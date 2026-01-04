@@ -159,7 +159,7 @@ export function SessionHeatmap({ sheets }: SessionHeatmapProps) {
       {/* Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent 
-          className="w-[99vw] md:w-[80vw] max-w-none max-h-[90vh] overflow-y-auto border-0"
+          className="w-[95vw] md:w-[90vw] lg:w-[85vw] xl:w-[80vw] max-w-none sm:max-w-none max-h-[90vh] overflow-y-auto border-0"
           style={{ backgroundColor: 'hsl(var(--card))' }}
         >
           <DialogHeader>
@@ -169,7 +169,7 @@ export function SessionHeatmap({ sheets }: SessionHeatmapProps) {
             </DialogTitle>
           </DialogHeader>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-[60%_40%] gap-6 mt-4">
             {/* Left: Large Heatmap */}
             <div className="flex items-center justify-center">
               <div className="relative w-full max-w-[400px] aspect-square">
