@@ -311,26 +311,42 @@ export default function SessionDetailPage() {
             return (
               <Card key={sheet._id}>
                 <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start justify-between gap-4 mb-4">
                     <CardTitle className="text-lg">{sheet.sheetLabel || `Sheet ${index + 1}`}</CardTitle>
                     <div className="text-right">
                       <p className="text-xs text-muted-foreground mb-1">Average Score</p>
                       <p className="text-3xl font-bold">{avgScore}</p>
                     </div>
                   </div>
-                  <div className="text-sm text-muted-foreground space-y-1 pt-2">
-                    <p>
-                      <strong>Firearm:</strong> {sheet.firearmId?.name || "Unknown"}
-                    </p>
-                    <p>
-                      <strong>Caliber:</strong> {sheet.caliberId?.name || "Unknown"}
-                    </p>
-                    <p>
-                      <strong>Optic:</strong> {sheet.opticId?.name || "Unknown"}
-                    </p>
-                    <p>
-                      <strong>Distance:</strong> {sheet.distanceYards} yards
-                    </p>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <TargetIcon className="h-3 w-3" />
+                        <span>Firearm</span>
+                      </div>
+                      <p className="font-medium">{sheet.firearmId?.name || "Unknown"}</p>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <Crosshair className="h-3 w-3" />
+                        <span>Caliber</span>
+                      </div>
+                      <p className="font-medium">{sheet.caliberId?.name || "Unknown"}</p>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <Eye className="h-3 w-3" />
+                        <span>Optic</span>
+                      </div>
+                      <p className="font-medium">{sheet.opticId?.name || "Unknown"}</p>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <Ruler className="h-3 w-3" />
+                        <span>Distance</span>
+                      </div>
+                      <p className="font-medium">{sheet.distanceYards} yards</p>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
