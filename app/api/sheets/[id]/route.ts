@@ -41,7 +41,19 @@ export async function PUT(
     const validated = sheetSchema.parse(body);
 
     await connectToDatabase();
-    const sheet = await TargetSheet.findByIdAndUpdate(id, validated, { new: true });
+    
+    // Don't update rangeSessionId if not provided
+    const updateData: any = {
+      firearmId: validated.firearmId,
+      caliberId: validated.caliberId,
+      opticId: validated.opticId,
+      distanceYards: validated.distanceYards,
+    };
+    
+    if (validated.sheetLabel !== undefined) updateData.sheetLabel = validated.sheetLabel;
+    if (validated.notes !== undefined) updateData.notes = validated.notes;
+    
+    const sheet = await TargetSheet.findByIdAndUpdate(id, updateData, { new: true });
 
     if (!sheet) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
