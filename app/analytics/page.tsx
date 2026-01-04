@@ -173,32 +173,43 @@ export default function AnalyticsPage() {
 
       {/* Filters */}
       <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters
-            </CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setFiltersOpen(!filtersOpen)}
-              className="gap-2"
-            >
-              {filtersOpen ? (
-                <>
+        {!filtersOpen ? (
+          <button
+            onClick={() => setFiltersOpen(true)}
+            className="w-full text-left hover:bg-accent/50 transition-colors"
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="h-5 w-5" />
+                  Filters
+                </CardTitle>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Click to expand</span>
+                  <ChevronDown className="h-4 w-4" />
+                </div>
+              </div>
+            </CardHeader>
+          </button>
+        ) : (
+          <>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="h-5 w-5" />
+                  Filters
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFiltersOpen(false)}
+                  className="gap-2"
+                >
                   Hide <ChevronUp className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  Show <ChevronDown className="h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </div>
-        </CardHeader>
-        {filtersOpen && (
-          <CardContent className="space-y-4">
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="dateStart" className="flex items-center gap-2">
@@ -302,7 +313,8 @@ export default function AnalyticsPage() {
               />
             </div>
           </div>
-        </CardContent>
+            </CardContent>
+          </>
         )}
       </Card>
 
