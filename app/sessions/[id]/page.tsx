@@ -310,10 +310,14 @@ export default function SessionDetailPage() {
             return (
               <Card key={sheet._id}>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span className="text-lg">{sheet.sheetLabel || `Sheet ${index + 1}`}</span>
-                  </CardTitle>
-                  <div className="text-sm text-muted-foreground space-y-1">
+                  <div className="flex items-start justify-between gap-4">
+                    <CardTitle className="text-lg">{sheet.sheetLabel || `Sheet ${index + 1}`}</CardTitle>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground mb-1">Average Score</p>
+                      <p className="text-3xl font-bold">{avgScore}</p>
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground space-y-1 pt-2">
                     <p>
                       <strong>Firearm:</strong> {sheet.firearmId?.name || "Unknown"}
                     </p>
@@ -330,16 +334,15 @@ export default function SessionDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <p className="text-sm">
-                        <strong>Total Shots:</strong> {totalShots}
-                      </p>
-                      <p className="text-sm">
-                        <strong>Total Score:</strong> {totalScore}
-                      </p>
-                      <p className="text-sm">
-                        <strong>Average Score/Shot:</strong> {avgScore}
-                      </p>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Total Shots</p>
+                        <p className="text-xl font-semibold">{totalShots}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Total Score</p>
+                        <p className="text-xl font-semibold">{totalScore}</p>
+                      </div>
                     </div>
 
                     {bullChartData.length > 0 && bullChartData.some((b) => b.totalShots > 0) && (
