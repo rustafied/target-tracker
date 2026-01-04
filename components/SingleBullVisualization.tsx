@@ -101,15 +101,15 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
           <line x1="0" y1="100" x2="200" y2="100" stroke="#333" strokeWidth="0.5" opacity="0.3" />
           <line x1="100" y1="0" x2="100" y2="200" stroke="#333" strokeWidth="0.5" opacity="0.3" />
           
-          {/* Shot markers (red dots) */}
+          {/* Shot markers (red dots, gold in bullseye) */}
           {shots.map((shot, index) => (
             <circle
               key={index}
               cx={shot.x}
               cy={shot.y}
               r="3"
-              fill="#ef4444"
-              stroke="#7f1d1d"
+              fill={shot.ring === 0 ? "#fbbf24" : "#ef4444"}
+              stroke={shot.ring === 0 ? "#92400e" : "#7f1d1d"}
               strokeWidth="0.5"
               opacity="0.9"
             />
