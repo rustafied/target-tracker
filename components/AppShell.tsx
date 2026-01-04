@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Target, LineChart, Settings, Menu } from "lucide-react";
+import { Target, LineChart, Settings, Menu, ChevronDown, ChevronRight, Crosshair, Eye, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -10,12 +10,90 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useState } from "react";
+import { Toaster } from "@/components/ui/sonner";
 
 const navigation = [
   { name: "Sessions", href: "/sessions", icon: Target },
   { name: "Analytics", href: "/analytics", icon: LineChart },
-  { name: "Setup", href: "/setup", icon: Settings },
 ];
+
+const setupItems = [
+  { name: "Firearms", href: "/setup/firearms", icon: Target },
+  { name: "Optics", href: "/setup/optics", icon: Eye },
+  { name: "Calibers", href: "/setup/calibers", icon: Crosshair },
+];
+
+function NavigationItems({ onItemClick }: { onItemClick?: () => void }) {
+  const pathname = usePathname();
+  const [setupOpen, setSetupOpen] = useState(pathname.startsWith("/setup"));
+
+  return (
+    <>
+      {navigation.map((item) => {
+        const isActive = pathname.startsWith(item.href);
+        return (
+          <Link
+            key={item.name}
+            href={item.href}
+            onClick={onItemClick}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              isActive
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            }`}
+          >
+            <item.icon className="h-5 w-5" />
+            {item.name}
+          </Link>
+        );
+      })}
+      
+      {/* Setup with sub-items */}
+      <div>
+        <button
+          onClick={() => setSetupOpen(!setupOpen)}
+          className={`flex w-full items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            pathname.startsWith("/setup")
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <Settings className="h-5 w-5" />
+            Setup
+          </div>
+          {setupOpen ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+        {setupOpen && (
+          <div className="ml-4 mt-1 space-y-1 border-l-2 border-border pl-4">
+            {setupItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onItemClick}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -23,6 +101,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background">
+      <Toaster />
+      
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
         <div className="flex items-center justify-between p-4">
@@ -45,24 +125,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 </div>
                 <nav className="flex-1 px-3 space-y-1">
-                  {navigation.map((item) => {
-                    const isActive = pathname.startsWith(item.href);
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
+                  <NavigationItems onItemClick={() => setMobileMenuOpen(false)} />
                 </nav>
               </div>
             </SheetContent>
@@ -80,23 +143,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
           <nav className="flex-1 px-3 space-y-1">
-            {navigation.map((item) => {
-              const isActive = pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
+            <NavigationItems />
           </nav>
         </div>
       </aside>
@@ -108,4 +155,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
