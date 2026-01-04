@@ -14,7 +14,7 @@ import { ArrowLeft, Plus, Minus } from "lucide-react";
 export default function NewSheetPage() {
   const router = useRouter();
   const params = useParams();
-  const sessionId = params.sessionId as string;
+  const sessionId = params.id as string;
 
   const [firearms, setFirearms] = useState<{ _id: string; name: string }[]>([]);
   const [optics, setOptics] = useState<{ _id: string; name: string }[]>([]);
