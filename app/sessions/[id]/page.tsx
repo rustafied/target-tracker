@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
+import { BullseyeVisualization } from "@/components/BullseyeVisualization";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -351,6 +352,11 @@ export default function SessionDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    {/* Bullseye Visualization */}
+                    {sheet.bulls && sheet.bulls.length > 0 && (
+                      <BullseyeVisualization bulls={sheet.bulls} />
+                    )}
+
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Total Shots</p>
