@@ -158,7 +158,10 @@ export function SessionHeatmap({ sheets }: SessionHeatmapProps) {
 
       {/* Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto bg-card border-0">
+        <DialogContent 
+          className="max-w-[1400px] w-[98vw] max-h-[90vh] overflow-y-auto border-0"
+          style={{ backgroundColor: 'hsl(var(--card))' }}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
