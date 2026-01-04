@@ -9,7 +9,11 @@ export async function GET() {
   try {
     await connectToDatabase();
     const sessions = await RangeSession.find().sort({ date: -1 });
-    return NextResponse.json(sessions);
+    
+    // Get unique locations for autocomplete
+    const locations = await RangeSession.distinct("location", { location: { $ne: null, $ne: "" } });
+    
+    return NextResponse.json({ sessions, locations });
   } catch (error) {
     console.error("Error fetching sessions:", error);
     return NextResponse.json({ error: "Failed to fetch sessions" }, { status: 500 });

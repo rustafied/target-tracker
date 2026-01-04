@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { toast } from "sonner";
 import { calculateSheetMetrics } from "@/lib/metrics";
 
@@ -44,6 +45,7 @@ export default function SessionDetailPage() {
 
   const [session, setSession] = useState<RangeSession | null>(null);
   const [sheets, setSheets] = useState<Sheet[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -55,8 +57,21 @@ export default function SessionDetailPage() {
   useEffect(() => {
     if (sessionId) {
       fetchSession();
+      fetchLocations();
     }
   }, [sessionId]);
+
+  const fetchLocations = async () => {
+    try {
+      const res = await fetch("/api/sessions");
+      if (res.ok) {
+        const data = await res.json();
+        setLocations(data.locations || []);
+      }
+    } catch (error) {
+      // Silent fail for locations
+    }
+  };
 
   const fetchSession = async () => {
     try {
@@ -241,11 +256,11 @@ export default function SessionDetailPage() {
                   <MapPin className="h-4 w-4" />
                   Location
                 </Label>
-                <Input
-                  id="location"
+                <LocationAutocomplete
                   value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="e.g., Local Range, Outdoor Range"
+                  onChange={(value) => setFormData({ ...formData, location: value })}
+                  suggestions={locations}
+                  placeholder="Select or type location..."
                 />
               </div>
               <div>

@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { toast } from "sonner";
 
 interface RangeSession {
@@ -29,6 +30,7 @@ interface RangeSession {
 export default function SessionsPage() {
   const router = useRouter();
   const [sessions, setSessions] = useState<RangeSession[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -46,7 +48,8 @@ export default function SessionsPage() {
       const res = await fetch("/api/sessions");
       if (res.ok) {
         const data = await res.json();
-        setSessions(data);
+        setSessions(data.sessions || data); // Handle both old and new format
+        setLocations(data.locations || []);
       }
     } catch (error) {
       toast.error("Failed to load sessions");
@@ -170,11 +173,11 @@ export default function SessionsPage() {
                   <MapPin className="h-4 w-4" />
                   Location
                 </Label>
-                <Input
-                  id="location"
+                <LocationAutocomplete
                   value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="e.g., Local Range, Outdoor Range"
+                  onChange={(value) => setFormData({ ...formData, location: value })}
+                  suggestions={locations}
+                  placeholder="Select or type location..."
                 />
               </div>
               <div>
