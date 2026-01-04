@@ -74,8 +74,11 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
                      bull.score2Count + bull.score1Count + bull.score0Count;
 
   return (
-    <div className="text-center">
-      <div className="relative mx-auto" style={{ width: size, height: size }}>
+    <div className="text-center group cursor-pointer">
+      <div 
+        className="relative mx-auto transition-all duration-300 ease-in-out group-hover:scale-200 group-hover:z-50" 
+        style={{ width: size, height: size }}
+      >
         <svg viewBox="0 0 200 200" className="w-full h-full">
           {/* Target rings (from outside to inside) */}
           
@@ -116,9 +119,13 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
           ))}
         </svg>
       </div>
-      <p className="text-xs text-muted-foreground mt-1">Bull {bull.bullIndex}</p>
+      <p className="text-xs text-muted-foreground mt-1 transition-opacity duration-300 group-hover:opacity-0">
+        Bull {bull.bullIndex}
+      </p>
       {totalShots > 0 && (
-        <p className="text-xs font-medium">{totalShots} shots</p>
+        <p className="text-xs font-medium transition-opacity duration-300 group-hover:opacity-0">
+          {totalShots} shots
+        </p>
       )}
     </div>
   );
