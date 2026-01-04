@@ -40,7 +40,10 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
+    console.log("Received body:", body);
+    
     const validated = sessionSchema.parse(body);
+    console.log("Validated data:", validated);
 
     await connectToDatabase();
     const session = await RangeSession.findByIdAndUpdate(id, validated, { new: true });
@@ -49,6 +52,7 @@ export async function PUT(
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
+    console.log("Updated session:", session);
     return NextResponse.json(session);
   } catch (error: any) {
     console.error("Error updating session:", error);
