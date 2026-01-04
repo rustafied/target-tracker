@@ -1,0 +1,13 @@
+import { z } from "zod";
+
+export const firearmSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  manufacturer: z.string().optional(),
+  model: z.string().optional(),
+  defaultCaliberId: z.string().optional(),
+  notes: z.string().optional(),
+  isActive: z.boolean().default(true),
+});
+
+export type FirearmFormData = z.infer<typeof firearmSchema>;
+
