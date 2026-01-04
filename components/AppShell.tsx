@@ -23,9 +23,9 @@ const setupItems = [
   { name: "Calibers", href: "/setup/calibers", icon: Crosshair },
 ];
 
-function NavigationItems({ onItemClick }: { onItemClick?: () => void }) {
+function NavigationItems({ onItemClick, isDesktop = false }: { onItemClick?: () => void; isDesktop?: boolean }) {
   const pathname = usePathname();
-  const [setupOpen, setSetupOpen] = useState(pathname.startsWith("/setup"));
+  const [setupOpen, setSetupOpen] = useState(isDesktop || pathname.startsWith("/setup"));
 
   return (
     <>
@@ -143,7 +143,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
           <nav className="flex-1 px-3 space-y-1">
-            <NavigationItems />
+            <NavigationItems isDesktop={true} />
           </nav>
         </div>
       </aside>
