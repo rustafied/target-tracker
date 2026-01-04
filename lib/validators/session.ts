@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const sessionSchema = z.object({
-  date: z.string().transform((str) => new Date(str)),
+  date: z.string().or(z.date()),
   location: z.string().optional().default(""),
   notes: z.string().optional().default(""),
 });
