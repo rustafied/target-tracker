@@ -118,7 +118,7 @@ export default function SheetDetailPage() {
 
       if (res.ok) {
         toast.success("Scores saved");
-        fetchSheet(); // Refresh to get updated data
+        router.push(`/sessions/${sheet.rangeSessionId._id}`);
       } else {
         toast.error("Failed to save scores");
       }
