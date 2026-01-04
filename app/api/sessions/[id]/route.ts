@@ -21,12 +21,6 @@ export async function GET(
     const _ = [Firearm, Caliber, Optic];
     
     const session = await RangeSession.findById(id);
-    console.log("========== GET SESSION DEBUG ==========");
-    console.log("Fetching session ID:", id);
-    console.log("Found session:", JSON.stringify(session, null, 2));
-    console.log("Session date:", session?.date);
-    console.log("========== END GET DEBUG ==========");
-    
     if (!session) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
@@ -52,33 +46,15 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    console.log("========== UPDATE SESSION DEBUG ==========");
-    console.log("Session ID:", id);
-    console.log("Received body:", JSON.stringify(body, null, 2));
-    console.log("Body date type:", typeof body.date);
-    console.log("Body date value:", body.date);
-    
     const validated = sessionSchema.parse(body);
-    console.log("Validated data:", JSON.stringify(validated, null, 2));
-    console.log("Validated date type:", typeof validated.date);
-    console.log("Validated date value:", validated.date);
 
     await connectToDatabase();
-    
-    // Check current session before update
-    const currentSession = await RangeSession.findById(id);
-    console.log("Current session in DB:", JSON.stringify(currentSession, null, 2));
-    
     const session = await RangeSession.findByIdAndUpdate(id, validated, { new: true });
 
     if (!session) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    console.log("Updated session:", JSON.stringify(session, null, 2));
-    console.log("Updated session date:", session.date);
-    console.log("========== END UPDATE DEBUG ==========");
-    
     return NextResponse.json(session);
   } catch (error: any) {
     console.error("Error updating session:", error);

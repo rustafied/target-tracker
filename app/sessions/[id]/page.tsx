@@ -79,7 +79,6 @@ export default function SessionDetailPage() {
       const res = await fetch(`/api/sessions/${sessionId}`);
       if (res.ok) {
         const data = await res.json();
-        console.log("Fetched session data:", data.session);
         setSession(data.session);
         setSheets(data.sheets);
       } else {
@@ -122,8 +121,6 @@ export default function SessionDetailPage() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log("Submitting form data:", formData);
-
     try {
       const res = await fetch(`/api/sessions/${sessionId}`, {
         method: "PUT",
@@ -136,12 +133,9 @@ export default function SessionDetailPage() {
         setEditDialogOpen(false);
         fetchSession();
       } else {
-        const error = await res.json();
-        console.error("Update failed:", error);
         toast.error("Failed to update session");
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("Failed to update session");
     }
   };
