@@ -17,6 +17,9 @@ export async function GET(
     const { id } = await params;
     await connectToDatabase();
     
+    // Ensure models are registered
+    const _ = [Firearm, Caliber, Optic];
+    
     const session = await RangeSession.findById(id);
     if (!session) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
