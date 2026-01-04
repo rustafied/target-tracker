@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Calendar, MapPin } from "lucide-react";
+import { Plus, Calendar, MapPin, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -153,7 +153,10 @@ export default function SessionsPage() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="date">Date *</Label>
+                <Label htmlFor="date" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Date *
+                </Label>
                 <Input
                   id="date"
                   type="date"
@@ -163,7 +166,10 @@ export default function SessionsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="location" className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Location
+                </Label>
                 <Input
                   id="location"
                   value={formData.location}
@@ -172,7 +178,10 @@ export default function SessionsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="notes">Notes</Label>
+                <Label htmlFor="notes" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Notes
+                </Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}

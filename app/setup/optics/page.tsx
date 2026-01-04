@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Maximize2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -202,7 +202,10 @@ export default function OpticsPage() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name" className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  Name *
+                </Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -212,7 +215,10 @@ export default function OpticsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="type">Type</Label>
+                <Label htmlFor="type" className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  Type
+                </Label>
                 <Input
                   id="type"
                   value={formData.type}
@@ -221,7 +227,10 @@ export default function OpticsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="magnification">Magnification</Label>
+                <Label htmlFor="magnification" className="flex items-center gap-2">
+                  <Maximize2 className="h-4 w-4" />
+                  Magnification
+                </Label>
                 <Input
                   id="magnification"
                   value={formData.magnification}
@@ -230,7 +239,10 @@ export default function OpticsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="notes">Notes</Label>
+                <Label htmlFor="notes" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Notes
+                </Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}

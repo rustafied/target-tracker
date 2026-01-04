@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Target, Building2, Package, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -202,7 +202,10 @@ export default function FirearmsPage() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name" className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Name *
+                </Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -212,7 +215,10 @@ export default function FirearmsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="manufacturer">Manufacturer</Label>
+                <Label htmlFor="manufacturer" className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Manufacturer
+                </Label>
                 <Input
                   id="manufacturer"
                   value={formData.manufacturer}
@@ -221,7 +227,10 @@ export default function FirearmsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="model">Model</Label>
+                <Label htmlFor="model" className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Model
+                </Label>
                 <Input
                   id="model"
                   value={formData.model}
@@ -230,7 +239,10 @@ export default function FirearmsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="notes">Notes</Label>
+                <Label htmlFor="notes" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Notes
+                </Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}

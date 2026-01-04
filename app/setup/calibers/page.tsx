@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Zap, Hash, Tag, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -202,7 +202,10 @@ export default function CalibersPage() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name" className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Name *
+                </Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -212,7 +215,10 @@ export default function CalibersPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="shortCode">Short Code</Label>
+                <Label htmlFor="shortCode" className="flex items-center gap-2">
+                  <Hash className="h-4 w-4" />
+                  Short Code
+                </Label>
                 <Input
                   id="shortCode"
                   value={formData.shortCode}
@@ -221,7 +227,10 @@ export default function CalibersPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category" className="flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  Category
+                </Label>
                 <Input
                   id="category"
                   value={formData.category}
@@ -230,7 +239,10 @@ export default function CalibersPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="notes">Notes</Label>
+                <Label htmlFor="notes" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Notes
+                </Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}

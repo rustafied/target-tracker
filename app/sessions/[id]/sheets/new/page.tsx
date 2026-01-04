@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TagSelector } from "@/components/TagSelector";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Ruler, Tag as TagIcon, FileText } from "lucide-react";
 
 export default function NewSheetPage() {
   const router = useRouter();
@@ -163,7 +163,10 @@ export default function NewSheetPage() {
             />
 
             <div>
-              <Label htmlFor="distance">Distance (yards) *</Label>
+              <Label htmlFor="distance" className="flex items-center gap-2">
+                <Ruler className="h-4 w-4" />
+                Distance (yards) *
+              </Label>
               <div className="flex items-center gap-2 mt-1">
                 <Button
                   type="button"
@@ -196,7 +199,10 @@ export default function NewSheetPage() {
             </div>
 
             <div>
-              <Label htmlFor="sheetLabel">Sheet Label</Label>
+              <Label htmlFor="sheetLabel" className="flex items-center gap-2">
+                <TagIcon className="h-4 w-4" />
+                Sheet Label
+              </Label>
               <Input
                 id="sheetLabel"
                 value={formData.sheetLabel}
@@ -206,7 +212,10 @@ export default function NewSheetPage() {
             </div>
 
             <div>
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Notes
+              </Label>
               <Textarea
                 id="notes"
                 value={formData.notes}

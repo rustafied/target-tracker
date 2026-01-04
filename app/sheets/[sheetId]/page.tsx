@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Save, Copy } from "lucide-react";
+import { ArrowLeft, Save, Copy, Target as TargetIcon, Calendar, Crosshair, Zap, Eye, Ruler, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -169,35 +169,59 @@ export default function SheetDetailPage() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <p className="text-muted-foreground">Date</p>
+              <p className="text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                Date
+              </p>
               <p className="font-medium">{format(new Date(sheet.rangeSessionId.date), "MMM d, yyyy")}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Firearm</p>
+              <p className="text-muted-foreground flex items-center gap-1">
+                <TargetIcon className="h-3 w-3" />
+                Firearm
+              </p>
               <p className="font-medium">{sheet.firearmId.name}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Caliber</p>
+              <p className="text-muted-foreground flex items-center gap-1">
+                <Zap className="h-3 w-3" />
+                Caliber
+              </p>
               <p className="font-medium">{sheet.caliberId.name}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Optic</p>
+              <p className="text-muted-foreground flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                Optic
+              </p>
               <p className="font-medium">{sheet.opticId.name}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Distance</p>
+              <p className="text-muted-foreground flex items-center gap-1">
+                <Ruler className="h-3 w-3" />
+                Distance
+              </p>
               <p className="font-medium">{sheet.distanceYards} yards</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Total Shots</p>
+              <p className="text-muted-foreground flex items-center gap-1">
+                <Crosshair className="h-3 w-3" />
+                Total Shots
+              </p>
               <p className="font-medium">{totalShots}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Total Score</p>
+              <p className="text-muted-foreground flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                Total Score
+              </p>
               <p className="font-medium">{totalScore}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Average</p>
+              <p className="text-muted-foreground flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                Average
+              </p>
               <p className="font-medium">{averageScore}</p>
             </div>
           </div>

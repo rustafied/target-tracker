@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { TagSelector } from "@/components/TagSelector";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { Calendar, Target, Crosshair, TrendingUp, Filter, Ruler } from "lucide-react";
 
 interface SessionMetric {
   sessionId: string;
@@ -123,7 +124,8 @@ export default function AnalyticsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
                 Total Sessions
               </CardTitle>
             </CardHeader>
@@ -133,7 +135,8 @@ export default function AnalyticsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Crosshair className="h-4 w-4" />
                 Total Shots
               </CardTitle>
             </CardHeader>
@@ -143,7 +146,8 @@ export default function AnalyticsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Target className="h-4 w-4" />
                 Total Score
               </CardTitle>
             </CardHeader>
@@ -153,7 +157,8 @@ export default function AnalyticsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
                 Average Score
               </CardTitle>
             </CardHeader>
@@ -167,12 +172,18 @@ export default function AnalyticsPage() {
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="dateStart">Start Date</Label>
+              <Label htmlFor="dateStart" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Start Date
+              </Label>
               <Input
                 id="dateStart"
                 type="date"
@@ -181,7 +192,10 @@ export default function AnalyticsPage() {
               />
             </div>
             <div>
-              <Label htmlFor="dateEnd">End Date</Label>
+              <Label htmlFor="dateEnd" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                End Date
+              </Label>
               <Input
                 id="dateEnd"
                 type="date"
@@ -193,7 +207,10 @@ export default function AnalyticsPage() {
 
           {firearms.length > 0 && (
             <div>
-              <Label>Firearms (optional - select to filter)</Label>
+              <Label className="flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                Firearms (optional - select to filter)
+              </Label>
               <div className="flex flex-wrap gap-2 mt-2">
                 {firearms.map((firearm) => (
                   <button
@@ -214,7 +231,10 @@ export default function AnalyticsPage() {
 
           {calibers.length > 0 && (
             <div>
-              <Label>Calibers (optional - select to filter)</Label>
+              <Label className="flex items-center gap-2">
+                <Crosshair className="h-4 w-4" />
+                Calibers (optional - select to filter)
+              </Label>
               <div className="flex flex-wrap gap-2 mt-2">
                 {calibers.map((caliber) => (
                   <button
@@ -235,7 +255,10 @@ export default function AnalyticsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="distanceMin">Min Distance (yards)</Label>
+              <Label htmlFor="distanceMin" className="flex items-center gap-2">
+                <Ruler className="h-4 w-4" />
+                Min Distance (yards)
+              </Label>
               <Input
                 id="distanceMin"
                 type="number"
@@ -245,7 +268,10 @@ export default function AnalyticsPage() {
               />
             </div>
             <div>
-              <Label htmlFor="distanceMax">Max Distance (yards)</Label>
+              <Label htmlFor="distanceMax" className="flex items-center gap-2">
+                <Ruler className="h-4 w-4" />
+                Max Distance (yards)
+              </Label>
               <Input
                 id="distanceMax"
                 type="number"
