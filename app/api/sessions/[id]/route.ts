@@ -3,6 +3,9 @@ import { connectToDatabase } from "@/lib/db";
 import { RangeSession } from "@/lib/models/RangeSession";
 import { TargetSheet } from "@/lib/models/TargetSheet";
 import { BullRecord } from "@/lib/models/BullRecord";
+import { Firearm } from "@/lib/models/Firearm";
+import { Caliber } from "@/lib/models/Caliber";
+import { Optic } from "@/lib/models/Optic";
 import { sessionSchema } from "@/lib/validators/session";
 import { calculateSheetMetrics } from "@/lib/metrics";
 
