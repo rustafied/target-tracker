@@ -75,4 +75,5 @@ target-tracker/
 * [API & Backend](./04-api-backend.md) - Routes and MongoDB setup
 * [Implementation Plan](./05-implementation-plan.md) - Build sequence and file structure
 * [Future Features](./06-future-features.md) - Planned expansions
+* **[Implementation Status](./09-implementation-status.md) - Current state and completed features**
 

@@ -20,13 +20,18 @@ export async function GET(
     // Ensure models are registered
     const _ = [Firearm, Caliber, Optic];
     
-    const session = await RangeSession.findById(id);
+    // Try to find by slug first, fallback to _id for backward compatibility
+    let session = await RangeSession.findOne({ slug: id });
+    if (!session) {
+      session = await RangeSession.findById(id);
+    }
+    
     if (!session) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
     // Get all sheets for this session with populated references
-    const sheets = await TargetSheet.find({ rangeSessionId: id })
+    const sheets = await TargetSheet.find({ rangeSessionId: session._id })
       .populate("firearmId")
       .populate("caliberId")
       .populate("opticId")
@@ -80,11 +85,20 @@ export async function PUT(
     const validated = sessionSchema.parse(body);
 
     await connectToDatabase();
-    const session = await RangeSession.findByIdAndUpdate(id, validated, { new: true });
-
+    
+    // Try to find by slug first, fallback to _id
+    let session = await RangeSession.findOne({ slug: id });
+    if (!session) {
+      session = await RangeSession.findById(id);
+    }
+    
     if (!session) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
+
+    // Update the session
+    Object.assign(session, validated);
+    await session.save();
 
     return NextResponse.json(session);
   } catch (error: any) {
@@ -104,13 +118,23 @@ export async function DELETE(
     const { id } = await params;
     await connectToDatabase();
 
+    // Try to find by slug first, fallback to _id
+    let session = await RangeSession.findOne({ slug: id });
+    if (!session) {
+      session = await RangeSession.findById(id);
+    }
+    
+    if (!session) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
     // Delete all associated sheets and bulls
-    const sheets = await TargetSheet.find({ rangeSessionId: id });
+    const sheets = await TargetSheet.find({ rangeSessionId: session._id });
     const sheetIds = sheets.map(s => s._id);
     
     await BullRecord.deleteMany({ targetSheetId: { $in: sheetIds } });
-    await TargetSheet.deleteMany({ rangeSessionId: id });
-    await RangeSession.findByIdAndDelete(id);
+    await TargetSheet.deleteMany({ rangeSessionId: session._id });
+    await RangeSession.findByIdAndDelete(session._id);
 
     return NextResponse.json({ message: "Session deleted successfully" });
   } catch (error) {

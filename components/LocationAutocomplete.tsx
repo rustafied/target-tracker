@@ -54,54 +54,57 @@ export function LocationAutocomplete({
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between font-normal"
-        >
-          {inputValue || placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
-        <Command>
-          <CommandInput
-            placeholder="Search or type new location..."
-            value={inputValue}
-            onValueChange={handleInputChange}
-          />
-          <CommandList>
-            {filteredSuggestions.length === 0 && inputValue && (
-              <CommandEmpty>
-                Press Enter to use &quot;{inputValue}&quot;
-              </CommandEmpty>
-            )}
-            {filteredSuggestions.length > 0 && (
-              <CommandGroup>
-                {filteredSuggestions.map((location) => (
-                  <CommandItem
-                    key={location}
-                    value={location}
-                    onSelect={() => handleSelect(location)}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === location ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {location}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <div className="relative">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between font-normal"
+          >
+            {inputValue || placeholder}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-popover" align="start" sideOffset={4}>
+          <Command className="bg-popover">
+            <CommandInput
+              placeholder="Search or type new location..."
+              value={inputValue}
+              onValueChange={handleInputChange}
+              className="bg-transparent"
+            />
+            <CommandList className="bg-popover">
+              {filteredSuggestions.length === 0 && inputValue && (
+                <CommandEmpty>
+                  Press Enter to use &quot;{inputValue}&quot;
+                </CommandEmpty>
+              )}
+              {filteredSuggestions.length > 0 && (
+                <CommandGroup>
+                  {filteredSuggestions.map((location) => (
+                    <CommandItem
+                      key={location}
+                      value={location}
+                      onSelect={() => handleSelect(location)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          value === location ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {location}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
 

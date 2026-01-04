@@ -22,6 +22,7 @@ import { toast } from "sonner";
 
 interface RangeSession {
   _id: string;
+  slug: string;
   date: string;
   location?: string;
   notes?: string;
@@ -72,7 +73,7 @@ export default function SessionsPage() {
         const session = await res.json();
         toast.success("Session created");
         setDialogOpen(false);
-        router.push(`/sessions/${session._id}`);
+        router.push(`/sessions/${session.slug || session._id}`);
       } else {
         toast.error("Failed to create session");
       }
@@ -84,7 +85,7 @@ export default function SessionsPage() {
   const openCreateDialog = () => {
     setFormData({
       date: format(new Date(), "yyyy-MM-dd"),
-      location: "",
+      location: "Reloaderz",
       notes: "",
     });
     setDialogOpen(true);
@@ -121,7 +122,7 @@ export default function SessionsPage() {
             <Card
               key={session._id}
               className="cursor-pointer hover:bg-accent transition-colors"
-              onClick={() => router.push(`/sessions/${session._id}`)}
+              onClick={() => router.push(`/sessions/${session.slug || session._id}`)}
             >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -154,9 +155,9 @@ export default function SessionsPage() {
             <DialogDescription>Create a new range session to track your shooting</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
+            <div className="space-y-6 py-4">
               <div>
-                <Label htmlFor="date" className="flex items-center gap-2">
+                <Label htmlFor="date" className="flex items-center gap-2 mb-2">
                   <Calendar className="h-4 w-4" />
                   Date *
                 </Label>
@@ -169,7 +170,7 @@ export default function SessionsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="location" className="flex items-center gap-2">
+                <Label htmlFor="location" className="flex items-center gap-2 mb-2">
                   <MapPin className="h-4 w-4" />
                   Location
                 </Label>
@@ -181,7 +182,7 @@ export default function SessionsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="notes" className="flex items-center gap-2">
+                <Label htmlFor="notes" className="flex items-center gap-2 mb-2">
                   <FileText className="h-4 w-4" />
                   Notes
                 </Label>

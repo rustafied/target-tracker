@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp, Crosshair, Eye, Ruler } from "lucide-react";
+import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp, Crosshair, Eye, Ruler, FileText, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,8 @@ import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { BullseyeVisualization } from "@/components/BullseyeVisualization";
 import { SingleBullVisualization } from "@/components/SingleBullVisualization";
 import { SessionHeatmap } from "@/components/SessionHeatmap";
+import { OCRUploader } from "@/components/OCRUploader";
+import type { ParsedSheetData } from "@/lib/ocr-parser";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -51,6 +53,7 @@ interface BullRecord {
 
 interface RangeSession {
   _id: string;
+  slug: string;
   date: string;
   location?: string;
   notes?: string;
@@ -58,6 +61,7 @@ interface RangeSession {
 
 interface Sheet {
   _id: string;
+  slug?: string;
   firearmId: { _id: string; name: string };
   caliberId: { _id: string; name: string };
   opticId: { _id: string; name: string };
@@ -77,9 +81,24 @@ export default function SessionDetailPage() {
   const [locations, setLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [ocrDialogOpen, setOcrDialogOpen] = useState(false);
+  const [ocrData, setOcrData] = useState<ParsedSheetData | null>(null);
+  const [firearms, setFirearms] = useState<{ _id: string; name: string; caliberIds?: string[]; opticIds?: string[] }[]>([]);
+  const [allOptics, setAllOptics] = useState<{ _id: string; name: string }[]>([]);
+  const [allCalibers, setAllCalibers] = useState<{ _id: string; name: string }[]>([]);
+  const [filteredOptics, setFilteredOptics] = useState<{ _id: string; name: string }[]>([]);
+  const [filteredCalibers, setFilteredCalibers] = useState<{ _id: string; name: string }[]>([]);
   const [formData, setFormData] = useState({
     date: "",
     location: "",
+    notes: "",
+  });
+  const [quickSheetFormData, setQuickSheetFormData] = useState({
+    firearmId: "",
+    caliberId: "",
+    opticId: "",
+    distanceYards: "25",
+    sheetLabel: "",
     notes: "",
   });
 
@@ -87,8 +106,53 @@ export default function SessionDetailPage() {
     if (sessionId) {
       fetchSession();
       fetchLocations();
+      fetchReferenceData();
     }
   }, [sessionId]);
+
+  const fetchReferenceData = async () => {
+    try {
+      const [firearmsRes, opticsRes, calibersRes] = await Promise.all([
+        fetch("/api/firearms"),
+        fetch("/api/optics"),
+        fetch("/api/calibers"),
+      ]);
+
+      let firearmsData: { _id: string; name: string; caliberIds?: string[]; opticIds?: string[] }[] = [];
+      let opticsData: { _id: string; name: string }[] = [];
+      let calibersData: { _id: string; name: string }[] = [];
+
+      if (firearmsRes.ok) {
+        firearmsData = await firearmsRes.json();
+        setFirearms(firearmsData);
+      }
+      if (opticsRes.ok) {
+        opticsData = await opticsRes.json();
+        setAllOptics(opticsData);
+        setFilteredOptics(opticsData);
+      }
+      if (calibersRes.ok) {
+        calibersData = await calibersRes.json();
+        setAllCalibers(calibersData);
+        setFilteredCalibers(calibersData);
+      }
+
+      // Set defaults
+      if (firearmsData.length > 0 && opticsData.length > 0 && calibersData.length > 0) {
+        setQuickSheetFormData({
+          firearmId: firearmsData[0]._id,
+          opticId: opticsData[0]._id,
+          caliberId: calibersData[0]._id,
+          distanceYards: "25",
+          sheetLabel: "",
+          notes: "",
+        });
+        filterByFirearm(firearmsData[0]._id, firearmsData, opticsData, calibersData);
+      }
+    } catch (error) {
+      // Silent fail
+    }
+  };
 
   const fetchLocations = async () => {
     try {
@@ -182,6 +246,105 @@ export default function SessionDetailPage() {
       }
     } catch (error) {
       toast.error("Failed to delete session");
+    }
+  };
+
+  const filterByFirearm = (
+    firearmId: string,
+    firearmsData = firearms,
+    opticsData = allOptics,
+    calibersData = allCalibers
+  ) => {
+    const selectedFirearm = firearmsData.find((f) => f._id === firearmId);
+    if (selectedFirearm) {
+      const filteredOpts = selectedFirearm.opticIds && selectedFirearm.opticIds.length > 0
+        ? opticsData.filter((o) => selectedFirearm.opticIds!.includes(o._id))
+        : opticsData;
+      
+      const filteredCals = selectedFirearm.caliberIds && selectedFirearm.caliberIds.length > 0
+        ? calibersData.filter((c) => selectedFirearm.caliberIds!.includes(c._id))
+        : calibersData;
+
+      setFilteredOptics(filteredOpts);
+      setFilteredCalibers(filteredCals);
+
+      setQuickSheetFormData((prev) => ({
+        ...prev,
+        firearmId,
+        opticId: filteredOpts.length > 0 ? filteredOpts[0]._id : "",
+        caliberId: filteredCals.length > 0 ? filteredCals[0]._id : "",
+      }));
+    }
+  };
+
+  const handleOCRDataParsed = (data: ParsedSheetData) => {
+    setOcrData(data);
+    
+    // Auto-populate distance if found
+    if (data.distance) {
+      setQuickSheetFormData((prev) => ({
+        ...prev,
+        distanceYards: data.distance!.toString(),
+      }));
+    }
+    
+    toast.success(
+      `Data ready: ${data.bullsData.length} bulls${data.distance ? `, ${data.distance} yards` : ''}. Review and create sheet.`
+    );
+  };
+
+  const handleCreateSheetFromOCR = async () => {
+    if (!session || !ocrData || ocrData.bullsData.length === 0) {
+      toast.error("No OCR data available");
+      return;
+    }
+
+    if (!quickSheetFormData.firearmId || !quickSheetFormData.caliberId || !quickSheetFormData.opticId) {
+      toast.error("Please select firearm, caliber, and optic");
+      return;
+    }
+
+    try {
+      // Create the sheet
+      const sheetRes = await fetch("/api/sheets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rangeSessionId: session._id,
+          ...quickSheetFormData,
+          distanceYards: parseInt(quickSheetFormData.distanceYards),
+        }),
+      });
+
+      if (!sheetRes.ok) {
+        toast.error("Failed to create sheet");
+        return;
+      }
+
+      const sheet = await sheetRes.json();
+      
+      // Save the bull records
+      const bullsRes = await fetch("/api/bulls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          ocrData.bullsData.map((bull) => ({
+            targetSheetId: sheet._id,
+            ...bull,
+          }))
+        ),
+      });
+
+      if (bullsRes.ok) {
+        toast.success("Sheet created with OCR data!");
+        setOcrDialogOpen(false);
+        setOcrData(null);
+        fetchSession(); // Refresh to show new sheet
+      } else {
+        toast.warning("Sheet created but failed to save OCR data");
+      }
+    } catch (error) {
+      toast.error("Failed to create sheet");
     }
   };
 
@@ -291,10 +454,16 @@ export default function SessionDetailPage() {
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold">Target Sheets</h2>
-        <Button onClick={() => router.push(`/sessions/${sessionId}/sheets/new`)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Sheet
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setOcrDialogOpen(true)}>
+            <ImageIcon className="h-4 w-4 mr-2" />
+            Upload Range Notes
+          </Button>
+          <Button onClick={() => router.push(`/sessions/${sessionId}/sheets/new`)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Sheet
+          </Button>
+        </div>
       </div>
 
       {sheets.length === 0 ? (
@@ -416,7 +585,7 @@ export default function SessionDetailPage() {
                       variant="outline"
                       size="sm"
                       className="w-full"
-                      onClick={() => router.push(`/sheets/${sheet._id}`)}
+                      onClick={() => router.push(`/sheets/${sheet.slug || sheet._id}`)}
                     >
                       <TargetIcon className="h-4 w-4 mr-2" />
                       View Details
@@ -436,9 +605,9 @@ export default function SessionDetailPage() {
             <DialogDescription>Update session details</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditSubmit}>
-            <div className="space-y-4 py-4">
+            <div className="space-y-6 py-4">
               <div>
-                <Label htmlFor="date" className="flex items-center gap-2">
+                <Label htmlFor="date" className="flex items-center gap-2 mb-2">
                   <Calendar className="h-4 w-4" />
                   Date *
                 </Label>
@@ -451,7 +620,7 @@ export default function SessionDetailPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="location" className="flex items-center gap-2">
+                <Label htmlFor="location" className="flex items-center gap-2 mb-2">
                   <MapPin className="h-4 w-4" />
                   Location
                 </Label>
@@ -463,7 +632,10 @@ export default function SessionDetailPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="notes">Notes</Label>
+                <Label htmlFor="notes" className="flex items-center gap-2 mb-2">
+                  <FileText className="h-4 w-4" />
+                  Notes
+                </Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}
@@ -480,6 +652,135 @@ export default function SessionDetailPage() {
               <Button type="submit">Update Session</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* OCR Upload Dialog */}
+      <Dialog open={ocrDialogOpen} onOpenChange={setOcrDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Upload Range Notes</DialogTitle>
+            <DialogDescription>
+              Upload a photo of your handwritten range notes to automatically create a sheet
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <OCRUploader onDataParsed={handleOCRDataParsed} />
+
+            {ocrData && ocrData.bullsData.length > 0 && (
+              <Card className="border-primary">
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-primary">
+                    ✓ Data Parsed - Configure Sheet Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-sm space-y-1 mb-4">
+                    <p>
+                      <span className="font-semibold">{ocrData.bullsData.length}</span> bulls detected
+                    </p>
+                    {ocrData.distance && (
+                      <p>
+                        Distance: <span className="font-semibold">{ocrData.distance}</span> yards
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Firearm *</Label>
+                      <select
+                        className="w-full mt-1 px-3 py-2 border rounded-md"
+                        value={quickSheetFormData.firearmId}
+                        onChange={(e) => filterByFirearm(e.target.value)}
+                      >
+                        {firearms.map((f) => (
+                          <option key={f._id} value={f._id}>{f.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label>Caliber *</Label>
+                      <select
+                        className="w-full mt-1 px-3 py-2 border rounded-md"
+                        value={quickSheetFormData.caliberId}
+                        onChange={(e) => setQuickSheetFormData({ ...quickSheetFormData, caliberId: e.target.value })}
+                      >
+                        {filteredCalibers.map((c) => (
+                          <option key={c._id} value={c._id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label>Optic *</Label>
+                      <select
+                        className="w-full mt-1 px-3 py-2 border rounded-md"
+                        value={quickSheetFormData.opticId}
+                        onChange={(e) => setQuickSheetFormData({ ...quickSheetFormData, opticId: e.target.value })}
+                      >
+                        {filteredOptics.map((o) => (
+                          <option key={o._id} value={o._id}>{o.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="ocrDistance">Distance (yards) *</Label>
+                      <Input
+                        id="ocrDistance"
+                        type="number"
+                        value={quickSheetFormData.distanceYards}
+                        onChange={(e) => setQuickSheetFormData({ ...quickSheetFormData, distanceYards: e.target.value })}
+                        required
+                        min="1"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="ocrSheetLabel">Sheet Label</Label>
+                      <Input
+                        id="ocrSheetLabel"
+                        value={quickSheetFormData.sheetLabel}
+                        onChange={(e) => setQuickSheetFormData({ ...quickSheetFormData, sheetLabel: e.target.value })}
+                        placeholder="e.g., Zeroing, Group Practice"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="ocrNotes">Notes</Label>
+                      <Textarea
+                        id="ocrNotes"
+                        value={quickSheetFormData.notes}
+                        onChange={(e) => setQuickSheetFormData({ ...quickSheetFormData, notes: e.target.value })}
+                        placeholder="Additional notes..."
+                        rows={2}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => {
+              setOcrDialogOpen(false);
+              setOcrData(null);
+            }}>
+              Cancel
+            </Button>
+            {ocrData && ocrData.bullsData.length > 0 && (
+              <Button onClick={handleCreateSheetFromOCR}>
+                Create Sheet with Data
+              </Button>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

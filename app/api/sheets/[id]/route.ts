@@ -12,17 +12,26 @@ export async function GET(
     const { id } = await params;
     await connectToDatabase();
     
-    const sheet = await TargetSheet.findById(id)
+    // Try to find by slug first, fallback to _id
+    let sheet = await TargetSheet.findOne({ slug: id })
       .populate("firearmId")
       .populate("caliberId")
       .populate("opticId")
       .populate("rangeSessionId");
+    
+    if (!sheet) {
+      sheet = await TargetSheet.findById(id)
+        .populate("firearmId")
+        .populate("caliberId")
+        .populate("opticId")
+        .populate("rangeSessionId");
+    }
 
     if (!sheet) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
     }
 
-    const bulls = await BullRecord.find({ targetSheetId: id }).sort({ bullIndex: 1 });
+    const bulls = await BullRecord.find({ targetSheetId: sheet._id }).sort({ bullIndex: 1 });
 
     return NextResponse.json({ sheet, bulls });
   } catch (error) {

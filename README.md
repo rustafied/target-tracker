@@ -1,36 +1,143 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Target Tracker
+
+A Next.js application for logging and visualizing shooting range sessions with per-bull scores. Track your progress over time with detailed scoring, filtering, and performance analytics.
+
+## Features
+
+- 📊 **Detailed Scoring** - 5-4-3-2-1-0 system per bull (up to 6 bulls per sheet)
+- 🎯 **Comprehensive Tracking** - Associate each sheet with firearm, caliber, optic, and distance
+- 📈 **Analytics & Visualizations** - Trend graphs, per-sheet charts, and bullseye visualizations
+- 🔫 **Equipment Management** - CRUD for firearms, optics, and calibers with drag-drop ordering
+- 📱 **Mobile-First Design** - Dark theme, optimized for quick data entry
+- 💾 **Local MongoDB Storage** - All data stored locally
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ and npm
+- MongoDB running locally on port 27017
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/rustafied/target-tracker.git
+cd target-tracker
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+# .env.local
+MONGODB_URI=mongodb://localhost:27017/target-tracker
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. (Optional) Seed sample data:
+```bash
+node seed.mjs
+```
 
-## Learn More
+5. Run the development server:
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+target-tracker/
+├── app/                    # Next.js App Router pages and API routes
+│   ├── api/               # API endpoints for all entities
+│   ├── sessions/          # Session management pages
+│   ├── sheets/            # Sheet detail and scoring
+│   ├── analytics/         # Performance analytics
+│   └── setup/             # Equipment CRUD pages
+├── components/            # Reusable UI components
+│   ├── ui/               # shadcn/ui components
+│   ├── AppShell.tsx      # Main layout
+│   ├── BullseyeVisualization.tsx
+│   ├── SingleBullVisualization.tsx
+│   ├── SessionHeatmap.tsx
+│   └── ...
+├── lib/                   # Backend utilities and models
+│   ├── models/           # Mongoose schemas
+│   ├── validators/       # Zod validation schemas
+│   └── db.ts            # MongoDB connection
+└── readme/                # Detailed project documentation
+```
 
-## Deploy on Vercel
+## Documentation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Comprehensive project documentation is available in the `/readme` folder:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Overview](./readme/00-overview.md) - Project goals and tech stack
+- [Domain Model](./readme/01-domain-model.md) - Data entities and relationships
+- [User Flows](./readme/02-user-flows.md) - Key user journeys
+- [UI & Design](./readme/03-ui-design.md) - Component specs and layout
+- [API & Backend](./readme/04-api-backend.md) - Routes and MongoDB setup
+- [Implementation Plan](./readme/05-implementation-plan.md) - Build sequence
+- [Future Features](./readme/06-future-features.md) - Planned expansions
+
+## Tech Stack
+
+- **Framework**: Next.js 16.1 (App Router, TypeScript)
+- **Styling**: Tailwind CSS 4 + shadcn/ui
+- **Database**: MongoDB + Mongoose
+- **Forms**: React Hook Form + Zod
+- **Charts**: Recharts
+- **Icons**: Lucide React
+
+## Current Implementation Status
+
+### ✅ Completed MVP Features
+
+- **Setup Pages**: Full CRUD for firearms, optics, and calibers with drag-drop reordering
+- **Firearm-Equipment Relationships**: Firearms can have multiple compatible calibers and optics
+- **Range Sessions**: Create, edit, view, and delete sessions with location autocomplete
+- **Target Sheets**: Add sheets to sessions with filtered equipment selection
+- **Bull Scoring**: Button-based count entry (0-10) for each score level (5-4-3-2-1-0)
+- **Session Visualizations**:
+  - Line chart showing average score progression across sheets
+  - Per-sheet bar charts with average score labels
+  - Individual bullseye visualizations (6 per sheet) with randomized shot placement
+  - Aggregate heatmap visualization for all shots in a session
+  - Hover tooltips on bullseyes showing score breakdown
+- **Analytics**: Collapsible filters (date, firearm, caliber, distance) with trend graphs
+- **Edit Capabilities**: Edit sessions, sheets, and bull scores
+
+### 🎨 Visual Features
+
+- **Bullseye Visualizations**: SVG-based targets with color-coded rings (red center, black, dark gray, light gray, white) and randomized shot placement
+- **Heatmap**: Density visualization using transparent dots for aggregate shot data
+- **Hover Interactions**: 2x scale animation on bullseye hover with detailed tooltip showing score grid and average
+- **Dark Theme**: Optimized color scheme with subtle accents
+
+### 📦 Database
+
+All collections include:
+- Firearms with `compatibleCaliberIds` and `compatibleOpticIds` arrays
+- Optics with `sortOrder` for custom ordering
+- Calibers with `sortOrder` for custom ordering
+- Range sessions with location and date
+- Target sheets linked to sessions and equipment
+- Bull records with aggregated score counts (0-10 per score level)
+
+## Future Enhancements
+
+See [Future Features](./readme/06-future-features.md) for planned additions:
+- Photo OCR for range notebook pages
+- Direct target photo ingestion with shot detection
+- Authentication and multi-device sync
+- Drill types and structured training programs
+- Advanced analytics and exports
+
+## License
+
+MIT

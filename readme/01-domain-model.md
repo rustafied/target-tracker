@@ -13,6 +13,9 @@ Represents a specific gun.
 * `manufacturer` (string, optional)
 * `model` (string, optional)
 * `defaultCaliberId` (ObjectId → Caliber, optional)
+* `compatibleCaliberIds` (ObjectId[] → Caliber, optional) - List of compatible calibers
+* `compatibleOpticIds` (ObjectId[] → Optic, optional) - List of compatible optics
+* `sortOrder` (number, default 0) - User-defined display order
 * `notes` (string, optional)
 * `isActive` (boolean, default true)
 * `createdAt`, `updatedAt` (dates)
@@ -27,6 +30,7 @@ Sighting system used with firearms.
 * `name` (string, required) - e.g. "Vortex Razor AMG UH-1 Gen II"
 * `type` (string, optional) - red dot, LPVO, irons, etc.
 * `magnification` (string, optional) - e.g. "1–6x"
+* `sortOrder` (number, default 0) - User-defined display order
 * `notes` (string, optional)
 * `isActive` (boolean, default true)
 * `createdAt`, `updatedAt` (dates)
@@ -41,6 +45,7 @@ Ammunition type.
 * `name` (string, required) - Display name (e.g. "5.56 NATO")
 * `shortCode` (string, optional) - e.g. "5.56", "9 mm"
 * `category` (string, optional) - rifle, pistol, etc.
+* `sortOrder` (number, default 0) - User-defined display order
 * `notes` (string, optional)
 * `isActive` (boolean, default true)
 * `createdAt`, `updatedAt` (dates)
@@ -107,7 +112,13 @@ TargetSheet (1) ──→ (many) BullRecord
 TargetSheet (1) ──→ (1) Firearm
 TargetSheet (1) ──→ (1) Caliber
 TargetSheet (1) ──→ (1) Optic
+
+Firearm (1) ──→ (many) Caliber [via compatibleCaliberIds]
+Firearm (1) ──→ (many) Optic [via compatibleOpticIds]
 ```
+
+**Equipment Filtering:**
+When creating a target sheet, the available calibers and optics are filtered based on the selected firearm's `compatibleCaliberIds` and `compatibleOpticIds` arrays.
 
 ## Validation Rules
 

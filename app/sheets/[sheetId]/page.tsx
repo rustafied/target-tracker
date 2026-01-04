@@ -30,7 +30,7 @@ interface Sheet {
   distanceYards: number;
   sheetLabel?: string;
   notes?: string;
-  rangeSessionId: { _id: string; date: string };
+  rangeSessionId: { _id: string; slug?: string; date: string };
 }
 
 interface BullRecord {
@@ -244,7 +244,7 @@ export default function SheetDetailPage() {
 
       if (res.ok) {
         toast.success("Scores saved");
-        router.push(`/sessions/${sheet.rangeSessionId._id}`);
+        router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`);
       } else {
         toast.error("Failed to save scores");
       }
@@ -278,7 +278,7 @@ export default function SheetDetailPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <Button variant="ghost" onClick={() => router.push(`/sessions/${sheet.rangeSessionId._id}`)}>
+        <Button variant="ghost" onClick={() => router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`)}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Session
         </Button>

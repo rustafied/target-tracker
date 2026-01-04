@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { TagSelector } from "@/components/TagSelector";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Calendar, Target, Crosshair, TrendingUp, Filter, Ruler, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Target, Crosshair, TrendingUp, Filter, Ruler, ChevronDown, ChevronUp, TrendingDown, Minus } from "lucide-react";
 
 interface SessionMetric {
   sessionId: string;
@@ -117,6 +117,62 @@ export default function AnalyticsPage() {
     shots: session.totalShots,
   }));
 
+  // Calculate improvements from session to session
+  const calculateImprovement = (current: number, previous: number | null) => {
+    if (previous === null || previous === 0) return null;
+    return ((current - previous) / previous) * 100;
+  };
+
+  const getImprovementDisplay = (improvement: number | null) => {
+    if (improvement === null) {
+      return {
+        text: "First session",
+        color: "text-muted-foreground",
+        icon: <Minus className="h-4 w-4" />,
+      };
+    }
+
+    if (Math.abs(improvement) < 0.1) {
+      return {
+        text: "No change",
+        color: "text-muted-foreground",
+        icon: <Minus className="h-4 w-4" />,
+      };
+    }
+
+    if (improvement > 0) {
+      return {
+        text: `+${improvement.toFixed(1)}%`,
+        color: "text-green-600 dark:text-green-400",
+        icon: <TrendingUp className="h-4 w-4" />,
+      };
+    }
+
+    return {
+      text: `${improvement.toFixed(1)}%`,
+      color: "text-red-600 dark:text-red-400",
+      icon: <TrendingDown className="h-4 w-4" />,
+    };
+  };
+
+  // Calculate overall trend (comparing first half vs second half)
+  const getOverallTrend = () => {
+    if (sessions.length < 2) return null;
+    
+    const midpoint = Math.floor(sessions.length / 2);
+    const firstHalf = sessions.slice(midpoint);
+    const secondHalf = sessions.slice(0, midpoint);
+    
+    if (firstHalf.length === 0 || secondHalf.length === 0) return null;
+    
+    const firstAvg = firstHalf.reduce((sum, s) => sum + s.averageScore, 0) / firstHalf.length;
+    const secondAvg = secondHalf.reduce((sum, s) => sum + s.averageScore, 0) / secondHalf.length;
+    
+    return calculateImprovement(secondAvg, firstAvg);
+  };
+
+  const overallTrend = getOverallTrend();
+
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Analytics</h1>
@@ -165,7 +221,20 @@ export default function AnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{summary.averageScore.toFixed(2)}</p>
+              <div className="flex items-end justify-between">
+                <p className="text-3xl font-bold">{summary.averageScore.toFixed(2)}</p>
+                {overallTrend !== null && (
+                  <div className={`flex items-center gap-1 text-sm font-medium ${getImprovementDisplay(overallTrend).color}`}>
+                    {getImprovementDisplay(overallTrend).icon}
+                    <span>{getImprovementDisplay(overallTrend).text}</span>
+                  </div>
+                )}
+              </div>
+              {overallTrend !== null && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Overall trend
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -368,22 +437,38 @@ export default function AnalyticsPage() {
                     <th className="text-right p-2">Shots</th>
                     <th className="text-right p-2">Score</th>
                     <th className="text-right p-2">Average</th>
+                    <th className="text-right p-2">Improvement</th>
                     <th className="text-right p-2">Sheets</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {sessions.map((session) => (
-                    <tr key={session.sessionId} className="border-b hover:bg-accent">
-                      <td className="p-2">{format(new Date(session.date), "MMM d, yyyy")}</td>
-                      <td className="p-2 text-muted-foreground">{session.location || "-"}</td>
-                      <td className="p-2 text-right">{session.totalShots}</td>
-                      <td className="p-2 text-right">{session.totalScore}</td>
-                      <td className="p-2 text-right font-medium">
-                        {session.averageScore.toFixed(2)}
-                      </td>
-                      <td className="p-2 text-right">{session.sheetCount}</td>
-                    </tr>
-                  ))}
+                  {sessions.map((session, index) => {
+                    const previousSession = index < sessions.length - 1 ? sessions[index + 1] : null;
+                    const improvement = calculateImprovement(
+                      session.averageScore,
+                      previousSession?.averageScore ?? null
+                    );
+                    const improvementDisplay = getImprovementDisplay(improvement);
+
+                    return (
+                      <tr key={session.sessionId} className="border-b hover:bg-accent">
+                        <td className="p-2">{format(new Date(session.date), "MMM d, yyyy")}</td>
+                        <td className="p-2 text-muted-foreground">{session.location || "-"}</td>
+                        <td className="p-2 text-right">{session.totalShots}</td>
+                        <td className="p-2 text-right">{session.totalScore}</td>
+                        <td className="p-2 text-right font-medium">
+                          {session.averageScore.toFixed(2)}
+                        </td>
+                        <td className="p-2 text-right">
+                          <div className={`flex items-center justify-end gap-1 font-medium ${improvementDisplay.color}`}>
+                            {improvementDisplay.icon}
+                            <span className="text-sm">{improvementDisplay.text}</span>
+                          </div>
+                        </td>
+                        <td className="p-2 text-right">{session.sheetCount}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

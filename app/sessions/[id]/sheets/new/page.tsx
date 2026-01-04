@@ -44,7 +44,7 @@ export default function NewSheetPage() {
         fetch("/api/calibers"),
       ]);
 
-      let firearmsData: { _id: string; name: string }[] = [];
+      let firearmsData: { _id: string; name: string; caliberIds?: string[]; opticIds?: string[] }[] = [];
       let opticsData: { _id: string; name: string }[] = [];
       let calibersData: { _id: string; name: string }[] = [];
 
@@ -55,26 +55,14 @@ export default function NewSheetPage() {
       if (opticsRes.ok) {
         opticsData = await opticsRes.json();
         setAllOptics(opticsData);
-        setOptics(opticsData);
       }
       if (calibersRes.ok) {
         calibersData = await calibersRes.json();
         setAllCalibers(calibersData);
-        setCalibers(calibersData);
       }
 
-      // Set defaults to first option if available
-      setFormData((prev) => ({
-        ...prev,
-        firearmId: firearmsData.length > 0 ? firearmsData[0]._id : "",
-        opticId: opticsData.length > 0 ? opticsData[0]._id : "",
-        caliberId: calibersData.length > 0 ? calibersData[0]._id : "",
-      }));
-
-      // Filter optics and calibers based on first firearm
-      if (firearmsData.length > 0) {
-        filterByFirearm(firearmsData[0]._id, firearmsData, opticsData, calibersData);
-      }
+      // Don't auto-select - let user choose firearm first
+      // This will trigger filterByFirearm when they select
     } catch (error) {
       toast.error("Failed to load reference data");
     } finally {
@@ -104,7 +92,7 @@ export default function NewSheetPage() {
       if (res.ok) {
         const sheet = await res.json();
         toast.success("Sheet created");
-        router.push(`/sheets/${sheet._id}`);
+        router.push(`/sheets/${sheet.slug || sheet._id}`);
       } else {
         toast.error("Failed to create sheet");
       }
@@ -158,7 +146,7 @@ export default function NewSheetPage() {
     return <div>Loading...</div>;
   }
 
-  if (firearms.length === 0 || optics.length === 0 || calibers.length === 0) {
+  if (firearms.length === 0 || allOptics.length === 0 || allCalibers.length === 0) {
     return (
       <div>
         <Button
@@ -211,94 +199,98 @@ export default function NewSheetPage() {
               required
             />
 
-            <TagSelector
-              items={calibers}
-              selectedId={formData.caliberId}
-              onSelect={(id) => setFormData({ ...formData, caliberId: id })}
-              label="Caliber"
-              required
-            />
-
-            <TagSelector
-              items={optics}
-              selectedId={formData.opticId}
-              onSelect={(id) => setFormData({ ...formData, opticId: id })}
-              label="Optic"
-              required
-            />
-
-            <div>
-              <Label htmlFor="distance" className="flex items-center gap-2">
-                <Ruler className="h-4 w-4" />
-                Distance (yards) *
-              </Label>
-              <div className="flex items-center gap-2 mt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => adjustDistance(-5)}
-                  className="h-12 w-12"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <Input
-                  id="distance"
-                  type="number"
-                  value={formData.distanceYards}
-                  onChange={(e) => setFormData({ ...formData, distanceYards: e.target.value })}
+            {formData.firearmId && (
+              <>
+                <TagSelector
+                  items={calibers}
+                  selectedId={formData.caliberId}
+                  onSelect={(id) => setFormData({ ...formData, caliberId: id })}
+                  label="Caliber"
                   required
-                  min="1"
-                  className="text-center text-lg font-semibold h-12"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => adjustDistance(5)}
-                  className="h-12 w-12"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
 
-            <div>
-              <Label htmlFor="sheetLabel" className="flex items-center gap-2">
-                <TagIcon className="h-4 w-4" />
-                Sheet Label
-              </Label>
-              <Input
-                id="sheetLabel"
-                value={formData.sheetLabel}
-                onChange={(e) => setFormData({ ...formData, sheetLabel: e.target.value })}
-                placeholder="e.g., Zeroing, Group Practice"
-              />
-            </div>
+                <TagSelector
+                  items={optics}
+                  selectedId={formData.opticId}
+                  onSelect={(id) => setFormData({ ...formData, opticId: id })}
+                  label="Optic"
+                  required
+                />
 
-            <div>
-              <Label htmlFor="notes" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Notes
-              </Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Additional notes about this sheet..."
-                rows={3}
-              />
-            </div>
+                <div>
+                  <Label htmlFor="distance" className="flex items-center gap-2">
+                    <Ruler className="h-4 w-4" />
+                    Distance (yards) *
+                  </Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => adjustDistance(-5)}
+                      className="h-12 w-12"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      id="distance"
+                      type="number"
+                      value={formData.distanceYards}
+                      onChange={(e) => setFormData({ ...formData, distanceYards: e.target.value })}
+                      required
+                      min="1"
+                      className="text-center text-lg font-semibold h-12"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => adjustDistance(5)}
+                      className="h-12 w-12"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
 
-            <div className="flex gap-2 justify-end">
-              <Button type="button" variant="outline" onClick={() => router.back()}>
-                Cancel
-              </Button>
-              <Button type="submit">Create Sheet</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+                <div>
+                  <Label htmlFor="sheetLabel" className="flex items-center gap-2">
+                    <TagIcon className="h-4 w-4" />
+                    Sheet Label
+                  </Label>
+                  <Input
+                    id="sheetLabel"
+                    value={formData.sheetLabel}
+                    onChange={(e) => setFormData({ ...formData, sheetLabel: e.target.value })}
+                    placeholder="e.g., Zeroing, Group Practice"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="notes" className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Notes
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Additional notes about this sheet..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={() => router.back()}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Create Sheet</Button>
+                </div>
+              </>
+            )}
+            </form>
+          </CardContent>
+        </Card>
     </div>
   );
 }
