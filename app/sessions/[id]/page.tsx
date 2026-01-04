@@ -93,14 +93,29 @@ export default function SessionDetailPage() {
     }
   };
 
-  const openEditDialog = () => {
+  const openEditDialog = async () => {
     if (session) {
-      setFormData({
-        date: format(new Date(session.date), "yyyy-MM-dd"),
-        location: session.location || "",
-        notes: session.notes || "",
-      });
-      setEditDialogOpen(true);
+      // Fetch fresh session data before opening dialog
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setFormData({
+            date: format(new Date(data.session.date), "yyyy-MM-dd"),
+            location: data.session.location || "",
+            notes: data.session.notes || "",
+          });
+          setEditDialogOpen(true);
+        }
+      } catch (error) {
+        // Fallback to current state if fetch fails
+        setFormData({
+          date: format(new Date(session.date), "yyyy-MM-dd"),
+          location: session.location || "",
+          notes: session.notes || "",
+        });
+        setEditDialogOpen(true);
+      }
     }
   };
 
