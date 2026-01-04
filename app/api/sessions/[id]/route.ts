@@ -32,7 +32,38 @@ export async function GET(
       .populate("opticId")
       .sort({ createdAt: 1 });
 
-    return NextResponse.json({ session, sheets });
+    // Get bull records for each sheet
+    const sheetsWithBulls = await Promise.all(
+      sheets.map(async (sheet) => {
+        const bulls = await BullRecord.find({ targetSheetId: sheet._id }).sort({ bullIndex: 1 });
+        const bullsWithMetrics = bulls.map((bull) => {
+          const totalShots =
+            bull.score5Count +
+            bull.score4Count +
+            bull.score3Count +
+            bull.score2Count +
+            bull.score1Count +
+            bull.score0Count;
+          const totalScore =
+            bull.score5Count * 5 +
+            bull.score4Count * 4 +
+            bull.score3Count * 3 +
+            bull.score2Count * 2 +
+            bull.score1Count * 1;
+          return {
+            ...bull.toObject(),
+            totalShots,
+            totalScore,
+          };
+        });
+        return {
+          ...sheet.toObject(),
+          bulls: bullsWithMetrics,
+        };
+      })
+    );
+
+    return NextResponse.json({ session, sheets: sheetsWithBulls });
   } catch (error) {
     console.error("Error fetching session:", error);
     return NextResponse.json({ error: "Failed to fetch session" }, { status: 500 });

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon } from "lucide-react";
+import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,31 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { toast } from "sonner";
-import { calculateSheetMetrics } from "@/lib/metrics";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+
+interface BullRecord {
+  _id: string;
+  bullIndex: number;
+  score5Count: number;
+  score4Count: number;
+  score3Count: number;
+  score2Count: number;
+  score1Count: number;
+  score0Count: number;
+  totalShots: number;
+  totalScore: number;
+}
 
 interface RangeSession {
   _id: string;
@@ -36,6 +60,7 @@ interface Sheet {
   distanceYards: number;
   sheetLabel?: string;
   notes?: string;
+  bulls: BullRecord[];
 }
 
 export default function SessionDetailPage() {
@@ -164,6 +189,19 @@ export default function SessionDetailPage() {
     return null;
   }
 
+  // Data for sheet averages graph (top of page)
+  const sheetAveragesData = sheets.map((sheet, index) => {
+    const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
+    const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
+    const avgScore = totalShots > 0 ? parseFloat((totalScore / totalShots).toFixed(2)) : 0;
+
+    return {
+      name: sheet.sheetLabel || `Sheet ${index + 1}`,
+      avgScore,
+      totalShots,
+    };
+  });
+
   return (
     <div>
       <div className="mb-6">
@@ -198,6 +236,44 @@ export default function SessionDetailPage() {
         )}
       </div>
 
+      {/* Sheet Averages Graph */}
+      {sheets.length > 0 && sheetAveragesData.some((s) => s.totalShots > 0) && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Average Score per Sheet
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={sheetAveragesData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="name" stroke="#888" />
+                <YAxis domain={[0, 5]} stroke="#888" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1a1a",
+                    border: "1px solid #333",
+                    borderRadius: "6px",
+                  }}
+                  labelStyle={{ color: "#fff" }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="avgScore"
+                  stroke="#8b5cf6"
+                  strokeWidth={2}
+                  name="Avg Score"
+                  dot={{ fill: "#8b5cf6", r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold">Target Sheets</h2>
         <Button onClick={() => router.push(`/sessions/${sessionId}/sheets/new`)}>
@@ -215,34 +291,96 @@ export default function SessionDetailPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {sheets.map((sheet) => (
-            <Card
-              key={sheet._id}
-              className="cursor-pointer hover:bg-accent transition-colors"
-              onClick={() => router.push(`/sheets/${sheet._id}`)}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TargetIcon className="h-5 w-5" />
-                  {sheet.sheetLabel || "Target Sheet"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-1 text-sm">
-                  <p><strong>Firearm:</strong> {sheet.firearmId.name}</p>
-                  <p><strong>Caliber:</strong> {sheet.caliberId.name}</p>
-                  <p><strong>Optic:</strong> {sheet.opticId.name}</p>
-                  <p><strong>Distance:</strong> {sheet.distanceYards} yards</p>
-                </div>
-                {sheet.notes && (
-                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                    {sheet.notes}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
+          {sheets.map((sheet, index) => {
+            const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
+            const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
+            const avgScore = totalShots > 0 ? (totalScore / totalShots).toFixed(2) : "0.00";
+
+            // Data for per-sheet bull scores graph
+            const bullChartData =
+              sheet.bulls?.map((bull) => ({
+                name: `Bull ${bull.bullIndex}`,
+                avgScore:
+                  bull.totalShots > 0 ? parseFloat((bull.totalScore / bull.totalShots).toFixed(2)) : 0,
+                totalShots: bull.totalShots,
+                totalScore: bull.totalScore,
+              })) || [];
+
+            return (
+              <Card key={sheet._id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="text-lg">{sheet.sheetLabel || `Sheet ${index + 1}`}</span>
+                  </CardTitle>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p>
+                      <strong>Firearm:</strong> {sheet.firearmId?.name || "Unknown"}
+                    </p>
+                    <p>
+                      <strong>Caliber:</strong> {sheet.caliberId?.name || "Unknown"}
+                    </p>
+                    <p>
+                      <strong>Optic:</strong> {sheet.opticId?.name || "Unknown"}
+                    </p>
+                    <p>
+                      <strong>Distance:</strong> {sheet.distanceYards} yards
+                    </p>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <p className="text-sm">
+                        <strong>Total Shots:</strong> {totalShots}
+                      </p>
+                      <p className="text-sm">
+                        <strong>Total Score:</strong> {totalScore}
+                      </p>
+                      <p className="text-sm">
+                        <strong>Average Score/Shot:</strong> {avgScore}
+                      </p>
+                    </div>
+
+                    {bullChartData.length > 0 && bullChartData.some((b) => b.totalShots > 0) && (
+                      <div className="pt-2">
+                        <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4" />
+                          Scores by Bull
+                        </h4>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart data={bullChartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                            <XAxis dataKey="name" stroke="#888" />
+                            <YAxis domain={[0, 5]} stroke="#888" />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: "#1a1a1a",
+                                border: "1px solid #333",
+                                borderRadius: "6px",
+                              }}
+                              labelStyle={{ color: "#fff" }}
+                            />
+                            <Bar dataKey="avgScore" fill="#8b5cf6" name="Avg Score" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => router.push(`/sheets/${sheet._id}`)}
+                    >
+                      <TargetIcon className="h-4 w-4 mr-2" />
+                      View Details
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -302,4 +440,3 @@ export default function SessionDetailPage() {
     </div>
   );
 }
-
