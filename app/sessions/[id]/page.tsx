@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { BullseyeVisualization } from "@/components/BullseyeVisualization";
+import { SingleBullVisualization } from "@/components/SingleBullVisualization";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -352,9 +353,13 @@ export default function SessionDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {/* Bullseye Visualization */}
+                    {/* Individual Bull Visualizations */}
                     {sheet.bulls && sheet.bulls.length > 0 && (
-                      <BullseyeVisualization bulls={sheet.bulls} />
+                      <div className="grid grid-cols-3 gap-3">
+                        {sheet.bulls.slice(0, 6).map((bull) => (
+                          <SingleBullVisualization key={bull.bullIndex} bull={bull} size={100} />
+                        ))}
+                      </div>
                     )}
 
                     <div className="grid grid-cols-2 gap-4 text-sm">
