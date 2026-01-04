@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Target, TrendingUp } from "lucide-react";
 
 interface SingleBullVisualizationProps {
@@ -23,6 +23,8 @@ interface Shot {
 }
 
 export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualizationProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   // Generate random shot positions within each ring
   const shots = useMemo(() => {
     const allShots: Shot[] = [];
@@ -80,9 +82,14 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
   const avgScore = totalShots > 0 ? (totalScore / totalShots).toFixed(2) : "0.00";
 
   return (
-    <div className="text-center group cursor-pointer relative">
+    <div 
+      className="text-center group cursor-pointer relative"
+      onClick={() => setIsExpanded(!isExpanded)}
+    >
       <div 
-        className="relative mx-auto transition-all duration-300 ease-in-out group-hover:scale-200 group-hover:z-50" 
+        className={`relative mx-auto transition-all duration-300 ease-in-out ${
+          isExpanded ? 'scale-200 z-50' : 'group-hover:scale-200 group-hover:z-50'
+        }`}
         style={{ width: size, height: size }}
       >
         <svg viewBox="0 0 200 200" className="w-full h-full">
@@ -126,8 +133,10 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
         </svg>
       </div>
       
-      {/* Tooltip - shows on hover */}
-      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
+      {/* Tooltip - shows on hover (desktop) or click (mobile) */}
+      <div className={`absolute left-1/2 -translate-x-1/2 top-full mt-2 transition-opacity duration-300 pointer-events-none z-50 ${
+        isExpanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      }`}>
         <div className="bg-black/90 backdrop-blur-sm border border-white/10 rounded-lg p-3 shadow-xl min-w-[180px]">
           {/* Average Score at top */}
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
@@ -169,11 +178,15 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground mt-1 transition-opacity duration-300 group-hover:opacity-0">
+      <p className={`text-xs text-muted-foreground mt-1 transition-opacity duration-300 ${
+        isExpanded ? 'opacity-0' : 'group-hover:opacity-0'
+      }`}>
         Bull {bull.bullIndex}
       </p>
       {totalShots > 0 && (
-        <p className="text-xs font-medium transition-opacity duration-300 group-hover:opacity-0">
+        <p className={`text-xs font-medium transition-opacity duration-300 ${
+          isExpanded ? 'opacity-0' : 'group-hover:opacity-0'
+        }`}>
           {totalShots} shots
         </p>
       )}
