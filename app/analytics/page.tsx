@@ -35,8 +35,8 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
-    dateStart: format(subMonths(new Date(), 3), "yyyy-MM-dd"),
-    dateEnd: format(new Date(), "yyyy-MM-dd"),
+    dateStart: "",
+    dateEnd: "",
     firearmIds: [] as string[],
     caliberIds: [] as string[],
     distanceMin: "",

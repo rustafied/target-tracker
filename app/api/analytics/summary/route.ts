@@ -52,34 +52,36 @@ export async function GET(request: Request) {
     const bulls = await BullRecord.find({ targetSheetId: { $in: sheetIds } });
 
     // Calculate metrics per session
-    const sessionMetrics = sessions.map((session) => {
-      const sessionSheets = sheets.filter(
-        (s: any) => s.rangeSessionId._id.toString() === session._id.toString()
-      );
+    const sessionMetrics = sessions
+      .map((session) => {
+        const sessionSheets = sheets.filter(
+          (s: any) => s.rangeSessionId._id.toString() === session._id.toString()
+        );
 
-      const sessionBulls = bulls.filter((b) =>
-        sessionSheets.some((s) => s._id.toString() === b.targetSheetId.toString())
-      );
+        const sessionBulls = bulls.filter((b) =>
+          sessionSheets.some((s) => s._id.toString() === b.targetSheetId.toString())
+        );
 
-      let totalShots = 0;
-      let totalScore = 0;
+        let totalShots = 0;
+        let totalScore = 0;
 
-      sessionBulls.forEach((bull) => {
-        const metrics = calculateBullMetrics(bull);
-        totalShots += metrics.totalShots;
-        totalScore += metrics.totalScore;
-      });
+        sessionBulls.forEach((bull) => {
+          const metrics = calculateBullMetrics(bull);
+          totalShots += metrics.totalShots;
+          totalScore += metrics.totalScore;
+        });
 
-      return {
-        sessionId: session._id,
-        date: session.date,
-        location: session.location,
-        totalShots,
-        totalScore,
-        averageScore: totalShots > 0 ? totalScore / totalShots : 0,
-        sheetCount: sessionSheets.length,
-      };
-    });
+        return {
+          sessionId: session._id,
+          date: session.date,
+          location: session.location,
+          totalShots,
+          totalScore,
+          averageScore: totalShots > 0 ? totalScore / totalShots : 0,
+          sheetCount: sessionSheets.length,
+        };
+      })
+      .filter((metric) => metric.sheetCount > 0); // Only include sessions with matching sheets
 
     // Overall stats
     const totalShots = sessionMetrics.reduce((sum, m) => sum + m.totalShots, 0);
@@ -88,7 +90,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       sessions: sessionMetrics,
       summary: {
-        totalSessions: sessions.length,
+        totalSessions: sessionMetrics.length, // Count only sessions with data
         totalShots,
         totalScore,
         averageScore: totalShots > 0 ? totalScore / totalShots : 0,
