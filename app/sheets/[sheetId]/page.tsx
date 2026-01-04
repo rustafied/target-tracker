@@ -45,8 +45,25 @@ export default function SheetDetailPage() {
   useEffect(() => {
     if (sheetId) {
       fetchSheet();
+      fetchReferenceData();
     }
   }, [sheetId]);
+
+  const fetchReferenceData = async () => {
+    try {
+      const [firearmsRes, opticsRes, calibersRes] = await Promise.all([
+        fetch("/api/firearms"),
+        fetch("/api/optics"),
+        fetch("/api/calibers"),
+      ]);
+
+      if (firearmsRes.ok) setFirearms(await firearmsRes.json());
+      if (opticsRes.ok) setAllOptics(await opticsRes.json());
+      if (calibersRes.ok) setAllCalibers(await calibersRes.json());
+    } catch (error) {
+      // Silent fail
+    }
+  };
 
   const fetchSheet = async () => {
     try {
