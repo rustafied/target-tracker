@@ -7,6 +7,7 @@ export interface IOptic {
   magnification?: string;
   notes?: string;
   isActive: boolean;
+  sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,6 +19,7 @@ const OpticSchema = new Schema<IOptic>(
     magnification: { type: String },
     notes: { type: String },
     isActive: { type: Boolean, default: true },
+    sortOrder: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

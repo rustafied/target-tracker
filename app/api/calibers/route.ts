@@ -6,7 +6,7 @@ import { caliberSchema } from "@/lib/validators/caliber";
 export async function GET() {
   try {
     await connectToDatabase();
-    const calibers = await Caliber.find({ isActive: true }).sort({ createdAt: -1 });
+    const calibers = await Caliber.find({ isActive: true }).sort({ sortOrder: 1, createdAt: -1 });
     return NextResponse.json(calibers);
   } catch (error) {
     console.error("Error fetching calibers:", error);

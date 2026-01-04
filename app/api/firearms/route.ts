@@ -6,7 +6,7 @@ import { firearmSchema } from "@/lib/validators/firearm";
 export async function GET() {
   try {
     await connectToDatabase();
-    const firearms = await Firearm.find({ isActive: true }).sort({ createdAt: -1 });
+    const firearms = await Firearm.find({ isActive: true }).sort({ sortOrder: 1, createdAt: -1 });
     return NextResponse.json(firearms);
   } catch (error) {
     console.error("Error fetching firearms:", error);

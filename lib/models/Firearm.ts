@@ -8,6 +8,7 @@ export interface IFirearm {
   defaultCaliberId?: mongoose.Types.ObjectId;
   notes?: string;
   isActive: boolean;
+  sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,6 +21,7 @@ const FirearmSchema = new Schema<IFirearm>(
     defaultCaliberId: { type: Schema.Types.ObjectId, ref: "Caliber" },
     notes: { type: String },
     isActive: { type: Boolean, default: true },
+    sortOrder: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

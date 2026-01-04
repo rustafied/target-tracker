@@ -6,7 +6,7 @@ import { opticSchema } from "@/lib/validators/optic";
 export async function GET() {
   try {
     await connectToDatabase();
-    const optics = await Optic.find({ isActive: true }).sort({ createdAt: -1 });
+    const optics = await Optic.find({ isActive: true }).sort({ sortOrder: 1, createdAt: -1 });
     return NextResponse.json(optics);
   } catch (error) {
     console.error("Error fetching optics:", error);
