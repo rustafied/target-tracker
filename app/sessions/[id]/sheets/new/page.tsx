@@ -42,9 +42,30 @@ export default function NewSheetPage() {
         fetch("/api/calibers"),
       ]);
 
-      if (firearmsRes.ok) setFirearms(await firearmsRes.json());
-      if (opticsRes.ok) setOptics(await opticsRes.json());
-      if (calibersRes.ok) setCalibers(await calibersRes.json());
+      let firearmsData: { _id: string; name: string }[] = [];
+      let opticsData: { _id: string; name: string }[] = [];
+      let calibersData: { _id: string; name: string }[] = [];
+
+      if (firearmsRes.ok) {
+        firearmsData = await firearmsRes.json();
+        setFirearms(firearmsData);
+      }
+      if (opticsRes.ok) {
+        opticsData = await opticsRes.json();
+        setOptics(opticsData);
+      }
+      if (calibersRes.ok) {
+        calibersData = await calibersRes.json();
+        setCalibers(calibersData);
+      }
+
+      // Set defaults to first option if available
+      setFormData((prev) => ({
+        ...prev,
+        firearmId: firearmsData.length > 0 ? firearmsData[0]._id : "",
+        opticId: opticsData.length > 0 ? opticsData[0]._id : "",
+        caliberId: calibersData.length > 0 ? calibersData[0]._id : "",
+      }));
     } catch (error) {
       toast.error("Failed to load reference data");
     } finally {
