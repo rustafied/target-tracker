@@ -104,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Toaster />
       
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border supports-[backdrop-filter]:bg-card/80">
         <div className="flex items-center justify-between p-4">
           <Link href="/sessions" className="flex items-center gap-2">
             <Target className="h-6 w-6" />
