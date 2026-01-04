@@ -6,17 +6,22 @@ A Next.js application for logging and visualizing shooting range sessions with p
 
 - 📊 **Detailed Scoring** - 5-4-3-2-1-0 system per bull (up to 6 bulls per sheet)
 - 🎯 **Comprehensive Tracking** - Associate each sheet with firearm, caliber, optic, and distance
-- 📈 **Analytics & Visualizations** - Trend graphs, per-sheet charts, and bullseye visualizations
+- 📈 **Analytics & Visualizations** - Trend graphs, per-sheet charts, bullseye visualizations, and session heatmaps
+- 📸 **OCR for Range Notes** - Upload photos of handwritten range notes to automatically create sheets with scores
 - 🔫 **Equipment Management** - CRUD for firearms, optics, and calibers with drag-drop ordering
+- 🔗 **Equipment Relationships** - Firearms can be linked to specific compatible calibers and optics
+- 📊 **Performance Tracking** - Session-over-session improvement percentages with color-coded indicators
+- 🔗 **SEO-Friendly URLs** - Descriptive slugs for sessions and sheets (e.g., `2026-01-04-reloaderz`, `2026-01-04-ddm4-5-56-nato-20yd`)
 - 📱 **Mobile-First Design** - Dark theme, optimized for quick data entry
-- 💾 **Local MongoDB Storage** - All data stored locally
+- ☁️ **Cloud Database** - MongoDB Atlas for reliable data storage
+- 🚀 **Production Deployment** - Deployed on Vercel with automatic GitHub integration
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- MongoDB running locally on port 27017
+- MongoDB Atlas account (free tier) OR local MongoDB on port 27017
 
 ### Installation
 
@@ -34,7 +39,11 @@ npm install
 3. Set up environment variables:
 ```bash
 # .env.local
-MONGODB_URI=mongodb://localhost:27017/target-tracker
+# For local development with MongoDB Atlas:
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/target-tracker?retryWrites=true&w=majority
+
+# OR for local MongoDB:
+# MONGODB_URI=mongodb://localhost:27017/target-tracker
 ```
 
 4. (Optional) Seed sample data:
@@ -48,6 +57,61 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser.
+
+## Deployment
+
+### Production Deployment (Vercel)
+
+The app is deployed on Vercel with automatic GitHub integration.
+
+**Live URL**: https://target-tracker-rho.vercel.app
+
+#### Deploy Your Own
+
+1. Install Vercel CLI:
+```bash
+npm install -g vercel
+```
+
+2. Login to Vercel:
+```bash
+vercel login
+```
+
+3. Link your project:
+```bash
+vercel link
+```
+
+4. Set environment variables:
+```bash
+vercel env add MONGODB_URI production
+vercel env add MONGODB_URI preview
+vercel env add MONGODB_URI development
+```
+
+5. Deploy:
+```bash
+vercel --prod
+```
+
+#### Automatic Deployments
+
+- Push to `main` branch → Production deployment
+- Push to other branches → Preview deployment
+- All deployments trigger automatic builds and tests
+
+#### Database Migration
+
+To migrate local data to Atlas:
+
+```bash
+# Export from local
+mongodump --uri="mongodb://localhost:27017/target-tracker" --out=./backup
+
+# Import to Atlas
+mongorestore --uri="your-atlas-connection-string" --drop ./backup/target-tracker
+```
 
 ## Project Structure
 
@@ -84,15 +148,20 @@ Comprehensive project documentation is available in the `/readme` folder:
 - [API & Backend](./readme/04-api-backend.md) - Routes and MongoDB setup
 - [Implementation Plan](./readme/05-implementation-plan.md) - Build sequence
 - [Future Features](./readme/06-future-features.md) - Planned expansions
+- [OCR Feature](./readme/07-ocr-feature.md) - Range notes OCR implementation
+- [Session URL Slugs](./readme/08-session-url-slugs.md) - Descriptive URL slugs
+- [Deployment Guide](./readme/10-deployment-guide.md) - Vercel & MongoDB Atlas setup
 
 ## Tech Stack
 
 - **Framework**: Next.js 16.1 (App Router, TypeScript)
 - **Styling**: Tailwind CSS 4 + shadcn/ui
-- **Database**: MongoDB + Mongoose
+- **Database**: MongoDB Atlas + Mongoose
+- **Deployment**: Vercel (with automatic GitHub integration)
 - **Forms**: React Hook Form + Zod
 - **Charts**: Recharts
 - **Icons**: Lucide React
+- **OCR**: Tesseract.js
 
 ## Current Implementation Status
 
@@ -100,8 +169,14 @@ Comprehensive project documentation is available in the `/readme` folder:
 
 - **Setup Pages**: Full CRUD for firearms, optics, and calibers with drag-drop reordering
 - **Firearm-Equipment Relationships**: Firearms can have multiple compatible calibers and optics
+  - Sheet creation form dynamically filters calibers and optics based on selected firearm
+  - Progressive form reveal - firearm selection first, then compatible options appear
 - **Range Sessions**: Create, edit, view, and delete sessions with location autocomplete
+  - Default location set to "Reloaderz"
+  - SEO-friendly URL slugs with date and location (e.g., `2026-01-04-reloaderz`)
 - **Target Sheets**: Add sheets to sessions with filtered equipment selection
+  - Descriptive URL slugs (e.g., `2026-01-04-ddm4-5-56-nato-20yd`)
+  - OCR upload option for creating sheets from range note photos
 - **Bull Scoring**: Button-based count entry (0-10) for each score level (5-4-3-2-1-0)
 - **Session Visualizations**:
   - Line chart showing average score progression across sheets
@@ -109,8 +184,16 @@ Comprehensive project documentation is available in the `/readme` folder:
   - Individual bullseye visualizations (6 per sheet) with randomized shot placement
   - Aggregate heatmap visualization for all shots in a session
   - Hover tooltips on bullseyes showing score breakdown
-- **Analytics**: Collapsible filters (date, firearm, caliber, distance) with trend graphs
+- **Analytics**: 
+  - Collapsible filters (date, firearm, caliber, distance) with trend graphs
+  - Session-over-session improvement tracking with color-coded percentages (green for improvement, red for decline)
+  - Overall trend calculation comparing performance periods
 - **Edit Capabilities**: Edit sessions, sheets, and bull scores
+- **OCR Range Notes**: 
+  - Upload or paste images of handwritten range notes
+  - Automatic parsing of distance and bull scores
+  - Manual review/edit interface before creating sheets
+  - Image preprocessing for better digit recognition
 
 ### 🎨 Visual Features
 
@@ -122,12 +205,38 @@ Comprehensive project documentation is available in the `/readme` folder:
 ### 📦 Database
 
 All collections include:
-- Firearms with `compatibleCaliberIds` and `compatibleOpticIds` arrays
-- Optics with `sortOrder` for custom ordering
-- Calibers with `sortOrder` for custom ordering
-- Range sessions with location and date
-- Target sheets linked to sessions and equipment
-- Bull records with aggregated score counts (0-10 per score level)
+- **Firearms** with `caliberIds` and `opticIds` arrays for equipment compatibility
+- **Optics** with `sortOrder` for custom ordering
+- **Calibers** with `sortOrder` for custom ordering
+- **Range Sessions** with `slug`, location, date, and notes
+- **Target Sheets** with `slug`, linked to sessions and equipment (firearm, caliber, optic, distance)
+- **Bull Records** with aggregated score counts (0-10 per score level)
+
+### 🔄 Recent Updates
+
+#### URL Slugs (January 2026)
+- **Sessions**: Now use descriptive slugs with date and location (`2026-01-04-reloaderz`)
+- **Sheets**: Descriptive slugs with date, firearm, caliber, and distance (`2026-01-04-ddm4-5-56-nato-20yd`)
+- All APIs support both slug and ID lookups for backward compatibility
+- Migration scripts available in `/scripts` for updating existing data
+
+#### OCR Feature (January 2026)
+- Client-side OCR using Tesseract.js for handwritten range notes
+- Image preprocessing (grayscale + contrast) for better digit recognition
+- Automatic parsing of bull scores and distance information
+- Manual review interface with editable table before sheet creation
+- "Upload Range Notes" button on session detail page
+
+#### Analytics Improvements (January 2026)
+- Session-over-session improvement percentages in analytics table
+- Color-coded indicators (green ↑ for improvement, red ↓ for decline)
+- Overall trend calculation displayed on average score card
+
+#### UI/UX Enhancements (January 2026)
+- Progressive form reveal on sheet creation (select firearm first, then see filtered options)
+- Fixed autocomplete background styling for proper theme support
+- Default location set to "Reloaderz" on session creation
+- Improved form validation and user feedback
 
 ## Future Enhancements
 

@@ -22,7 +22,7 @@ const RangeSessionSchema = new Schema<IRangeSession>(
 );
 
 // Generate slug before saving
-RangeSessionSchema.pre('save', async function(next) {
+RangeSessionSchema.pre('save', async function(next: any) {
   if (this.isNew || this.isModified('date') || this.isModified('location')) {
     const dateStr = format(this.date, 'yyyy-MM-dd');
     

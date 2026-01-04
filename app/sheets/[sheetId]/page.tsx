@@ -244,7 +244,9 @@ export default function SheetDetailPage() {
 
       if (res.ok) {
         toast.success("Scores saved");
-        router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`);
+        if (sheet) {
+          router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`);
+        }
       } else {
         toast.error("Failed to save scores");
       }
@@ -264,12 +266,12 @@ export default function SheetDetailPage() {
   }
 
   const totalShots = bulls.reduce((sum, bull) => {
-    const metrics = calculateBullMetrics(bull);
+    const metrics = calculateBullMetrics(bull as any);
     return sum + metrics.totalShots;
   }, 0);
 
   const totalScore = bulls.reduce((sum, bull) => {
-    const metrics = calculateBullMetrics(bull);
+    const metrics = calculateBullMetrics(bull as any);
     return sum + metrics.totalScore;
   }, 0);
 
@@ -278,7 +280,7 @@ export default function SheetDetailPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <Button variant="ghost" onClick={() => router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`)}>
+        <Button variant="ghost" onClick={() => sheet && router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`)}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Session
         </Button>
@@ -365,7 +367,7 @@ export default function SheetDetailPage() {
 
       <div className="space-y-4">
         {bulls.map((bull, index) => {
-          const metrics = calculateBullMetrics(bull);
+          const metrics = calculateBullMetrics(bull as any);
           return (
             <Card key={bull._id}>
               <CardHeader>

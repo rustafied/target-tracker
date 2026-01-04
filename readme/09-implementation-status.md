@@ -2,6 +2,8 @@
 
 Current state of the Target Tracker application as of January 2026.
 
+**Production URL**: https://target-tracker-rho.vercel.app
+
 ---
 
 ## ✅ Completed Features
@@ -197,10 +199,13 @@ Not stored in database, calculated on-the-fly:
 - **React Hook Form** - Form state management
 - **Zod** - Schema validation (forms and API)
 - **Mongoose** - MongoDB ODM
+- **MongoDB Atlas** - Cloud database (M0 free tier)
+- **Vercel** - Production deployment with GitHub integration
 - **Recharts** - Charting library
 - **@dnd-kit** - Drag-and-drop functionality
 - **Lucide React** - Icon library
 - **date-fns** - Date formatting
+- **Tesseract.js** - OCR for range notes
 
 ### Notable Components
 
@@ -320,10 +325,20 @@ See [Future Features](./06-future-features.md) for detailed plans:
 
 ## 📝 Development Notes
 
+### Production Deployment
+- **Hosting**: Vercel (https://target-tracker-rho.vercel.app)
+- **Database**: MongoDB Atlas M0 (free tier)
+- **Auto-Deploy**: Push to `main` branch triggers production deployment
+- **Preview Deploys**: Feature branches get preview URLs
+- See [Deployment Guide](./10-deployment-guide.md) for full setup
+
 ### Running Locally
 ```bash
-# Start MongoDB (if using Homebrew)
+# Start MongoDB locally (if using local DB)
 brew services start mongodb-community
+
+# OR use MongoDB Atlas (recommended)
+# Set MONGODB_URI in .env.local to Atlas connection string
 
 # Install dependencies
 npm install
@@ -340,7 +355,18 @@ node seed.mjs
 ### Environment Variables
 `.env.local`:
 ```
+# Production (MongoDB Atlas)
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/target-tracker?retryWrites=true&w=majority
+
+# OR Local development
 MONGODB_URI=mongodb://localhost:27017/target-tracker
+```
+
+### Database Migration
+To migrate local data to Atlas:
+```bash
+mongodump --uri="mongodb://localhost:27017/target-tracker" --out=./backup
+mongorestore --uri="mongodb+srv://user:pass@cluster.mongodb.net/target-tracker" --drop ./backup/target-tracker
 ```
 
 ### Git Repository

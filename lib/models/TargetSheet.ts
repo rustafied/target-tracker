@@ -31,7 +31,7 @@ const TargetSheetSchema = new Schema<ITargetSheet>(
 );
 
 // Generate slug before saving
-TargetSheetSchema.pre('save', async function(next) {
+TargetSheetSchema.pre('save', async function(next: any) {
   if (this.isNew) {
     // We'll need to populate the references to build the slug
     const [session, firearm, caliber] = await Promise.all([

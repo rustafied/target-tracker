@@ -11,12 +11,18 @@ export async function GET() {
     const sessions = await RangeSession.find().sort({ date: -1 });
     
     // Get unique locations for autocomplete
-    const locations = await RangeSession.distinct("location", { location: { $ne: null, $ne: "" } });
+    const locations = await RangeSession.distinct("location", { 
+      location: { $exists: true, $nin: [null, ""] } 
+    });
     
     return NextResponse.json({ sessions, locations });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching sessions:", error);
-    return NextResponse.json({ error: "Failed to fetch sessions" }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Failed to fetch sessions", 
+      details: error?.message,
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined 
+    }, { status: 500 });
   }
 }
 
