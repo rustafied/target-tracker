@@ -375,8 +375,8 @@ export default function SessionDetailPage() {
                             <YAxis domain={[0, 5]} stroke="#888" />
                             <Tooltip
                               contentStyle={{
-                                backgroundColor: "#1a1a1a",
-                                border: "1px solid #333",
+                                backgroundColor: "rgba(0, 0, 0, 0.8)",
+                                border: "1px solid rgba(255, 255, 255, 0.1)",
                                 borderRadius: "6px",
                               }}
                               labelStyle={{ color: "#fff" }}
