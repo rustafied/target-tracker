@@ -107,10 +107,10 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
               key={index}
               cx={shot.x}
               cy={shot.y}
-              r="3"
+              r="4"
               fill={shot.ring === 0 ? "#ffffff" : "#ef4444"}
               stroke={shot.ring === 0 ? "#333333" : "#7f1d1d"}
-              strokeWidth="0.5"
+              strokeWidth="0.8"
               opacity="0.9"
             />
           ))}
