@@ -198,9 +198,16 @@ Comprehensive project documentation is available in the `/readme` folder:
 ### 🎨 Visual Features
 
 - **Bullseye Visualizations**: SVG-based targets with color-coded rings (red center, black, dark gray, light gray, white) and randomized shot placement
-- **Heatmap**: Density visualization using transparent dots for aggregate shot data
-- **Hover Interactions**: 2x scale animation on bullseye hover with detailed tooltip showing score grid and average
+  - Desktop: Hover to zoom 2x with detailed tooltip
+  - Mobile: Tap to expand/collapse with score breakdown
+- **Session Heatmap**: Clickable density visualization with detailed modal
+  - Large heatmap view with aggregate shot data
+  - Statistics panel: Total shots, average score, bull hit rate
+  - Score distribution with color-coded progress bars
+  - Responsive: 80% width on desktop, 99% on mobile
+- **Hover Interactions**: Smooth scale animations with detailed tooltips
 - **Dark Theme**: Optimized color scheme with subtle accents
+- **Mobile-First**: Responsive layouts optimized for touch interfaces with backdrop blur headers
 
 ### 📦 Database
 
@@ -213,6 +220,21 @@ All collections include:
 - **Bull Records** with aggregated score counts (0-10 per score level)
 
 ### 🔄 Recent Updates
+
+#### Database & Deployment (January 2026)
+- **MongoDB Atlas M2**: Upgraded to always-on cluster ($9/month) for better performance
+- **Production URL**: https://target-tracker-rho.vercel.app
+- **Auto-Deploy**: Push to main triggers automatic Vercel deployment
+- Database migration completed with 92 documents
+
+#### Mobile UX (January 2026)
+- **Touch-Friendly Bullseyes**: Click-to-toggle expansion on mobile devices
+- **Enhanced Header**: Backdrop blur prevents content bleed-through on scroll
+- **Heatmap Modal**: Full-screen interactive statistics with responsive layout
+
+#### Navigation (January 2026)
+- **Desktop Sidebar**: Setup menu expanded by default for better discoverability
+- **Favicon**: Custom bullseye target icon (white on transparent)
 
 #### URL Slugs (January 2026)
 - **Sessions**: Now use descriptive slugs with date and location (`2026-01-04-reloaderz`)

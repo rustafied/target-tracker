@@ -1,5 +1,76 @@
 # Changelog
 
+## January 4, 2026 - UI Polish & Mobile Improvements
+
+### 🎨 Visual Improvements
+
+#### Favicon Update
+- New bullseye target favicon (black and white, simple design)
+- White circle outline with center dot on transparent background
+- Matches the app's target/crosshair icon style
+
+#### Mobile Header Enhancement
+- Added backdrop blur to mobile header for better visibility
+- Semi-transparent background prevents content showing through on scroll
+- Improved z-index layering
+
+### 📱 Mobile UX Enhancements
+
+#### Interactive Bullseye Visualizations
+- Added click-to-toggle functionality for bullseye targets on mobile
+- Desktop: Hover to zoom (unchanged)
+- Mobile: Tap to expand/collapse with tooltip
+- Smooth transitions and state management
+
+#### Session Heatmap Modal
+- **Click to open**: Session heatmap now opens detailed modal on click
+- **Large visualization**: Full-size heatmap for better detail
+- **Statistics panel**: Comprehensive stats with icons
+  - Total Shots, Average Score, Total Score, Bull Hit Rate
+  - Score distribution with progress bars
+  - Color-coded rings matching target
+- **Responsive design**: 
+  - Desktop: 80% width, two-column layout
+  - Mobile: 99% width, single-column stacked layout
+- **Solid background**: Fixed transparency issues with inline styles
+- **Dark overlay**: 80% black backdrop for better focus
+
+### 🖥️ Desktop Navigation
+
+#### Sidebar Improvements
+- Setup menu now expands by default on desktop view
+- Firearms, Optics, and Calibers immediately visible
+- Mobile behavior unchanged (collapsed unless on setup page)
+- Better discoverability for new users
+
+### 🗄️ Database Updates
+
+#### MongoDB Atlas Upgrade
+- Upgraded from M0 (free) to M2 ($9/month)
+- No sleep/wake delays - always-on cluster
+- Better performance and reliability
+- Updated connection strings across all environments
+
+### 🔧 Technical Fixes
+
+#### Production Deployment
+- Fixed IP whitelist configuration for new M2 cluster
+- Updated environment variables in Vercel
+- Improved error logging in session API route
+- Resolved cold start connection issues
+
+#### Component Updates
+- `SingleBullVisualization`: Added mobile click state management
+- `SessionHeatmap`: Complete modal redesign with statistics
+- `AppShell`: Desktop-specific setup menu expansion
+- `dialog.tsx`: Darker overlay (50% → 80%) and solid backgrounds
+
+### 📝 Documentation Updates
+- Deployment guide with MongoDB Atlas setup
+- Environment variable management
+- Database migration instructions
+- Complete step-by-step Vercel CLI guide
+
 ## January 4, 2026 - Production Deployment
 
 ### 🚀 Deployment & Infrastructure
