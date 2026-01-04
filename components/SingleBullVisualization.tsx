@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Target, TrendingUp } from "lucide-react";
 
 interface SingleBullVisualizationProps {
   bull: {
@@ -73,12 +74,18 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
   const totalShots = bull.score5Count + bull.score4Count + bull.score3Count + 
                      bull.score2Count + bull.score1Count + bull.score0Count;
 
+  const totalScore = bull.score5Count * 5 + bull.score4Count * 4 + bull.score3Count * 3 +
+                     bull.score2Count * 2 + bull.score1Count * 1;
+  
+  const avgScore = totalShots > 0 ? (totalScore / totalShots).toFixed(2) : "0.00";
+
   return (
-    <div className="text-center group cursor-pointer">
+    <div className="text-center group cursor-pointer relative">
       <div 
         className="relative mx-auto transition-all duration-300 ease-in-out group-hover:scale-200 group-hover:z-50" 
         style={{ width: size, height: size }}
       >
+        <svg viewBox="0 0 200 200" className="w-full h-full">
         <svg viewBox="0 0 200 200" className="w-full h-full">
           {/* Target rings (from outside to inside) */}
           
@@ -119,6 +126,50 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
           ))}
         </svg>
       </div>
+      
+      {/* Tooltip - shows on hover */}
+      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
+        <div className="bg-black/90 backdrop-blur-sm border border-white/10 rounded-lg p-3 shadow-xl min-w-[180px]">
+          {/* Average Score at top */}
+          <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+            <div className="flex items-center gap-1.5">
+              <TrendingUp className="h-3.5 w-3.5 text-purple-400" />
+              <span className="text-xs text-gray-400">Average</span>
+            </div>
+            <span className="text-lg font-bold text-white">{avgScore}</span>
+          </div>
+
+          {/* Score breakdown grid */}
+          <div className="space-y-1.5">
+            {[
+              { score: 5, count: bull.score5Count, color: "bg-red-600", label: "5pt" },
+              { score: 4, count: bull.score4Count, color: "bg-gray-900", label: "4pt" },
+              { score: 3, count: bull.score3Count, color: "bg-gray-800", label: "3pt" },
+              { score: 2, count: bull.score2Count, color: "bg-gray-600", label: "2pt" },
+              { score: 1, count: bull.score1Count, color: "bg-gray-400", label: "1pt" },
+              { score: 0, count: bull.score0Count, color: "bg-white", label: "0pt" },
+            ].map(({ score, count, color, label }) => (
+              <div key={score} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${color} ${color === 'bg-white' ? 'border border-gray-400' : ''}`}></div>
+                  <span className="text-gray-300 font-medium">{label}</span>
+                </div>
+                <span className="text-white font-semibold tabular-nums">{count}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Total at bottom */}
+          <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/10">
+            <div className="flex items-center gap-1.5">
+              <Target className="h-3.5 w-3.5 text-gray-400" />
+              <span className="text-xs text-gray-400">Total</span>
+            </div>
+            <span className="text-sm font-bold text-white">{totalShots}</span>
+          </div>
+        </div>
+      </div>
+
       <p className="text-xs text-muted-foreground mt-1 transition-opacity duration-300 group-hover:opacity-0">
         Bull {bull.bullIndex}
       </p>
