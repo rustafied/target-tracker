@@ -5,10 +5,11 @@ import { format, subMonths } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { TagSelector } from "@/components/TagSelector";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Calendar, Target, Crosshair, TrendingUp, Filter, Ruler } from "lucide-react";
+import { Calendar, Target, Crosshair, TrendingUp, Filter, Ruler, ChevronDown, ChevronUp } from "lucide-react";
 
 interface SessionMetric {
   sessionId: string;
@@ -33,6 +34,7 @@ export default function AnalyticsPage() {
   const [sessions, setSessions] = useState<SessionMetric[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [filters, setFilters] = useState({
     dateStart: "",
@@ -172,12 +174,31 @@ export default function AnalyticsPage() {
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className="gap-2"
+            >
+              {filtersOpen ? (
+                <>
+                  Hide <ChevronUp className="h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  Show <ChevronDown className="h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        {filtersOpen && (
+          <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="dateStart" className="flex items-center gap-2">
@@ -282,6 +303,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
         </CardContent>
+        )}
       </Card>
 
       {/* Progress Chart */}
