@@ -2,19 +2,31 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Save, Copy, Target as TargetIcon, Calendar, Crosshair, Zap, Eye, Ruler, TrendingUp } from "lucide-react";
+import { ArrowLeft, Save, Copy, Target as TargetIcon, Calendar, Crosshair, Zap, Eye, Ruler, TrendingUp, Edit, Tag as TagIconLucide, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { CountButtons } from "@/components/CountButtons";
+import { TagSelector } from "@/components/TagSelector";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { calculateBullMetrics } from "@/lib/metrics";
 
 interface Sheet {
   _id: string;
-  firearmId: { name: string };
-  caliberId: { name: string };
-  opticId: { name: string };
+  firearmId: { _id: string; name: string; caliberIds?: string[]; opticIds?: string[] };
+  caliberId: { _id: string; name: string };
+  opticId: { _id: string; name: string };
   distanceYards: number;
   sheetLabel?: string;
   notes?: string;
@@ -41,6 +53,22 @@ export default function SheetDetailPage() {
   const [bulls, setBulls] = useState<BullRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  
+  const [firearms, setFirearms] = useState<{ _id: string; name: string; caliberIds?: string[]; opticIds?: string[] }[]>([]);
+  const [allOptics, setAllOptics] = useState<{ _id: string; name: string }[]>([]);
+  const [allCalibers, setAllCalibers] = useState<{ _id: string; name: string }[]>([]);
+  const [filteredOptics, setFilteredOptics] = useState<{ _id: string; name: string }[]>([]);
+  const [filteredCalibers, setFilteredCalibers] = useState<{ _id: string; name: string }[]>([]);
+
+  const [editFormData, setEditFormData] = useState({
+    firearmId: "",
+    caliberId: "",
+    opticId: "",
+    distanceYards: "",
+    sheetLabel: "",
+    notes: "",
+  });
 
   useEffect(() => {
     if (sheetId) {
@@ -80,6 +108,87 @@ export default function SheetDetailPage() {
       toast.error("Failed to load sheet");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openEditDialog = () => {
+    if (sheet) {
+      setEditFormData({
+        firearmId: sheet.firearmId._id,
+        caliberId: sheet.caliberId._id,
+        opticId: sheet.opticId._id,
+        distanceYards: sheet.distanceYards.toString(),
+        sheetLabel: sheet.sheetLabel || "",
+        notes: sheet.notes || "",
+      });
+
+      // Filter optics and calibers based on firearm
+      const selectedFirearm = firearms.find((f) => f._id === sheet.firearmId._id);
+      if (selectedFirearm) {
+        const filteredOpts = selectedFirearm.opticIds && selectedFirearm.opticIds.length > 0
+          ? allOptics.filter((o) => selectedFirearm.opticIds!.includes(o._id))
+          : allOptics;
+        
+        const filteredCals = selectedFirearm.caliberIds && selectedFirearm.caliberIds.length > 0
+          ? allCalibers.filter((c) => selectedFirearm.caliberIds!.includes(c._id))
+          : allCalibers;
+
+        setFilteredOptics(filteredOpts);
+        setFilteredCalibers(filteredCals);
+      } else {
+        setFilteredOptics(allOptics);
+        setFilteredCalibers(allCalibers);
+      }
+
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleFirearmChange = (firearmId: string) => {
+    const selectedFirearm = firearms.find((f) => f._id === firearmId);
+    if (selectedFirearm) {
+      const filteredOpts = selectedFirearm.opticIds && selectedFirearm.opticIds.length > 0
+        ? allOptics.filter((o) => selectedFirearm.opticIds!.includes(o._id))
+        : allOptics;
+      
+      const filteredCals = selectedFirearm.caliberIds && selectedFirearm.caliberIds.length > 0
+        ? allCalibers.filter((c) => selectedFirearm.caliberIds!.includes(c._id))
+        : allCalibers;
+
+      setFilteredOptics(filteredOpts);
+      setFilteredCalibers(filteredCals);
+
+      setEditFormData((prev) => ({
+        ...prev,
+        firearmId,
+        opticId: filteredOpts.length > 0 ? filteredOpts[0]._id : "",
+        caliberId: filteredCals.length > 0 ? filteredCals[0]._id : "",
+      }));
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch(`/api/sheets/${sheetId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...editFormData,
+          distanceYards: parseInt(editFormData.distanceYards),
+        }),
+      });
+
+      if (res.ok) {
+        toast.success("Sheet updated");
+        setEditDialogOpen(false);
+        fetchSheet();
+      } else {
+        toast.error("Failed to update sheet");
+      }
+    } catch (error) {
+      toast.error("Failed to update sheet");
     }
   };
 
@@ -173,10 +282,16 @@ export default function SheetDetailPage() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Session
         </Button>
-        <Button onClick={handleSave} disabled={saving}>
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? "Saving..." : "Save Scores"}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={openEditDialog}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Sheet
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? "Saving..." : "Save Scores"}
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-6">
@@ -326,7 +441,94 @@ export default function SheetDetailPage() {
           {saving ? "Saving..." : "Save All Scores"}
         </Button>
       </div>
+
+      {/* Edit Sheet Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Target Sheet</DialogTitle>
+            <DialogDescription>Update sheet details</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit}>
+            <div className="space-y-6 py-4">
+              <TagSelector
+                items={firearms}
+                selectedId={editFormData.firearmId}
+                onSelect={handleFirearmChange}
+                label="Firearm"
+                required
+              />
+
+              <TagSelector
+                items={filteredCalibers}
+                selectedId={editFormData.caliberId}
+                onSelect={(id) => setEditFormData({ ...editFormData, caliberId: id })}
+                label="Caliber"
+                required
+              />
+
+              <TagSelector
+                items={filteredOptics}
+                selectedId={editFormData.opticId}
+                onSelect={(id) => setEditFormData({ ...editFormData, opticId: id })}
+                label="Optic"
+                required
+              />
+
+              <div>
+                <Label htmlFor="edit-distance" className="flex items-center gap-2">
+                  <Ruler className="h-4 w-4" />
+                  Distance (yards) *
+                </Label>
+                <Input
+                  id="edit-distance"
+                  type="number"
+                  value={editFormData.distanceYards}
+                  onChange={(e) => setEditFormData({ ...editFormData, distanceYards: e.target.value })}
+                  required
+                  min="1"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-sheetLabel" className="flex items-center gap-2">
+                  <TagIconLucide className="h-4 w-4" />
+                  Sheet Label
+                </Label>
+                <Input
+                  id="edit-sheetLabel"
+                  value={editFormData.sheetLabel}
+                  onChange={(e) => setEditFormData({ ...editFormData, sheetLabel: e.target.value })}
+                  placeholder="e.g., Zeroing, Group Practice"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-notes" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Notes
+                </Label>
+                <Textarea
+                  id="edit-notes"
+                  value={editFormData.notes}
+                  onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                  placeholder="Additional notes about this sheet..."
+                  rows={3}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Update Sheet</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
