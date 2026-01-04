@@ -16,9 +16,11 @@ export default function NewSheetPage() {
   const params = useParams();
   const sessionId = params.id as string;
 
-  const [firearms, setFirearms] = useState<{ _id: string; name: string }[]>([]);
+  const [firearms, setFirearms] = useState<{ _id: string; name: string; caliberIds?: string[]; opticIds?: string[] }[]>([]);
   const [optics, setOptics] = useState<{ _id: string; name: string }[]>([]);
   const [calibers, setCalibers] = useState<{ _id: string; name: string }[]>([]);
+  const [allOptics, setAllOptics] = useState<{ _id: string; name: string }[]>([]);
+  const [allCalibers, setAllCalibers] = useState<{ _id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -52,10 +54,12 @@ export default function NewSheetPage() {
       }
       if (opticsRes.ok) {
         opticsData = await opticsRes.json();
+        setAllOptics(opticsData);
         setOptics(opticsData);
       }
       if (calibersRes.ok) {
         calibersData = await calibersRes.json();
+        setAllCalibers(calibersData);
         setCalibers(calibersData);
       }
 
@@ -66,6 +70,11 @@ export default function NewSheetPage() {
         opticId: opticsData.length > 0 ? opticsData[0]._id : "",
         caliberId: calibersData.length > 0 ? calibersData[0]._id : "",
       }));
+
+      // Filter optics and calibers based on first firearm
+      if (firearmsData.length > 0) {
+        filterByFirearm(firearmsData[0]._id, firearmsData, opticsData, calibersData);
+      }
     } catch (error) {
       toast.error("Failed to load reference data");
     } finally {
@@ -102,6 +111,41 @@ export default function NewSheetPage() {
     } catch (error) {
       toast.error("Failed to create sheet");
     }
+  };
+
+  const filterByFirearm = (
+    firearmId: string, 
+    firearmsData = firearms,
+    opticsData = allOptics,
+    calibersData = allCalibers
+  ) => {
+    const selectedFirearm = firearmsData.find((f) => f._id === firearmId);
+    if (selectedFirearm) {
+      // Filter optics
+      const filteredOptics = selectedFirearm.opticIds && selectedFirearm.opticIds.length > 0
+        ? opticsData.filter((o) => selectedFirearm.opticIds!.includes(o._id))
+        : opticsData;
+      
+      // Filter calibers
+      const filteredCalibers = selectedFirearm.caliberIds && selectedFirearm.caliberIds.length > 0
+        ? calibersData.filter((c) => selectedFirearm.caliberIds!.includes(c._id))
+        : calibersData;
+
+      setOptics(filteredOptics);
+      setCalibers(filteredCalibers);
+
+      // Update form to select first available after filtering
+      setFormData((prev) => ({
+        ...prev,
+        firearmId,
+        opticId: filteredOptics.length > 0 ? filteredOptics[0]._id : "",
+        caliberId: filteredCalibers.length > 0 ? filteredCalibers[0]._id : "",
+      }));
+    }
+  };
+
+  const handleFirearmChange = (firearmId: string) => {
+    filterByFirearm(firearmId);
   };
 
   const adjustDistance = (delta: number) => {
@@ -162,7 +206,7 @@ export default function NewSheetPage() {
             <TagSelector
               items={firearms}
               selectedId={formData.firearmId}
-              onSelect={(id) => setFormData({ ...formData, firearmId: id })}
+              onSelect={handleFirearmChange}
               label="Firearm"
               required
             />

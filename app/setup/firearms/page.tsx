@@ -42,6 +42,18 @@ interface Firearm {
   notes?: string;
   isActive: boolean;
   sortOrder: number;
+  caliberIds?: string[];
+  opticIds?: string[];
+}
+
+interface Caliber {
+  _id: string;
+  name: string;
+}
+
+interface Optic {
+  _id: string;
+  name: string;
 }
 
 function SortableFirearmCard({
@@ -116,6 +128,8 @@ function SortableFirearmCard({
 
 export default function FirearmsPage() {
   const [firearms, setFirearms] = useState<Firearm[]>([]);
+  const [calibers, setCalibers] = useState<Caliber[]>([]);
+  const [optics, setOptics] = useState<Optic[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingFirearm, setEditingFirearm] = useState<Firearm | null>(null);
@@ -124,6 +138,8 @@ export default function FirearmsPage() {
     manufacturer: "",
     model: "",
     notes: "",
+    caliberIds: [] as string[],
+    opticIds: [] as string[],
   });
 
   const sensors = useSensors(
@@ -135,7 +151,22 @@ export default function FirearmsPage() {
 
   useEffect(() => {
     fetchFirearms();
+    fetchReferenceData();
   }, []);
+
+  const fetchReferenceData = async () => {
+    try {
+      const [calibersRes, opticsRes] = await Promise.all([
+        fetch("/api/calibers"),
+        fetch("/api/optics"),
+      ]);
+
+      if (calibersRes.ok) setCalibers(await calibersRes.json());
+      if (opticsRes.ok) setOptics(await opticsRes.json());
+    } catch (error) {
+      // Silent fail
+    }
+  };
 
   const fetchFirearms = async () => {
     try {
@@ -231,13 +262,22 @@ export default function FirearmsPage() {
       manufacturer: firearm.manufacturer || "",
       model: firearm.model || "",
       notes: firearm.notes || "",
+      caliberIds: firearm.caliberIds || [],
+      opticIds: firearm.opticIds || [],
     });
     setDialogOpen(true);
   };
 
   const resetForm = () => {
     setEditingFirearm(null);
-    setFormData({ name: "", manufacturer: "", model: "", notes: "" });
+    setFormData({ 
+      name: "", 
+      manufacturer: "", 
+      model: "", 
+      notes: "",
+      caliberIds: [],
+      opticIds: [],
+    });
   };
 
   if (loading) {
@@ -343,6 +383,60 @@ export default function FirearmsPage() {
                   placeholder="Additional notes..."
                   rows={3}
                 />
+              </div>
+              <div>
+                <Label>Compatible Calibers</Label>
+                <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-md min-h-[60px]">
+                  {calibers.map((caliber) => (
+                    <button
+                      key={caliber._id}
+                      type="button"
+                      onClick={() => {
+                        const isSelected = formData.caliberIds.includes(caliber._id);
+                        setFormData({
+                          ...formData,
+                          caliberIds: isSelected
+                            ? formData.caliberIds.filter((id) => id !== caliber._id)
+                            : [...formData.caliberIds, caliber._id],
+                        });
+                      }}
+                      className={`px-3 py-2 rounded-md text-sm transition-colors ${
+                        formData.caliberIds.includes(caliber._id)
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-secondary-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {caliber.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label>Compatible Optics</Label>
+                <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-md min-h-[60px]">
+                  {optics.map((optic) => (
+                    <button
+                      key={optic._id}
+                      type="button"
+                      onClick={() => {
+                        const isSelected = formData.opticIds.includes(optic._id);
+                        setFormData({
+                          ...formData,
+                          opticIds: isSelected
+                            ? formData.opticIds.filter((id) => id !== optic._id)
+                            : [...formData.opticIds, optic._id],
+                        });
+                      }}
+                      className={`px-3 py-2 rounded-md text-sm transition-colors ${
+                        formData.opticIds.includes(optic._id)
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-secondary-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {optic.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <DialogFooter>
