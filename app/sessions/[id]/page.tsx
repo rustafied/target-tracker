@@ -74,10 +74,12 @@ export default function SessionDetailPage() {
   };
 
   const fetchSession = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`/api/sessions/${sessionId}`);
       if (res.ok) {
         const data = await res.json();
+        console.log("Fetched session data:", data.session);
         setSession(data.session);
         setSheets(data.sheets);
       } else {
