@@ -60,17 +60,9 @@
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    @apply border-border;
   }
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-  }
-}
-
-/* Custom hover scale for bull targets */
-@layer utilities {
-  .group:hover .group-hover\:scale-200 {
-    transform: scale(2);
+    @apply bg-background text-foreground;
   }
 }
