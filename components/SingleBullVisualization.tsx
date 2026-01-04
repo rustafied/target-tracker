@@ -86,7 +86,6 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
         style={{ width: size, height: size }}
       >
         <svg viewBox="0 0 200 200" className="w-full h-full">
-        <svg viewBox="0 0 200 200" className="w-full h-full">
           {/* Target rings (from outside to inside) */}
           
           {/* 0 - White (miss) */}
@@ -181,4 +180,3 @@ export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualiz
     </div>
   );
 }
-
