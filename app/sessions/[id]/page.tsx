@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { BullseyeVisualization } from "@/components/BullseyeVisualization";
 import { SingleBullVisualization } from "@/components/SingleBullVisualization";
+import { SessionHeatmap } from "@/components/SessionHeatmap";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -245,34 +246,45 @@ export default function SessionDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Average Score per Sheet
+              Session Overview
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={sheetAveragesData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" stroke="#888" />
-                <YAxis domain={[0, 5]} stroke="#888" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1a1a1a",
-                    border: "1px solid #333",
-                    borderRadius: "6px",
-                  }}
-                  labelStyle={{ color: "#fff" }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="avgScore"
-                  stroke="#8b5cf6"
-                  strokeWidth={2}
-                  name="Avg Score"
-                  dot={{ fill: "#8b5cf6", r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Line Chart - 2/3 width on large screens */}
+              <div className="lg:col-span-2">
+                <h3 className="text-sm font-semibold mb-3">Average Score per Sheet</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={sheetAveragesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                    <XAxis dataKey="name" stroke="#888" />
+                    <YAxis domain={[0, 5]} stroke="#888" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#1a1a1a",
+                        border: "1px solid #333",
+                        borderRadius: "6px",
+                      }}
+                      labelStyle={{ color: "#fff" }}
+                    />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="avgScore"
+                      stroke="#8b5cf6"
+                      strokeWidth={2}
+                      name="Avg Score"
+                      dot={{ fill: "#8b5cf6", r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Heatmap - 1/3 width on large screens */}
+              <div className="flex items-center justify-center">
+                <SessionHeatmap sheets={sheets} />
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
