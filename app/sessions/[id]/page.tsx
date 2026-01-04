@@ -30,6 +30,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LabelList,
 } from "recharts";
 
 interface BullRecord {
@@ -364,7 +365,9 @@ export default function SessionDetailPage() {
                               }}
                               labelStyle={{ color: "#fff" }}
                             />
-                            <Bar dataKey="avgScore" fill="#8b5cf6" name="Avg Score" />
+                            <Bar dataKey="avgScore" fill="#8b5cf6" name="Avg Score">
+                              <LabelList dataKey="avgScore" position="inside" fill="#fff" fontSize={12} />
+                            </Bar>
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
