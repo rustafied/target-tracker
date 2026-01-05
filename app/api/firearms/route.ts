@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { Firearm } from "@/lib/models/Firearm";
 import { firearmSchema } from "@/lib/validators/firearm";
@@ -20,7 +21,18 @@ export async function POST(request: Request) {
     const validated = firearmSchema.parse(body);
 
     await connectToDatabase();
-    const firearm = await Firearm.create(validated);
+    
+    // Convert string IDs to ObjectIds
+    const firearmData = {
+      ...validated,
+      caliberIds: validated.caliberIds.map(id => new mongoose.Types.ObjectId(id)),
+      opticIds: validated.opticIds.map(id => new mongoose.Types.ObjectId(id)),
+      ...(validated.defaultCaliberId && { 
+        defaultCaliberId: new mongoose.Types.ObjectId(validated.defaultCaliberId) 
+      }),
+    };
+    
+    const firearm = await Firearm.create(firearmData);
 
     return NextResponse.json(firearm, { status: 201 });
   } catch (error: any) {
