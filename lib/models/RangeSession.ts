@@ -6,6 +6,8 @@ export interface IRangeSession {
   date: Date;
   slug: string;
   location?: string;
+  startTime?: string;
+  endTime?: string;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -16,6 +18,8 @@ const RangeSessionSchema = new Schema<IRangeSession>(
     date: { type: Date, required: true },
     slug: { type: String, required: true, unique: true },
     location: { type: String },
+    startTime: { type: String },
+    endTime: { type: String },
     notes: { type: String },
   },
   { timestamps: true }

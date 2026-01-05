@@ -7,6 +7,8 @@ export const sessionSchema = z.object({
     return new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
   }),
   location: z.string().optional().default(""),
+  startTime: z.string().optional().default(""),
+  endTime: z.string().optional().default(""),
   notes: z.string().optional().default(""),
 });
 

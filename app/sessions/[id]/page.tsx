@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp, Crosshair, Eye, Ruler, FileText, Zap, Award, BarChart3 } from "lucide-react";
+import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp, Crosshair, Eye, Ruler, FileText, Zap, Award, BarChart3, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +54,8 @@ interface RangeSession {
   slug: string;
   date: string;
   location?: string;
+  startTime?: string;
+  endTime?: string;
   notes?: string;
 }
 
@@ -85,6 +87,8 @@ export default function SessionDetailPage() {
   const [formData, setFormData] = useState({
     date: "",
     location: "",
+    startTime: "",
+    endTime: "",
     notes: "",
   });
 
@@ -149,6 +153,8 @@ export default function SessionDetailPage() {
           setFormData({
             date: format(new Date(data.session.date), "yyyy-MM-dd"),
             location: data.session.location || "",
+            startTime: data.session.startTime || "",
+            endTime: data.session.endTime || "",
             notes: data.session.notes || "",
           });
           setEditDialogOpen(true);
@@ -158,6 +164,8 @@ export default function SessionDetailPage() {
         setFormData({
           date: format(new Date(session.date), "yyyy-MM-dd"),
           location: session.location || "",
+          startTime: session.startTime || "",
+          endTime: session.endTime || "",
           notes: session.notes || "",
         });
         setEditDialogOpen(true);
@@ -688,6 +696,32 @@ export default function SessionDetailPage() {
                   suggestions={locations}
                   placeholder="Select or type location..."
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startTime" className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4" />
+                    Start Time
+                  </Label>
+                  <Input
+                    id="startTime"
+                    type="time"
+                    value={formData.startTime}
+                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endTime" className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4" />
+                    End Time
+                  </Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    value={formData.endTime}
+                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                  />
+                </div>
               </div>
               <div>
                 <Label htmlFor="notes" className="flex items-center gap-2 mb-2">

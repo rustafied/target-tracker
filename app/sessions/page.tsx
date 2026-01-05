@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Calendar, MapPin, FileText, Target, TrendingUp, Crosshair, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Calendar, MapPin, FileText, Target, TrendingUp, Crosshair, ChevronRight, ArrowUp, ArrowDown, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,8 @@ export default function SessionsPage() {
   const [formData, setFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
     location: "",
+    startTime: "",
+    endTime: "",
     notes: "",
   });
 
@@ -91,6 +93,8 @@ export default function SessionsPage() {
     setFormData({
       date: format(new Date(), "yyyy-MM-dd"),
       location: "Reloaderz",
+      startTime: "",
+      endTime: "",
       notes: "",
     });
     setDialogOpen(true);
@@ -312,6 +316,32 @@ export default function SessionsPage() {
                   suggestions={locations}
                   placeholder="Select or type location..."
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startTime" className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4" />
+                    Start Time
+                  </Label>
+                  <Input
+                    id="startTime"
+                    type="time"
+                    value={formData.startTime}
+                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endTime" className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4" />
+                    End Time
+                  </Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    value={formData.endTime}
+                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                  />
+                </div>
               </div>
               <div>
                 <Label htmlFor="notes" className="flex items-center gap-2 mb-2">
