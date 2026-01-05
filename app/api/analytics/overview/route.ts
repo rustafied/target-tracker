@@ -7,6 +7,7 @@ import {
   aggregateBullMetrics,
   calculateRingDistributionForSession,
   calculateDelta,
+  calculateTrend,
 } from "@/lib/analytics-utils";
 
 export async function GET(request: Request) {
@@ -123,6 +124,12 @@ export async function GET(request: Request) {
         bullRate: last3.reduce((sum, s) => sum + s.bullRate, 0) / 3,
         missRate: last3.reduce((sum, s) => sum + s.missRate, 0) / 3,
         tightness: last3.reduce((sum, s) => sum + s.tightnessScore, 0) / 3,
+        meanRadius: last3.filter(s => s.meanRadius).length === 3
+          ? last3.reduce((sum, s) => sum + (s.meanRadius || 0), 0) / 3
+          : null,
+        centroidDistance: last3.filter(s => s.centroidDistance).length === 3
+          ? last3.reduce((sum, s) => sum + (s.centroidDistance || 0), 0) / 3
+          : null,
       };
 
       const avgPrev3 = {
@@ -130,6 +137,12 @@ export async function GET(request: Request) {
         bullRate: prev3.reduce((sum, s) => sum + s.bullRate, 0) / 3,
         missRate: prev3.reduce((sum, s) => sum + s.missRate, 0) / 3,
         tightness: prev3.reduce((sum, s) => sum + s.tightnessScore, 0) / 3,
+        meanRadius: prev3.filter(s => s.meanRadius).length === 3
+          ? prev3.reduce((sum, s) => sum + (s.meanRadius || 0), 0) / 3
+          : null,
+        centroidDistance: prev3.filter(s => s.centroidDistance).length === 3
+          ? prev3.reduce((sum, s) => sum + (s.centroidDistance || 0), 0) / 3
+          : null,
       };
 
       last3VsPrev3 = {
@@ -137,8 +150,28 @@ export async function GET(request: Request) {
         bullRate: calculateDelta(avgLast3.bullRate, avgPrev3.bullRate, true),
         missRate: calculateDelta(avgLast3.missRate, avgPrev3.missRate, false),
         tightnessScore: calculateDelta(avgLast3.tightness, avgPrev3.tightness, true),
+        meanRadius: avgLast3.meanRadius && avgPrev3.meanRadius
+          ? calculateDelta(avgLast3.meanRadius, avgPrev3.meanRadius, false)
+          : null,
+        centroidDistance: avgLast3.centroidDistance && avgPrev3.centroidDistance
+          ? calculateDelta(avgLast3.centroidDistance, avgPrev3.centroidDistance, false)
+          : null,
       };
     }
+
+    // Calculate overall trends using linear regression
+    const trends = sessionMetrics.length >= 3 ? {
+      avgScore: calculateTrend(sessionMetrics.map(s => s.avgScorePerShot), true),
+      bullRate: calculateTrend(sessionMetrics.map(s => s.bullRate), true),
+      missRate: calculateTrend(sessionMetrics.map(s => s.missRate), false),
+      tightnessScore: calculateTrend(sessionMetrics.map(s => s.tightnessScore), true),
+      meanRadius: sessionMetrics.every(s => s.meanRadius !== undefined)
+        ? calculateTrend(sessionMetrics.map(s => s.meanRadius!), false)
+        : null,
+      centroidDistance: sessionMetrics.every(s => s.centroidDistance !== undefined)
+        ? calculateTrend(sessionMetrics.map(s => s.centroidDistance!), false)
+        : null,
+    } : null;
 
     // Ring distributions
     const ringDistributions = sessionMetrics.map((sm) => {
@@ -173,6 +206,7 @@ export async function GET(request: Request) {
         lastVsPrev,
         last3VsPrev3,
       },
+      trends,
       sessions: sessionMetrics,
       ringDistributions,
       shotsPerSession,

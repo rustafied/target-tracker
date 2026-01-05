@@ -125,6 +125,7 @@ export default function CalibersAnalyticsPage() {
     if (filters.distanceMax) params.set("distanceMax", filters.distanceMax);
     if (filters.minShots !== 10) params.set("minShots", filters.minShots.toString());
     if (filters.positionOnly) params.set("positionOnly", "true");
+    if (filters.allowSynthetic) params.set("allowSynthetic", "true");
 
     router.replace(`/analytics/calibers?${params.toString()}`, { scroll: false });
   };

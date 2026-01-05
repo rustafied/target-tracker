@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Filter, X, ChevronDown, ChevronUp, Target, Crosshair, Ruler, Telescope } from "lucide-react";
+import { Filter, X, ChevronDown, ChevronUp, Target, Crosshair, Ruler, Telescope, Check } from "lucide-react";
 
 export interface AnalyticsFilters {
   firearmIds: string[];
@@ -78,10 +79,10 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="w-full text-left hover:bg-accent/50 transition-colors"
+          className="w-full text-left hover:bg-accent/50 transition-colors cursor-pointer rounded-lg"
         >
-          <CardHeader>
-            <div className="flex items-center justify-between">
+          <CardHeader className="cursor-pointer">
+            <div className="flex items-center justify-between w-full">
               <CardTitle className="flex items-center gap-2">
                 <Filter className="h-5 w-5" />
                 Filters
@@ -132,19 +133,23 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
                   Firearms
                 </Label>
                 <div className="flex flex-wrap gap-2">
-                  {firearms.map((firearm) => (
-                    <button
-                      key={firearm._id}
-                      className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                        filters.firearmIds.includes(firearm._id)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-accent"
-                      }`}
-                      onClick={() => toggleFirearm(firearm._id)}
-                    >
-                      {firearm.name}
-                    </button>
-                  ))}
+                  {firearms.map((firearm) => {
+                    const isActive = filters.firearmIds.includes(firearm._id);
+                    return (
+                      <button
+                        key={firearm._id}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                          isActive
+                            ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
+                            : "bg-secondary text-secondary-foreground hover:bg-accent hover:ring-1 hover:ring-border"
+                        }`}
+                        onClick={() => toggleFirearm(firearm._id)}
+                      >
+                        {isActive && <Check className="h-4 w-4" />}
+                        {firearm.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -157,19 +162,23 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
                   Calibers
                 </Label>
                 <div className="flex flex-wrap gap-2">
-                  {calibers.map((caliber) => (
-                    <button
-                      key={caliber._id}
-                      className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                        filters.caliberIds.includes(caliber._id)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-accent"
-                      }`}
-                      onClick={() => toggleCaliber(caliber._id)}
-                    >
-                      {caliber.name}
-                    </button>
-                  ))}
+                  {calibers.map((caliber) => {
+                    const isActive = filters.caliberIds.includes(caliber._id);
+                    return (
+                      <button
+                        key={caliber._id}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                          isActive
+                            ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
+                            : "bg-secondary text-secondary-foreground hover:bg-accent hover:ring-1 hover:ring-border"
+                        }`}
+                        onClick={() => toggleCaliber(caliber._id)}
+                      >
+                        {isActive && <Check className="h-4 w-4" />}
+                        {caliber.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -182,19 +191,23 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
                   Optics
                 </Label>
                 <div className="flex flex-wrap gap-2">
-                  {optics.map((optic) => (
-                    <button
-                      key={optic._id}
-                      className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                        filters.opticIds.includes(optic._id)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-accent"
-                      }`}
-                      onClick={() => toggleOptic(optic._id)}
-                    >
-                      {optic.name}
-                    </button>
-                  ))}
+                  {optics.map((optic) => {
+                    const isActive = filters.opticIds.includes(optic._id);
+                    return (
+                      <button
+                        key={optic._id}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                          isActive
+                            ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
+                            : "bg-secondary text-secondary-foreground hover:bg-accent hover:ring-1 hover:ring-border"
+                        }`}
+                        onClick={() => toggleOptic(optic._id)}
+                      >
+                        {isActive && <Check className="h-4 w-4" />}
+                        {optic.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -242,29 +255,33 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
             </div>
 
             {/* Data Mode Toggles */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Data Mode</Label>
-              <div className="flex flex-col gap-2">
-                <button
-                  className={`px-4 py-2 rounded-md text-sm transition-colors text-left ${
-                    filters.positionOnly
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-accent"
-                  }`}
-                  onClick={() => onChange({ ...filters, positionOnly: !filters.positionOnly })}
-                >
-                  Position data only (exclude count-only bulls)
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-md text-sm transition-colors text-left ${
-                    filters.allowSynthetic
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-accent"
-                  }`}
-                  onClick={() => onChange({ ...filters, allowSynthetic: !filters.allowSynthetic })}
-                >
-                  Allow synthetic shots for visualizations
-                </button>
+              <div className="flex flex-col gap-3">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <Checkbox
+                    id="positionOnly"
+                    checked={filters.positionOnly}
+                    onCheckedChange={(checked) => 
+                      onChange({ ...filters, positionOnly: checked as boolean })
+                    }
+                  />
+                  <span className="text-sm group-hover:text-foreground transition-colors">
+                    Position data only (exclude count-only bulls)
+                  </span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <Checkbox
+                    id="allowSynthetic"
+                    checked={filters.allowSynthetic}
+                    onCheckedChange={(checked) => 
+                      onChange({ ...filters, allowSynthetic: checked as boolean })
+                    }
+                  />
+                  <span className="text-sm group-hover:text-foreground transition-colors">
+                    Allow synthetic shots for visualizations
+                  </span>
+                </label>
               </div>
             </div>
           </CardContent>

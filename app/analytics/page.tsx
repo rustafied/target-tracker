@@ -48,6 +48,14 @@ interface OverviewData {
     lastVsPrev: any;
     last3VsPrev3: any;
   };
+  trends: {
+    avgScore: { direction: "improving" | "stable" | "declining"; slope: number; confidence: number };
+    bullRate: { direction: "improving" | "stable" | "declining"; slope: number; confidence: number };
+    missRate: { direction: "improving" | "stable" | "declining"; slope: number; confidence: number };
+    tightnessScore: { direction: "improving" | "stable" | "declining"; slope: number; confidence: number };
+    meanRadius: { direction: "improving" | "stable" | "declining"; slope: number; confidence: number } | null;
+    centroidDistance: { direction: "improving" | "stable" | "declining"; slope: number; confidence: number } | null;
+  } | null;
   sessions: any[];
   ringDistributions: any[];
   shotsPerSession: any[];
@@ -164,7 +172,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const { kpis, deltas, sessions, ringDistributions, shotsPerSession } = data;
+  const { kpis, deltas, trends, sessions, ringDistributions, shotsPerSession } = data;
 
   // Debug logging
   console.log("Analytics data:", { sessions, ringDistributions, shotsPerSession });
@@ -402,25 +410,31 @@ export default function AnalyticsPage() {
           title="Avg Score/Shot"
           value={kpis.avgScore.toFixed(2)}
           icon={TrendingUp}
-          delta={deltas.lastVsPrev?.avgScore.delta}
+          delta={deltas.last3VsPrev3?.avgScore.delta}
           higherIsBetter={true}
-          subtitle="Last session"
+          subtitle="Overall average"
+          trend={trends?.avgScore.direction}
+          trendConfidence={trends?.avgScore.confidence}
         />
         <KpiCard
           title="Bull Rate"
           value={`${(kpis.bullRate * 100).toFixed(1)}%`}
           icon={Target}
-          delta={deltas.lastVsPrev?.bullRate.delta}
+          delta={deltas.last3VsPrev3?.bullRate.delta}
           higherIsBetter={true}
-          subtitle="Last session"
+          subtitle="Overall average"
+          trend={trends?.bullRate.direction}
+          trendConfidence={trends?.bullRate.confidence}
         />
         <KpiCard
           title="Miss Rate"
           value={`${(kpis.missRate * 100).toFixed(1)}%`}
           icon={Crosshair}
-          delta={deltas.lastVsPrev?.missRate.delta}
+          delta={deltas.last3VsPrev3?.missRate.delta}
           higherIsBetter={false}
-          subtitle="Last session"
+          subtitle="Overall average"
+          trend={trends?.missRate.direction}
+          trendConfidence={trends?.missRate.confidence}
         />
         <KpiCard
           title="Total Shots"
@@ -438,9 +452,11 @@ export default function AnalyticsPage() {
               title="Mean Radius"
               value={kpis.meanRadius.toFixed(2)}
               icon={Radius}
-              delta={deltas.lastVsPrev?.meanRadius?.delta}
+              delta={deltas.last3VsPrev3?.meanRadius?.delta}
               higherIsBetter={false}
               subtitle="Target units"
+              trend={trends?.meanRadius?.direction}
+              trendConfidence={trends?.meanRadius?.confidence}
             />
           )}
           {kpis.centroidDistance !== null && (
@@ -448,18 +464,22 @@ export default function AnalyticsPage() {
               title="Centroid Distance"
               value={kpis.centroidDistance.toFixed(2)}
               icon={Focus}
-              delta={deltas.lastVsPrev?.centroidDistance?.delta}
+              delta={deltas.last3VsPrev3?.centroidDistance?.delta}
               higherIsBetter={false}
               subtitle="Bias from center"
+              trend={trends?.centroidDistance?.direction}
+              trendConfidence={trends?.centroidDistance?.confidence}
             />
           )}
           <KpiCard
             title="Tightness Score"
             value={kpis.tightnessScore}
             icon={Sparkles}
-            delta={deltas.lastVsPrev?.tightnessScore.delta}
+            delta={deltas.last3VsPrev3?.tightnessScore?.delta}
             higherIsBetter={true}
             subtitle="0-100 scale"
+            trend={trends?.tightnessScore.direction}
+            trendConfidence={trends?.tightnessScore.confidence}
           />
           <KpiCard
             title="Shot Coverage"
@@ -556,44 +576,48 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Insights */}
-      {deltas.lastVsPrev && (
+      {deltas.last3VsPrev3 && trends && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
-              Recent Insights
+              Performance Insights
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
-              {deltas.lastVsPrev.avgScore.delta !== null && Math.abs(deltas.lastVsPrev.avgScore.delta) > 0.1 && (
+              {trends.avgScore.direction !== "stable" && (
                 <li>
-                  Average score{" "}
-                  <strong className={deltas.lastVsPrev.avgScore.isImprovement ? "text-green-500" : "text-red-500"}>
-                    {deltas.lastVsPrev.avgScore.delta > 0 ? "increased" : "decreased"} by{" "}
-                    {Math.abs(deltas.lastVsPrev.avgScore.delta).toFixed(1)}%
-                  </strong>{" "}
-                  in your last session.
+                  Overall trend shows your average score is{" "}
+                  <strong className={trends.avgScore.direction === "improving" ? "text-green-500" : "text-red-500"}>
+                    {trends.avgScore.direction}
+                  </strong>
+                  {" "}across all sessions.
                 </li>
               )}
-              {deltas.lastVsPrev.bullRate.delta !== null && Math.abs(deltas.lastVsPrev.bullRate.delta) > 0.1 && (
+              {deltas.last3VsPrev3.avgScore.delta !== null && Math.abs(deltas.last3VsPrev3.avgScore.delta) > 2 && (
                 <li>
-                  Bull rate{" "}
-                  <strong className={deltas.lastVsPrev.bullRate.isImprovement ? "text-green-500" : "text-red-500"}>
-                    {deltas.lastVsPrev.bullRate.delta > 0 ? "improved" : "declined"} by{" "}
-                    {Math.abs(deltas.lastVsPrev.bullRate.delta).toFixed(1)}%
+                  Your last 3 sessions averaged{" "}
+                  <strong className={deltas.last3VsPrev3.avgScore.isImprovement ? "text-green-500" : "text-red-500"}>
+                    {deltas.last3VsPrev3.avgScore.delta > 0 ? "+" : ""}
+                    {deltas.last3VsPrev3.avgScore.delta.toFixed(1)}%
                   </strong>
-                  .
+                  {" "}compared to the previous 3 sessions.
                 </li>
               )}
-              {deltas.lastVsPrev.meanRadius && deltas.lastVsPrev.meanRadius.delta !== null && (
+              {trends.bullRate.direction !== "stable" && (
                 <li>
-                  Mean radius{" "}
-                  <strong className={deltas.lastVsPrev.meanRadius.isImprovement ? "text-green-500" : "text-red-500"}>
-                    {deltas.lastVsPrev.meanRadius.delta > 0 ? "increased" : "decreased"} by{" "}
-                    {Math.abs(deltas.lastVsPrev.meanRadius.delta).toFixed(1)}%
+                  Your bull rate is trending{" "}
+                  <strong className={trends.bullRate.direction === "improving" ? "text-green-500" : "text-red-500"}>
+                    {trends.bullRate.direction}
                   </strong>
-                  {" - "}tighter grouping!
+                  {" "}over time.
+                </li>
+              )}
+              {trends.meanRadius && trends.meanRadius.direction === "improving" && (
+                <li>
+                  Great progress! Your shot groupings are getting{" "}
+                  <strong className="text-green-500">tighter</strong> over time.
                 </li>
               )}
             </ul>

@@ -405,6 +405,75 @@ export function calculateDelta(
 }
 
 // ============================================================================
+// TREND ANALYSIS (LINEAR REGRESSION)
+// ============================================================================
+
+export type TrendDirection = "improving" | "stable" | "declining";
+
+export interface TrendAnalysis {
+  direction: TrendDirection;
+  slope: number; // change per session
+  confidence: number; // 0-1, based on R²
+}
+
+/**
+ * Calculate linear regression trend for a metric across sessions
+ * @param values - Array of metric values ordered chronologically
+ * @param higherIsBetter - Whether increasing values indicate improvement
+ * @returns Trend analysis with direction and slope
+ */
+export function calculateTrend(
+  values: number[],
+  higherIsBetter: boolean = true
+): TrendAnalysis {
+  if (values.length < 3) {
+    return { direction: "stable", slope: 0, confidence: 0 };
+  }
+
+  const n = values.length;
+  const x = Array.from({ length: n }, (_, i) => i); // [0, 1, 2, ...]
+  const y = values;
+
+  // Calculate means
+  const xMean = x.reduce((sum, val) => sum + val, 0) / n;
+  const yMean = y.reduce((sum, val) => sum + val, 0) / n;
+
+  // Calculate slope and intercept
+  let numerator = 0;
+  let denominator = 0;
+  for (let i = 0; i < n; i++) {
+    numerator += (x[i] - xMean) * (y[i] - yMean);
+    denominator += Math.pow(x[i] - xMean, 2);
+  }
+  const slope = denominator !== 0 ? numerator / denominator : 0;
+
+  // Calculate R² (coefficient of determination)
+  const yPredicted = x.map(xi => yMean + slope * (xi - xMean));
+  const ssRes = y.reduce((sum, yi, i) => sum + Math.pow(yi - yPredicted[i], 2), 0);
+  const ssTot = y.reduce((sum, yi) => sum + Math.pow(yi - yMean, 2), 0);
+  const rSquared = ssTot !== 0 ? 1 - (ssRes / ssTot) : 0;
+
+  // Determine direction based on slope significance
+  // Consider trend significant if slope is meaningful relative to data range
+  const dataRange = Math.max(...y) - Math.min(...y);
+  const relativeSlope = dataRange !== 0 ? Math.abs(slope) / dataRange : 0;
+  const isSignificant = relativeSlope > 0.02 && rSquared > 0.1; // At least 2% of range per session
+
+  let direction: TrendDirection = "stable";
+  if (isSignificant) {
+    const isPositiveSlope = slope > 0;
+    const isImproving = higherIsBetter ? isPositiveSlope : !isPositiveSlope;
+    direction = isImproving ? "improving" : "declining";
+  }
+
+  return {
+    direction,
+    slope,
+    confidence: Math.max(0, Math.min(1, rSquared)),
+  };
+}
+
+// ============================================================================
 // RING DISTRIBUTION AGGREGATION
 // ============================================================================
 
