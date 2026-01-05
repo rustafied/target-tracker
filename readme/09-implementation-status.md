@@ -59,6 +59,7 @@ Current state of the Target Tracker application as of January 2026.
 - **Distance Entry** - Numeric input in yards with +/- buttons
 - **Sheet Labels & Notes** - Optional metadata
 - **Edit Sheets** - Modify all sheet details after creation
+- **Delete Sheets** - Remove sheets from sessions with confirmation dialog
 - **Flexible Bull Count** - Sheets can have 1-6 bulls; only non-zero bulls are saved to database
 - **Sheet Cards** - Display on session page with:
   - Equipment details (firearm, caliber, optic, distance)
@@ -67,6 +68,7 @@ Current state of the Target Tracker application as of January 2026.
   - Per-bull bar chart showing average scores
   - Large average score in top-right
   - Icons for all equipment types
+  - Trash icon button for quick deletion
 
 #### 4. Bull Scoring
 - **Interactive Target Input** - Visual click-to-add shot placement
@@ -79,7 +81,7 @@ Current state of the Target Tracker application as of January 2026.
   - Hover feedback shows point value of hovered zone
   - Shot positions saved as XY coordinates (optional field)
   - Bidirectionally syncs with count buttons and quick entry
-  - Clear all button to reset shots
+  - Clear button to reset individual bull's shots and scores
 - **Quick Entry Card** - Positioned at top of sheet detail page
   - 6 input fields (one per bull) in responsive grid layout
   - Enter scores as 6-digit strings (e.g., "543210" = 5pts:5, 4pts:4, 3pts:3, 2pts:2, 1pt:1, 0pts:0)
@@ -91,10 +93,12 @@ Current state of the Target Tracker application as of January 2026.
   - 6 bull sections (bulls 1-6) displayed below quick entry
   - Button grid (0-10) for each score level (5, 4, 3, 2, 1, 0)
   - Copy Previous button for each bull (except first)
+  - Clear button to reset individual bull (scores and shot positions)
   - Live calculation of total shots, total score, and average
   - Active state styling with blue highlighting
 - **Save & Navigate** - After saving, automatically returns to session detail
 - **Edit Scores** - Modify bull scores at any time
+- **Delete Bulls** - Clear individual bulls during editing with confirmation
 - **Smart Saving** - Only saves bulls with non-zero data to database
 
 #### 5. Analytics
@@ -167,7 +171,11 @@ Custom SVG components with realistic target rings:
 3. **Session Heatmap**
    - Large aggregate bullseye visualization
    - Displays all shots from all sheets in session
-   - Uses transparent dots to show density/concentration
+   - Uses exact shot positions when available (from interactive target input)
+   - Falls back to randomized positions within correct rings for bulls without position data
+   - Shot dots: White for bullseye (5pts), red for all others
+   - Transparent dots show density/concentration
+   - Click to expand modal with detailed stats and larger visualization
    - Positioned next to comparison chart
 
 4. **Per-Sheet Visualizations**
@@ -393,6 +401,32 @@ All CRUD operations exposed via `/api/*`:
     - White dots for bullseye shots (5pts), red for all others
     - Hover feedback shows point value of target zone
 
+16. **Shot Position Persistence**
+    - Issue: Shot positions saved to database but not displaying after page reload
+    - Root cause: Mongoose schema needed explicit subdocument handling and API needed `$set` operator
+    - Fix: Updated `BullRecordSchema` with separate `ShotPositionSchema` using `_id: false`
+    - Modified `/api/bulls` POST route to use `$set` operator for proper array replacement
+    - Added explicit model imports to prevent `MissingSchemaError` during population
+
+17. **Sheet and Bull Deletion**
+    - Feature: Added ability to delete sheets from sessions and individual bulls from sheets
+    - Sheet deletion via trash icon on sheet cards with confirmation dialog
+    - Bull clearing via "Clear" button in sheet edit page
+    - DELETE endpoint for `/api/sheets/[id]` removes sheet and associated bull records
+    - Bull deletion via `/api/bulls/[id]` DELETE endpoint
+
+18. **TypeScript Build Errors for Deployment**
+    - Issue: Production build failing on Vercel with multiple TypeScript errors
+    - Fixed `totalShots` null check in `/api/sessions/route.ts` (optional field)
+    - Removed unused `filterByFirearm` function with undefined variable references
+    - Added explicit type to `bullsMap` in sheet detail page
+    - Fixed firearms API to convert string IDs to ObjectIds for Mongoose compatibility
+
+19. **Toast Notification Visibility**
+    - Issue: Toast notifications had transparent background, showing content underneath
+    - Fix: Added `bg-background/95`, `backdrop-blur-sm`, `border-border`, and `shadow-lg` to Sonner component
+    - Now has semi-opaque background with blur effect for better readability
+
 ---
 
 ## 📋 Seeded Data
@@ -481,5 +515,5 @@ https://github.com/rustafied/target-tracker
 
 ---
 
-_Last Updated: January 5, 2026_
+_Last Updated: January 4, 2026_
 
