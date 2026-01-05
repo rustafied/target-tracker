@@ -40,8 +40,14 @@ TargetSheetSchema.pre('validate', async function() {
       mongoose.models.Caliber.findById(this.caliberId),
     ]);
 
-    if (!session || !firearm || !caliber) {
-      throw new Error('Required references not found');
+    if (!session) {
+      throw new Error('Session not found');
+    }
+    if (!firearm) {
+      throw new Error('Firearm not found');
+    }
+    if (!caliber) {
+      throw new Error('Caliber not found');
     }
 
     // Create base slug: sessionDate-firearmName-caliberName-distance

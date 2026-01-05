@@ -1,50 +1,75 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { format, subMonths } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { TagSelector } from "@/components/TagSelector";
-import { toast } from "sonner";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Calendar, Target, Crosshair, TrendingUp, Filter, Ruler, ChevronDown, ChevronUp, TrendingDown, Minus } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import {
+  TrendingUp,
+  Target,
+  Crosshair,
+  Radius,
+  Focus,
+  Activity,
+  Calendar,
+  BarChart3,
+  LineChart,
+  PieChart,
+  Sparkles,
+  ArrowRight,
+} from "lucide-react";
+import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
+import { FilterBar, AnalyticsFilters } from "@/components/analytics/FilterBar";
+import { KpiCard } from "@/components/analytics/KpiCard";
+import { ChartCard } from "@/components/analytics/ChartCard";
+import { EmptyState } from "@/components/analytics/EmptyState";
+import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import type { EChartsOption } from "echarts";
 
-interface SessionMetric {
-  sessionId: string;
-  slug: string;
-  date: string;
-  location?: string;
-  totalShots: number;
-  totalScore: number;
-  averageScore: number;
-  sheetCount: number;
-}
-
-interface Summary {
-  totalSessions: number;
-  totalShots: number;
-  totalScore: number;
-  averageScore: number;
+interface OverviewData {
+  kpis: {
+    avgScore: number;
+    bullRate: number;
+    missRate: number;
+    meanRadius: number | null;
+    centroidDistance: number | null;
+    tightnessScore: number;
+    totalShots: number;
+    sessionsCount: number;
+    shotCoverage: number;
+    goodHitRate: number;
+  };
+  deltas: {
+    lastVsPrev: any;
+    last3VsPrev3: any;
+  };
+  sessions: any[];
+  ringDistributions: any[];
+  shotsPerSession: any[];
 }
 
 export default function AnalyticsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  const [data, setData] = useState<OverviewData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [firearms, setFirearms] = useState<{ _id: string; name: string }[]>([]);
   const [calibers, setCalibers] = useState<{ _id: string; name: string }[]>([]);
-  const [sessions, setSessions] = useState<SessionMetric[]>([]);
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [optics, setOptics] = useState<{ _id: string; name: string }[]>([]);
 
-  const [filters, setFilters] = useState({
-    dateStart: "",
-    dateEnd: "",
-    firearmIds: [] as string[],
-    caliberIds: [] as string[],
-    distanceMin: "",
-    distanceMax: "",
+  const [filters, setFilters] = useState<AnalyticsFilters>({
+    firearmIds: searchParams.get("firearmIds")?.split(",").filter(Boolean) || [],
+    caliberIds: searchParams.get("caliberIds")?.split(",").filter(Boolean) || [],
+    opticIds: searchParams.get("opticIds")?.split(",").filter(Boolean) || [],
+    distanceMin: searchParams.get("distanceMin") || "",
+    distanceMax: searchParams.get("distanceMax") || "",
+    minShots: parseInt(searchParams.get("minShots") || "10"),
+    positionOnly: searchParams.get("positionOnly") === "true",
+    allowSynthetic: searchParams.get("allowSynthetic") === "true",
   });
 
   useEffect(() => {
@@ -53,17 +78,20 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     fetchAnalytics();
+    updateURL();
   }, [filters]);
 
   const fetchReferenceData = async () => {
     try {
-      const [firearmsRes, calibersRes] = await Promise.all([
+      const [firearmsRes, calibersRes, opticsRes] = await Promise.all([
         fetch("/api/firearms"),
         fetch("/api/calibers"),
+        fetch("/api/optics"),
       ]);
 
       if (firearmsRes.ok) setFirearms(await firearmsRes.json());
       if (calibersRes.ok) setCalibers(await calibersRes.json());
+      if (opticsRes.ok) setOptics(await opticsRes.json());
     } catch (error) {
       toast.error("Failed to load reference data");
     }
@@ -73,18 +101,17 @@ export default function AnalyticsPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.dateStart) params.append("dateStart", filters.dateStart);
-      if (filters.dateEnd) params.append("dateEnd", filters.dateEnd);
       if (filters.firearmIds.length > 0) params.append("firearmIds", filters.firearmIds.join(","));
       if (filters.caliberIds.length > 0) params.append("caliberIds", filters.caliberIds.join(","));
+      if (filters.opticIds.length > 0) params.append("opticIds", filters.opticIds.join(","));
       if (filters.distanceMin) params.append("distanceMin", filters.distanceMin);
       if (filters.distanceMax) params.append("distanceMax", filters.distanceMax);
+      params.append("minShots", filters.minShots.toString());
+      params.append("positionOnly", filters.positionOnly.toString());
 
-      const res = await fetch(`/api/analytics/summary?${params}`);
+      const res = await fetch(`/api/analytics/overview?${params}`);
       if (res.ok) {
-        const data = await res.json();
-        setSessions(data.sessions);
-        setSummary(data.summary);
+        setData(await res.json());
       } else {
         toast.error("Failed to load analytics");
       }
@@ -95,409 +122,479 @@ export default function AnalyticsPage() {
     }
   };
 
-  const toggleFirearm = (id: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      firearmIds: prev.firearmIds.includes(id)
-        ? prev.firearmIds.filter((fid) => fid !== id)
-        : [...prev.firearmIds, id],
-    }));
+  const updateURL = () => {
+    const params = new URLSearchParams();
+    if (filters.firearmIds.length > 0) params.set("firearmIds", filters.firearmIds.join(","));
+    if (filters.caliberIds.length > 0) params.set("caliberIds", filters.caliberIds.join(","));
+    if (filters.opticIds.length > 0) params.set("opticIds", filters.opticIds.join(","));
+    if (filters.distanceMin) params.set("distanceMin", filters.distanceMin);
+    if (filters.distanceMax) params.set("distanceMax", filters.distanceMax);
+    if (filters.minShots !== 10) params.set("minShots", filters.minShots.toString());
+    if (filters.positionOnly) params.set("positionOnly", "true");
+    if (filters.allowSynthetic) params.set("allowSynthetic", "true");
+
+    router.replace(`/analytics?${params.toString()}`, { scroll: false });
   };
 
-  const toggleCaliber = (id: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      caliberIds: prev.caliberIds.includes(id)
-        ? prev.caliberIds.filter((cid) => cid !== id)
-        : [...prev.caliberIds, id],
-    }));
-  };
-
-  const chartData = sessions.map((session) => ({
-    date: format(new Date(session.date), "MMM d"),
-    score: parseFloat(session.averageScore.toFixed(2)),
-    shots: session.totalShots,
-  }));
-
-  // Calculate improvements from session to session
-  const calculateImprovement = (current: number, previous: number | null) => {
-    if (previous === null || previous === 0) return null;
-    return ((current - previous) / previous) * 100;
-  };
-
-  const getImprovementDisplay = (improvement: number | null) => {
-    if (improvement === null) {
-      return {
-        text: "First session",
-        color: "text-muted-foreground",
-        icon: <Minus className="h-4 w-4" />,
-      };
-    }
-
-    if (Math.abs(improvement) < 0.1) {
-      return {
-        text: "No change",
-        color: "text-muted-foreground",
-        icon: <Minus className="h-4 w-4" />,
-      };
-    }
-
-    if (improvement > 0) {
-      return {
-        text: `+${improvement.toFixed(1)}%`,
-        color: "text-green-600 dark:text-green-400",
-        icon: <TrendingUp className="h-4 w-4" />,
-      };
-    }
-
-    return {
-      text: `${improvement.toFixed(1)}%`,
-      color: "text-red-600 dark:text-red-400",
-      icon: <TrendingDown className="h-4 w-4" />,
-    };
-  };
-
-  // Calculate overall trend (comparing first half vs second half)
-  // Sessions are now ordered by date (oldest first), so first half is older
-  const getOverallTrend = () => {
-    if (sessions.length < 2) return null;
-    
-    const midpoint = Math.floor(sessions.length / 2);
-    const firstHalf = sessions.slice(0, midpoint); // Older sessions
-    const secondHalf = sessions.slice(midpoint); // Newer sessions
-    
-    if (firstHalf.length === 0 || secondHalf.length === 0) return null;
-    
-    const firstAvg = firstHalf.reduce((sum, s) => sum + s.averageScore, 0) / firstHalf.length;
-    const secondAvg = secondHalf.reduce((sum, s) => sum + s.averageScore, 0) / secondHalf.length;
-    
-    return calculateImprovement(secondAvg, firstAvg);
-  };
-
-  const overallTrend = getOverallTrend();
-
-  return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Analytics</h1>
-
-      {/* Summary Cards */}
-      {summary && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Total Sessions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{summary.totalSessions}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Crosshair className="h-4 w-4" />
-                Total Shots
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{summary.totalShots}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Total Score
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{summary.totalScore}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Average Score
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-end justify-between">
-                <p className="text-3xl font-bold">{summary.averageScore.toFixed(2)}</p>
-                {overallTrend !== null && (
-                  <div className={`flex items-center gap-1 text-sm font-medium ${getImprovementDisplay(overallTrend).color}`}>
-                    {getImprovementDisplay(overallTrend).icon}
-                    <span>{getImprovementDisplay(overallTrend).text}</span>
-                  </div>
-                )}
-              </div>
-              {overallTrend !== null && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Overall trend
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Filters */}
-      <Card className="mb-6">
-        {!filtersOpen ? (
-          <button
-            onClick={() => setFiltersOpen(true)}
-            className="w-full text-left hover:bg-accent/50 transition-colors"
-          >
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="h-5 w-5" />
-                  Filters
-                </CardTitle>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>Click to expand</span>
-                  <ChevronDown className="h-4 w-4" />
-                </div>
-              </div>
-            </CardHeader>
-          </button>
-        ) : (
-          <>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="h-5 w-5" />
-                  Filters
-                </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setFiltersOpen(false)}
-                  className="gap-2"
-                >
-                  Hide <ChevronUp className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="dateStart" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Start Date
-              </Label>
-              <Input
-                id="dateStart"
-                type="date"
-                value={filters.dateStart}
-                onChange={(e) => setFilters({ ...filters, dateStart: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="dateEnd" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                End Date
-              </Label>
-              <Input
-                id="dateEnd"
-                type="date"
-                value={filters.dateEnd}
-                onChange={(e) => setFilters({ ...filters, dateEnd: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {firearms.length > 0 && (
-            <div>
-              <Label className="flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Firearms (optional - select to filter)
-              </Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {firearms.map((firearm) => (
-                  <button
-                    key={firearm._id}
-                    className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                      filters.firearmIds.includes(firearm._id)
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground hover:bg-accent"
-                    }`}
-                    onClick={() => toggleFirearm(firearm._id)}
-                  >
-                    {firearm.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {calibers.length > 0 && (
-            <div>
-              <Label className="flex items-center gap-2">
-                <Crosshair className="h-4 w-4" />
-                Calibers (optional - select to filter)
-              </Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {calibers.map((caliber) => (
-                  <button
-                    key={caliber._id}
-                    className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                      filters.caliberIds.includes(caliber._id)
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground hover:bg-accent"
-                    }`}
-                    onClick={() => toggleCaliber(caliber._id)}
-                  >
-                    {caliber.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="distanceMin" className="flex items-center gap-2">
-                <Ruler className="h-4 w-4" />
-                Min Distance (yards)
-              </Label>
-              <Input
-                id="distanceMin"
-                type="number"
-                value={filters.distanceMin}
-                onChange={(e) => setFilters({ ...filters, distanceMin: e.target.value })}
-                placeholder="e.g., 25"
-              />
-            </div>
-            <div>
-              <Label htmlFor="distanceMax" className="flex items-center gap-2">
-                <Ruler className="h-4 w-4" />
-                Max Distance (yards)
-              </Label>
-              <Input
-                id="distanceMax"
-                type="number"
-                value={filters.distanceMax}
-                onChange={(e) => setFilters({ ...filters, distanceMax: e.target.value })}
-                placeholder="e.g., 100"
-              />
-            </div>
-          </div>
-            </CardContent>
-          </>
-        )}
-      </Card>
-
-      {/* Progress Chart */}
-      {sessions.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Average Score Over Time</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="date" className="text-xs" />
-                <YAxis domain={[0, 5]} className="text-xs" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "6px",
-                  }}
-                />
-                <Legend />
-                <Bar
-                  dataKey="score"
-                  fill="hsl(var(--primary))"
-                  name="Average Score"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Session Table */}
-      {sessions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Session Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">Date</th>
-                    <th className="text-left p-2">Location</th>
-                    <th className="text-right p-2">Shots</th>
-                    <th className="text-right p-2">Score</th>
-                    <th className="text-right p-2">Average</th>
-                    <th className="text-right p-2">Improvement</th>
-                    <th className="text-right p-2">Sheets</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sessions.map((session, index) => {
-                    // Since sessions are sorted by date (oldest first), previous session is at index - 1
-                    const previousSession = index > 0 ? sessions[index - 1] : null;
-                    const improvement = calculateImprovement(
-                      session.averageScore,
-                      previousSession?.averageScore ?? null
-                    );
-                    const improvementDisplay = getImprovementDisplay(improvement);
-
-                    return (
-                      <tr key={session.sessionId} className="border-b hover:bg-accent">
-                        <td className="p-2">
-                          <Link 
-                            href={`/sessions/${session.slug}`}
-                            className="text-primary hover:underline"
-                          >
-                            {format(new Date(session.date), "MMM d, yyyy")}
-                          </Link>
-                        </td>
-                        <td className="p-2 text-muted-foreground">{session.location || "-"}</td>
-                        <td className="p-2 text-right">{session.totalShots}</td>
-                        <td className="p-2 text-right">{session.totalScore}</td>
-                        <td className="p-2 text-right font-medium">
-                          {session.averageScore.toFixed(2)}
-                        </td>
-                        <td className="p-2 text-right">
-                          <div className={`flex items-center justify-end gap-1 font-medium ${improvementDisplay.color}`}>
-                            {improvementDisplay.icon}
-                            <span className="text-sm">{improvementDisplay.text}</span>
-                          </div>
-                        </td>
-                        <td className="p-2 text-right">{session.sheetCount}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {loading && sessions.length === 0 && (
+  if (loading && !data) {
+    return (
+      <div>
+        <AnalyticsHeader title="Analytics" icon={BarChart3} description="Track your shooting performance over time" />
         <Card>
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">Loading analytics...</p>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  if (!data || data.sessions.length === 0) {
+    return (
+      <div>
+        <AnalyticsHeader title="Analytics" icon={BarChart3} description="Track your shooting performance over time" />
+        <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+        <EmptyState
+          title="No data available"
+          description="No sessions match your current filters. Try adjusting your filters or record some shooting sessions to see analytics."
+        />
+      </div>
+    );
+  }
+
+  const { kpis, deltas, sessions, ringDistributions, shotsPerSession } = data;
+
+  // Debug logging
+  console.log("Analytics data:", { sessions, ringDistributions, shotsPerSession });
+
+  // Chart: Average Score Per Shot Over Sessions
+  const avgScoreChartOption: EChartsOption = {
+    tooltip: {
+      trigger: "axis",
+      formatter: (params: any) => {
+        const session = sessions[params[0].dataIndex];
+        return `
+          <strong>Session ${session.sessionIndex + 1}</strong><br/>
+          ${format(new Date(session.date), "MMM d, yyyy")}<br/>
+          Avg Score: ${session.avgScorePerShot.toFixed(2)}<br/>
+          Bull Rate: ${(session.bullRate * 100).toFixed(1)}%<br/>
+          Shots: ${session.totalShots}
+        `;
+      },
+    },
+    xAxis: {
+      type: "category",
+      data: sessions.map((s, i) => `S${i + 1}`),
+    },
+    yAxis: {
+      type: "value",
+      min: 0,
+      max: 5,
+      name: "Score",
+    },
+    series: [
+      {
+        data: sessions.map((s) => s.avgScorePerShot),
+        type: "line",
+        smooth: true,
+        lineStyle: { color: CHART_COLORS.primary, width: 3 },
+        itemStyle: { color: CHART_COLORS.primary },
+        areaStyle: { color: CHART_COLORS.primary, opacity: 0.1 },
+      },
+    ],
+  };
+
+  // Chart: Bull Rate and Miss Rate Over Sessions
+  const bullMissChartOption: EChartsOption = {
+    tooltip: {
+      trigger: "axis",
+      formatter: (params: any) => {
+        const session = sessions[params[0].dataIndex];
+        return `
+          <strong>Session ${session.sessionIndex + 1}</strong><br/>
+          Bull Rate: ${(session.bullRate * 100).toFixed(1)}%<br/>
+          Miss Rate: ${(session.missRate * 100).toFixed(1)}%
+        `;
+      },
+    },
+    legend: {
+      data: ["Bull Rate", "Miss Rate"],
+      textStyle: { color: "hsl(var(--foreground))" },
+    },
+    xAxis: {
+      type: "category",
+      data: sessions.map((s, i) => `S${i + 1}`),
+    },
+    yAxis: {
+      type: "value",
+      min: 0,
+      max: 1,
+      name: "Rate",
+      axisLabel: {
+        formatter: (val: number) => `${(val * 100).toFixed(0)}%`,
+      },
+    },
+    series: [
+      {
+        name: "Bull Rate",
+        data: sessions.map((s) => s.bullRate),
+        type: "line",
+        smooth: true,
+        lineStyle: { color: CHART_COLORS.success },
+        itemStyle: { color: CHART_COLORS.success },
+      },
+      {
+        name: "Miss Rate",
+        data: sessions.map((s) => s.missRate),
+        type: "line",
+        smooth: true,
+        lineStyle: { color: CHART_COLORS.danger },
+        itemStyle: { color: CHART_COLORS.danger },
+      },
+    ],
+  };
+
+  // Chart: Mean Radius Over Sessions (if available)
+  const hasMeanRadiusData = sessions.some((s) => s.meanRadius !== undefined);
+  const meanRadiusChartOption: EChartsOption | null = hasMeanRadiusData
+    ? {
+        tooltip: {
+          trigger: "axis",
+          formatter: (params: any) => {
+            const session = sessions[params[0].dataIndex];
+            return `
+              <strong>Session ${session.sessionIndex + 1}</strong><br/>
+              Mean Radius: ${session.meanRadius?.toFixed(2) || "N/A"}
+            `;
+          },
+        },
+        xAxis: {
+          type: "category",
+          data: sessions.map((s, i) => `S${i + 1}`),
+        },
+        yAxis: {
+          type: "value",
+          name: "Mean Radius",
+        },
+        series: [
+          {
+            data: sessions.map((s) => s.meanRadius || null),
+            type: "line",
+            smooth: true,
+            lineStyle: { color: CHART_COLORS.info, width: 3 },
+            itemStyle: { color: CHART_COLORS.info },
+          },
+        ],
+      }
+    : null;
+
+  // Chart: Shots Per Session (Bar)
+  const shotCountChartOption: EChartsOption = {
+    tooltip: {
+      trigger: "axis",
+    },
+    xAxis: {
+      type: "category",
+      data: shotsPerSession.map((s, i) => `S${i + 1}`),
+    },
+    yAxis: {
+      type: "value",
+      name: "Shots",
+    },
+    series: [
+      {
+        data: shotsPerSession.map((s) => s.shots),
+        type: "bar",
+        itemStyle: { color: CHART_COLORS.primary },
+      },
+    ],
+  };
+
+  // Chart: Ring Distribution Stacked
+  const ringDistChartOption: EChartsOption = {
+    tooltip: {
+      trigger: "axis",
+      formatter: (params: any) => {
+        let result = `<strong>Session ${params[0].axisValue}</strong><br/>`;
+        params.forEach((p: any) => {
+          result += `${p.seriesName}: ${(p.value * 100).toFixed(1)}%<br/>`;
+        });
+        return result;
+      },
+    },
+    legend: {
+      data: ["5", "4", "3", "2", "1", "0"],
+      textStyle: { color: "hsl(var(--foreground))" },
+    },
+    xAxis: {
+      type: "category",
+      data: ringDistributions.map((r, i) => `S${i + 1}`),
+    },
+    yAxis: {
+      type: "value",
+      min: 0,
+      max: 1,
+      axisLabel: {
+        formatter: (val: number) => `${(val * 100).toFixed(0)}%`,
+      },
+    },
+    series: [
+      {
+        name: "5",
+        data: ringDistributions.map((r) => r.p5),
+        type: "bar",
+        stack: "rings",
+        itemStyle: { color: CHART_COLORS.score5 },
+      },
+      {
+        name: "4",
+        data: ringDistributions.map((r) => r.p4),
+        type: "bar",
+        stack: "rings",
+        itemStyle: { color: CHART_COLORS.score4 },
+      },
+      {
+        name: "3",
+        data: ringDistributions.map((r) => r.p3),
+        type: "bar",
+        stack: "rings",
+        itemStyle: { color: CHART_COLORS.score3 },
+      },
+      {
+        name: "2",
+        data: ringDistributions.map((r) => r.p2),
+        type: "bar",
+        stack: "rings",
+        itemStyle: { color: CHART_COLORS.score2 },
+      },
+      {
+        name: "1",
+        data: ringDistributions.map((r) => r.p1),
+        type: "bar",
+        stack: "rings",
+        itemStyle: { color: CHART_COLORS.score1 },
+      },
+      {
+        name: "0",
+        data: ringDistributions.map((r) => r.p0),
+        type: "bar",
+        stack: "rings",
+        itemStyle: { color: CHART_COLORS.score0 },
+      },
+    ],
+  };
+
+  return (
+    <div>
+      <AnalyticsHeader
+        title="Analytics"
+        icon={BarChart3}
+        description="Track your shooting performance over time"
+      />
+
+      <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <KpiCard
+          title="Avg Score/Shot"
+          value={kpis.avgScore.toFixed(2)}
+          icon={TrendingUp}
+          delta={deltas.lastVsPrev?.avgScore.delta}
+          higherIsBetter={true}
+          subtitle="Last session"
+        />
+        <KpiCard
+          title="Bull Rate"
+          value={`${(kpis.bullRate * 100).toFixed(1)}%`}
+          icon={Target}
+          delta={deltas.lastVsPrev?.bullRate.delta}
+          higherIsBetter={true}
+          subtitle="Last session"
+        />
+        <KpiCard
+          title="Miss Rate"
+          value={`${(kpis.missRate * 100).toFixed(1)}%`}
+          icon={Crosshair}
+          delta={deltas.lastVsPrev?.missRate.delta}
+          higherIsBetter={false}
+          subtitle="Last session"
+        />
+        <KpiCard
+          title="Total Shots"
+          value={kpis.totalShots}
+          icon={Activity}
+          subtitle={`${kpis.sessionsCount} sessions`}
+        />
+      </div>
+
+      {/* Position-based KPIs (if available) */}
+      {kpis.shotCoverage > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          {kpis.meanRadius !== null && (
+            <KpiCard
+              title="Mean Radius"
+              value={kpis.meanRadius.toFixed(2)}
+              icon={Radius}
+              delta={deltas.lastVsPrev?.meanRadius?.delta}
+              higherIsBetter={false}
+              subtitle="Target units"
+            />
+          )}
+          {kpis.centroidDistance !== null && (
+            <KpiCard
+              title="Centroid Distance"
+              value={kpis.centroidDistance.toFixed(2)}
+              icon={Focus}
+              delta={deltas.lastVsPrev?.centroidDistance?.delta}
+              higherIsBetter={false}
+              subtitle="Bias from center"
+            />
+          )}
+          <KpiCard
+            title="Tightness Score"
+            value={kpis.tightnessScore}
+            icon={Sparkles}
+            delta={deltas.lastVsPrev?.tightnessScore.delta}
+            higherIsBetter={true}
+            subtitle="0-100 scale"
+          />
+          <KpiCard
+            title="Shot Coverage"
+            value={`${(kpis.shotCoverage * 100).toFixed(1)}%`}
+            icon={PieChart}
+            subtitle="With position data"
+          />
+        </div>
       )}
 
-      {!loading && sessions.length === 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">
-              No data available for the selected filters. Try adjusting your date range or filters.
-            </p>
+      {/* Charts */}
+      <div className="space-y-6 mb-6">
+        <ChartCard title="Average Score Over Sessions" icon={LineChart}>
+          <EChart option={avgScoreChartOption} height={300} />
+        </ChartCard>
+
+        <ChartCard title="Bull Rate & Miss Rate" icon={TrendingUp}>
+          <EChart option={bullMissChartOption} height={300} />
+        </ChartCard>
+
+        {meanRadiusChartOption && (
+          <ChartCard title="Mean Radius (Precision)" icon={Radius}>
+            <EChart option={meanRadiusChartOption} height={300} />
+          </ChartCard>
+        )}
+
+        <ChartCard title="Shots Per Session" icon={Activity}>
+          <EChart option={shotCountChartOption} height={250} />
+        </ChartCard>
+
+        <ChartCard title="Ring Distribution" icon={PieChart}>
+          <EChart option={ringDistChartOption} height={300} />
+        </ChartCard>
+      </div>
+
+      {/* Drilldown Links */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
+        <Link href="/analytics/targets">
+          <Card className="hover:bg-accent transition-colors cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Shot Visualizations
+                </span>
+                <ArrowRight className="h-5 w-5" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Heatmaps, shot plots, bias analysis, and group metrics
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/analytics/firearms">
+          <Card className="hover:bg-accent transition-colors cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Firearms
+                </span>
+                <ArrowRight className="h-5 w-5" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Performance leaderboard and trends by firearm
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/analytics/calibers">
+          <Card className="hover:bg-accent transition-colors cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Crosshair className="h-5 w-5" />
+                  Calibers
+                </span>
+                <ArrowRight className="h-5 w-5" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Performance leaderboard and trends by caliber
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Insights */}
+      {deltas.lastVsPrev && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              Recent Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm">
+              {deltas.lastVsPrev.avgScore.delta !== null && Math.abs(deltas.lastVsPrev.avgScore.delta) > 0.1 && (
+                <li>
+                  Average score{" "}
+                  <strong className={deltas.lastVsPrev.avgScore.isImprovement ? "text-green-500" : "text-red-500"}>
+                    {deltas.lastVsPrev.avgScore.delta > 0 ? "increased" : "decreased"} by{" "}
+                    {Math.abs(deltas.lastVsPrev.avgScore.delta).toFixed(1)}%
+                  </strong>{" "}
+                  in your last session.
+                </li>
+              )}
+              {deltas.lastVsPrev.bullRate.delta !== null && Math.abs(deltas.lastVsPrev.bullRate.delta) > 0.1 && (
+                <li>
+                  Bull rate{" "}
+                  <strong className={deltas.lastVsPrev.bullRate.isImprovement ? "text-green-500" : "text-red-500"}>
+                    {deltas.lastVsPrev.bullRate.delta > 0 ? "improved" : "declined"} by{" "}
+                    {Math.abs(deltas.lastVsPrev.bullRate.delta).toFixed(1)}%
+                  </strong>
+                  .
+                </li>
+              )}
+              {deltas.lastVsPrev.meanRadius && deltas.lastVsPrev.meanRadius.delta !== null && (
+                <li>
+                  Mean radius{" "}
+                  <strong className={deltas.lastVsPrev.meanRadius.isImprovement ? "text-green-500" : "text-red-500"}>
+                    {deltas.lastVsPrev.meanRadius.delta > 0 ? "increased" : "decreased"} by{" "}
+                    {Math.abs(deltas.lastVsPrev.meanRadius.delta).toFixed(1)}%
+                  </strong>
+                  {" - "}tighter grouping!
+                </li>
+              )}
+            </ul>
           </CardContent>
         </Card>
       )}

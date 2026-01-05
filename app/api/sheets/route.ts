@@ -39,7 +39,11 @@ export async function POST(request: Request) {
     if (error.name === "ZodError") {
       return NextResponse.json({ error: "Validation failed", details: error.errors }, { status: 400 });
     }
-    return NextResponse.json({ error: "Failed to create sheet" }, { status: 500 });
+    // Return the actual error message for better debugging
+    return NextResponse.json({ 
+      error: error.message || "Failed to create sheet",
+      details: error.toString() 
+    }, { status: 500 });
   }
 }
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Target, LineChart, Settings, Menu, ChevronDown, ChevronRight, Crosshair, Eye, Zap } from "lucide-react";
+import { Target, LineChart, Settings, Menu, ChevronDown, ChevronRight, Crosshair, Eye, Zap, Radius } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,7 +14,14 @@ import { Toaster } from "@/components/ui/sonner";
 
 const navigation = [
   { name: "Sessions", href: "/sessions", icon: Target },
-  { name: "Analytics", href: "/analytics", icon: LineChart },
+];
+
+const analyticsItems = [
+  { name: "Overview", href: "/analytics", icon: LineChart },
+  { name: "Targets", href: "/analytics/targets", icon: Target },
+  { name: "Firearms", href: "/analytics/firearms", icon: Zap },
+  { name: "Calibers", href: "/analytics/calibers", icon: Crosshair },
+  { name: "Optics", href: "/analytics/optics", icon: Eye },
 ];
 
 const setupItems = [
@@ -25,12 +32,13 @@ const setupItems = [
 
 function NavigationItems({ onItemClick, isDesktop = false }: { onItemClick?: () => void; isDesktop?: boolean }) {
   const pathname = usePathname();
+  const [analyticsOpen, setAnalyticsOpen] = useState(isDesktop || pathname.startsWith("/analytics"));
   const [setupOpen, setSetupOpen] = useState(isDesktop || pathname.startsWith("/setup"));
 
   return (
     <>
       {navigation.map((item) => {
-        const isActive = pathname.startsWith(item.href);
+        const isActive = pathname === item.href;
         return (
           <Link
             key={item.name}
@@ -47,6 +55,50 @@ function NavigationItems({ onItemClick, isDesktop = false }: { onItemClick?: () 
           </Link>
         );
       })}
+      
+      {/* Analytics with sub-items */}
+      <div>
+        <button
+          onClick={() => setAnalyticsOpen(!analyticsOpen)}
+          className={`flex w-full items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            pathname.startsWith("/analytics")
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <LineChart className="h-5 w-5" />
+            Analytics
+          </div>
+          {analyticsOpen ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+        {analyticsOpen && (
+          <div className="ml-4 mt-1 space-y-1 border-l-2 border-border pl-4">
+            {analyticsItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onItemClick}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
       
       {/* Setup with sub-items */}
       <div>
