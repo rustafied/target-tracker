@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { TargetSheet } from "@/lib/models/TargetSheet";
 import { BullRecord } from "@/lib/models/BullRecord";
+import { RangeSession } from "@/lib/models/RangeSession";
+import { Firearm } from "@/lib/models/Firearm";
+import { Caliber } from "@/lib/models/Caliber";
+import { Optic } from "@/lib/models/Optic";
 import { sheetSchema } from "@/lib/validators/sheet";
 
 export async function GET(

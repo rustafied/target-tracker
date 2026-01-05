@@ -42,11 +42,44 @@ export async function POST(request: Request) {
       const results = await Promise.all(
         nonEmptyBulls.map(async (bull) => {
           const metrics = calculateBullMetrics(bull as any);
-          return await BullRecord.findOneAndUpdate(
-            { targetSheetId: sheetId, bullIndex: bull.bullIndex },
-            { ...bull, targetSheetId: sheetId, totalShots: metrics.totalShots },
-            { new: true, upsert: true }
-          );
+          
+          // Find existing or create new
+          let existingBull = await BullRecord.findOne({ 
+            targetSheetId: sheetId, 
+            bullIndex: bull.bullIndex 
+          });
+          
+          if (existingBull) {
+            // Update existing
+            existingBull.score5Count = bull.score5Count;
+            existingBull.score4Count = bull.score4Count;
+            existingBull.score3Count = bull.score3Count;
+            existingBull.score2Count = bull.score2Count;
+            existingBull.score1Count = bull.score1Count;
+            existingBull.score0Count = bull.score0Count;
+            existingBull.shotPositions = bull.shotPositions || [];
+            existingBull.totalShots = metrics.totalShots;
+            
+            await existingBull.save();
+            return existingBull;
+          } else {
+            // Create new
+            const newBull = new BullRecord({
+              targetSheetId: sheetId,
+              bullIndex: bull.bullIndex,
+              score5Count: bull.score5Count,
+              score4Count: bull.score4Count,
+              score3Count: bull.score3Count,
+              score2Count: bull.score2Count,
+              score1Count: bull.score1Count,
+              score0Count: bull.score0Count,
+              shotPositions: bull.shotPositions || [],
+              totalShots: metrics.totalShots
+            });
+            
+            await newBull.save();
+            return newBull;
+          }
         })
       );
 

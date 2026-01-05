@@ -90,6 +90,39 @@ lucide-react icons:
 #### Label
 * "Bull 1", "Bull 2", etc.
 
+#### Two-Column Layout (Desktop/Tablet)
+* **Left Column**: Interactive Target Input
+  * Visual target with clickable zones
+  * Click to add shots to specific target locations
+  * Right-click to remove shots
+  * Shows real-time shot placement
+  * White dots for bullseye (5pts), red dots for other rings
+  * Hover feedback showing point value of hovered zone
+* **Right Column**: Count Buttons
+  * Traditional count button interface
+  * Rows for each score level (5, 4, 3, 2, 1, 0)
+  * Small, rounded buttons
+  * Selected state highlighted
+  * Syncs with interactive target input
+
+#### Mobile Layout
+* Interactive target above count buttons
+* Vertical stacking for better touch input
+* Both methods stay in sync
+
+#### Interactive Target Features
+* SVG-based target visualization (200x200 viewBox)
+* Ring-based scoring zones:
+  * Red center (0-15 radius): 5pts
+  * Inner black (15-30): 4pts
+  * Middle black (30-50): 3pts
+  * Dark gray (50-70): 2pts
+  * Light gray (70-85): 1pt
+  * White outer (85-100): 0pts
+* Real-time score calculation from shot positions
+* Auto-populates count buttons and quick entry
+* Optional - if shot positions not recorded, displays randomized positions based on counts
+
 #### Compact Grid
 * **Rows**: Score levels (5, 4, 3, 2, 1, 0)
 * **For each row**:
@@ -101,6 +134,7 @@ lucide-react icons:
 #### Mobile Optimization
 * Buttons in 2–3 columns per row to fit narrow screens
 * Ensure tap targets are large enough
+* Interactive target optimized for touch input
 
 #### Derived Metrics Display
 Real-time text updates:
@@ -108,7 +142,7 @@ Real-time text updates:
 * "Total score: Y"
 * "Average score/shot: Z.Z"
 
-These metrics update live as the user adjusts counts.
+These metrics update live as the user adjusts counts or adds shots via the interactive target.
 
 ---
 

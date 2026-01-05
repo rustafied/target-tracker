@@ -1,5 +1,11 @@
 import mongoose, { Schema, Model } from "mongoose";
 
+export interface IShotPosition {
+  x: number; // X coordinate (0-200 in SVG viewBox)
+  y: number; // Y coordinate (0-200 in SVG viewBox)
+  score: number; // Score value (0-5)
+}
+
 export interface IBullRecord {
   _id?: mongoose.Types.ObjectId;
   targetSheetId: mongoose.Types.ObjectId;
@@ -10,10 +16,17 @@ export interface IBullRecord {
   score2Count: number;
   score1Count: number;
   score0Count: number;
+  shotPositions?: IShotPosition[]; // Optional array of exact shot positions
   totalShots?: number;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const ShotPositionSchema = new Schema({
+  x: { type: Number, required: true },
+  y: { type: Number, required: true },
+  score: { type: Number, required: true, min: 0, max: 5 }
+}, { _id: false });
 
 const BullRecordSchema = new Schema<IBullRecord>(
   {
@@ -25,6 +38,7 @@ const BullRecordSchema = new Schema<IBullRecord>(
     score2Count: { type: Number, default: 0, min: 0, max: 10 },
     score1Count: { type: Number, default: 0, min: 0, max: 10 },
     score0Count: { type: Number, default: 0, min: 0, max: 10 },
+    shotPositions: [ShotPositionSchema],
     totalShots: { type: Number },
   },
   { timestamps: true }

@@ -80,6 +80,8 @@ export default function SessionDetailPage() {
   const [locations, setLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteSheetDialogOpen, setDeleteSheetDialogOpen] = useState(false);
+  const [sheetToDelete, setSheetToDelete] = useState<Sheet | null>(null);
   const [formData, setFormData] = useState({
     date: "",
     location: "",
@@ -198,6 +200,32 @@ export default function SessionDetailPage() {
       }
     } catch (error) {
       toast.error("Failed to delete session");
+    }
+  };
+
+  const openDeleteSheetDialog = (sheet: Sheet) => {
+    setSheetToDelete(sheet);
+    setDeleteSheetDialogOpen(true);
+  };
+
+  const handleDeleteSheet = async () => {
+    if (!sheetToDelete) return;
+
+    try {
+      const res = await fetch(`/api/sheets/${sheetToDelete._id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("Sheet deleted");
+        setDeleteSheetDialogOpen(false);
+        setSheetToDelete(null);
+        fetchSession(); // Refresh the session to update sheets list
+      } else {
+        toast.error("Failed to delete sheet");
+      }
+    } catch (error) {
+      toast.error("Failed to delete sheet");
     }
   };
 
@@ -630,15 +658,24 @@ export default function SessionDetailPage() {
                       </div>
                     )}
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => router.push(`/sheets/${sheet.slug || sheet._id}`)}
-                    >
-                      <TargetIcon className="h-4 w-4 mr-2" />
-                      View Details
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => router.push(`/sheets/${sheet.slug || sheet._id}`)}
+                      >
+                        <TargetIcon className="h-4 w-4 mr-2" />
+                        View Details
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openDeleteSheetDialog(sheet)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -701,6 +738,33 @@ export default function SessionDetailPage() {
               <Button type="submit">Update Session</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Sheet Confirmation Dialog */}
+      <Dialog open={deleteSheetDialogOpen} onOpenChange={setDeleteSheetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Sheet</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this sheet? This will permanently delete all scores for this sheet.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteSheetDialogOpen(false);
+                setSheetToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteSheet}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Sheet
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

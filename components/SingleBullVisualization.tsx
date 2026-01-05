@@ -12,6 +12,11 @@ interface SingleBullVisualizationProps {
     score2Count: number;
     score1Count: number;
     score0Count: number;
+    shotPositions?: Array<{
+      x: number;
+      y: number;
+      score: number;
+    }>;
   };
   size?: number;
 }
@@ -25,9 +30,19 @@ interface Shot {
 export function SingleBullVisualization({ bull, size = 120 }: SingleBullVisualizationProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Generate random shot positions within each ring
+  // Generate shot positions - use real positions if available, otherwise random
   const shots = useMemo(() => {
     const allShots: Shot[] = [];
+    
+    // If we have real shot positions, use them
+    if (bull.shotPositions && bull.shotPositions.length > 0) {
+      bull.shotPositions.forEach(pos => {
+        allShots.push({ x: pos.x, y: pos.y, ring: 5 - pos.score });
+      });
+      return allShots;
+    }
+    
+    // Otherwise, generate random positions based on counts
     const centerX = 100;
     const centerY = 100;
     

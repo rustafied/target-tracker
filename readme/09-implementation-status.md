@@ -69,6 +69,17 @@ Current state of the Target Tracker application as of January 2026.
   - Icons for all equipment types
 
 #### 4. Bull Scoring
+- **Interactive Target Input** - Visual click-to-add shot placement
+  - Left column: SVG-based interactive target (200x200 viewBox)
+  - Click anywhere on target to add a shot at that exact location
+  - Right-click on existing shots to remove them
+  - Automatically calculates score based on distance from center
+  - Ring-based scoring zones (bullseye: 0-15 radius = 5pts, etc.)
+  - White dots for bullseye shots (5pts), red dots for all other rings
+  - Hover feedback shows point value of hovered zone
+  - Shot positions saved as XY coordinates (optional field)
+  - Bidirectionally syncs with count buttons and quick entry
+  - Clear all button to reset shots
 - **Quick Entry Card** - Positioned at top of sheet detail page
   - 6 input fields (one per bull) in responsive grid layout
   - Enter scores as 6-digit strings (e.g., "543210" = 5pts:5, 4pts:4, 3pts:3, 2pts:2, 1pt:1, 0pts:0)
@@ -76,6 +87,7 @@ Current state of the Target Tracker application as of January 2026.
   - Syncs bidirectionally with count buttons below
   - Pre-populated when viewing existing sheets
 - **Score Entry Interface** - `/sheets/[sheetId]` page with:
+  - Two-column layout per bull (interactive target left, count buttons right)
   - 6 bull sections (bulls 1-6) displayed below quick entry
   - Button grid (0-10) for each score level (5, 4, 3, 2, 1, 0)
   - Copy Previous button for each bull (except first)
@@ -113,11 +125,17 @@ Custom SVG components with realistic target rings:
   - Score 0 (outer): White (#ffffff)
 
 #### Shot Placement
-- **Randomized Positions** - Shots are randomly placed within the appropriate ring for their score
+- **Exact Position Recording** - When using interactive target input, records XY coordinates
+  - Stored as array of `{x, y, score}` objects in `shotPositions` field
+  - Optional field - system works with or without position data
+- **Intelligent Visualization** - Adapts based on available data:
+  - If shot positions recorded: Uses exact coordinates for true accuracy
+  - If no positions: Falls back to randomized placement within correct scoring rings
 - **Shot Dots**:
   - Default: Red (#ef4444) for visibility
-  - Bullseye (score 5): White (#ffffff) for contrast
+  - Bullseye (score 5): White (#ffffff) for contrast against red center
   - Size: 6px radius for clear visibility
+  - Interactive target: 7px radius with darker stroke for better feedback
 - **Hover Effects** - On individual bullseye visualizations:
   - 2x scale animation (smooth transition)
   - Detailed tooltip appears below showing:
@@ -223,6 +241,7 @@ All using Mongoose ODM with MongoDB:
 - `targetSheetId` (reference)
 - `bullIndex` (1-6)
 - `score5Count`, `score4Count`, `score3Count`, `score2Count`, `score1Count`, `score0Count`
+- `shotPositions` (array of {x, y, score}, optional) - Exact XY coordinates when using interactive input
 - `totalShots` (derived)
 - `createdAt`, `updatedAt`
 
@@ -254,9 +273,10 @@ Not stored in database, calculated on-the-fly:
 
 #### Custom Components
 - `AppShell.tsx` - Main layout with expandable navigation
-- `BullseyeVisualization.tsx` - Combined bullseye for all shots on sheet
+- `BullseyeVisualization.tsx` - Combined bullseye for all shots on sheet (uses real positions if available)
 - `SingleBullVisualization.tsx` - Individual bull with hover tooltip
-- `SessionHeatmap.tsx` - Aggregate heatmap for session
+- `SessionHeatmap.tsx` - Aggregate heatmap for session (uses real positions if available)
+- `InteractiveTargetInput.tsx` - Click-to-add shot placement interface with live feedback
 - `CountButtons.tsx` - 0-10 button grid for score entry with active state styling
 - `TagSelector.tsx` - Multi-select tag interface with blue active state
 - `LocationAutocomplete.tsx` - Location input with suggestions
@@ -361,6 +381,17 @@ All CRUD operations exposed via `/api/*`:
     - Issue: Input field showing default "543210" and not allowing leading zeros
     - Fix: Added separate state for quick entry, bidirectional sync with count buttons
     - Now supports partial entry like "03" and shows blank for all-zero bulls
+
+15. **Interactive Target Input**
+    - Feature: Added visual click-to-add shot placement interface
+    - Left column displays interactive SVG target (200x200 viewBox)
+    - Click to add shots, right-click to remove
+    - Automatically scores based on distance from center using ring radii
+    - Records exact XY coordinates in optional `shotPositions` array field
+    - Bidirectionally syncs with count buttons and quick entry
+    - Visualizations intelligently use real positions when available, otherwise randomize
+    - White dots for bullseye shots (5pts), red for all others
+    - Hover feedback shows point value of target zone
 
 ---
 

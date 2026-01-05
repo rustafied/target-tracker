@@ -18,6 +18,11 @@ interface SessionHeatmapProps {
       score2Count: number;
       score1Count: number;
       score0Count: number;
+      shotPositions?: Array<{
+        x: number;
+        y: number;
+        score: number;
+      }>;
     }>;
   }>;
 }
@@ -31,52 +36,61 @@ interface Shot {
 export function SessionHeatmap({ sheets }: SessionHeatmapProps) {
   const [modalOpen, setModalOpen] = useState(false);
   
-  // Generate random shot positions from all bulls on all sheets
+  // Generate shot positions from all bulls on all sheets - use real positions if available
   const shots = useMemo(() => {
     const allShots: Shot[] = [];
-    const centerX = 100;
-    const centerY = 100;
     
-    // Ring radii (from center outward)
-    const rings = [
-      { inner: 0, outer: 15, score: 5 },      // Red center (5)
-      { inner: 15, outer: 30, score: 4 },     // Black ring (4)
-      { inner: 30, outer: 50, score: 3 },     // Black ring (3)
-      { inner: 50, outer: 70, score: 2 },     // Dark gray (2)
-      { inner: 70, outer: 85, score: 1 },     // Light gray (1)
-      { inner: 85, outer: 100, score: 0 },    // White (0/miss)
-    ];
-
     sheets.forEach((sheet) => {
       sheet.bulls?.forEach((bull) => {
-        const counts = [
-          { count: bull.score5Count, ring: 0 },
-          { count: bull.score4Count, ring: 1 },
-          { count: bull.score3Count, ring: 2 },
-          { count: bull.score2Count, ring: 3 },
-          { count: bull.score1Count, ring: 4 },
-          { count: bull.score0Count, ring: 5 },
-        ];
+        // If we have real shot positions, use them
+        if (bull.shotPositions && bull.shotPositions.length > 0) {
+          bull.shotPositions.forEach(pos => {
+            allShots.push({ x: pos.x, y: pos.y, ring: 5 - pos.score });
+          });
+        } else {
+          // Otherwise, generate random positions based on counts
+          const centerX = 100;
+          const centerY = 100;
+          
+          // Ring radii (from center outward)
+          const rings = [
+            { inner: 0, outer: 15, score: 5 },      // Red center (5)
+            { inner: 15, outer: 30, score: 4 },     // Black ring (4)
+            { inner: 30, outer: 50, score: 3 },     // Black ring (3)
+            { inner: 50, outer: 70, score: 2 },     // Dark gray (2)
+            { inner: 70, outer: 85, score: 1 },     // Light gray (1)
+            { inner: 85, outer: 100, score: 0 },    // White (0/miss)
+          ];
 
-        counts.forEach(({ count, ring }) => {
-          for (let i = 0; i < count; i++) {
-            const { inner, outer } = rings[ring];
-            
-            // Random angle
-            const angle = Math.random() * Math.PI * 2;
-            
-            // Random radius within the ring (with slight padding)
-            const minRadius = inner + 2;
-            const maxRadius = outer - 2;
-            const radius = minRadius + Math.random() * (maxRadius - minRadius);
-            
-            // Convert to x,y coordinates
-            const x = centerX + radius * Math.cos(angle);
-            const y = centerY + radius * Math.sin(angle);
-            
-            allShots.push({ x, y, ring });
-          }
-        });
+          const counts = [
+            { count: bull.score5Count, ring: 0 },
+            { count: bull.score4Count, ring: 1 },
+            { count: bull.score3Count, ring: 2 },
+            { count: bull.score2Count, ring: 3 },
+            { count: bull.score1Count, ring: 4 },
+            { count: bull.score0Count, ring: 5 },
+          ];
+
+          counts.forEach(({ count, ring }) => {
+            for (let i = 0; i < count; i++) {
+              const { inner, outer } = rings[ring];
+              
+              // Random angle
+              const angle = Math.random() * Math.PI * 2;
+              
+              // Random radius within the ring (with slight padding)
+              const minRadius = inner + 2;
+              const maxRadius = outer - 2;
+              const radius = minRadius + Math.random() * (maxRadius - minRadius);
+              
+              // Convert to x,y coordinates
+              const x = centerX + radius * Math.cos(angle);
+              const y = centerY + radius * Math.sin(angle);
+              
+              allShots.push({ x, y, ring });
+            }
+          });
+        }
       });
     });
 
@@ -111,40 +125,24 @@ export function SessionHeatmap({ sheets }: SessionHeatmapProps) {
         <div className="relative w-full max-w-[300px] mx-auto aspect-square transition-all duration-300 group-hover:scale-105">
           <svg viewBox="0 0 200 200" className="w-full h-full">
             {/* Target rings (from outside to inside) */}
+            <circle cx="100" cy="100" r="100" fill="white" stroke="#333" strokeWidth="2" />
+            <circle cx="100" cy="100" r="85" fill="#d4d4d4" stroke="#333" strokeWidth="2" />
+            <circle cx="100" cy="100" r="70" fill="#737373" stroke="#333" strokeWidth="2" />
+            <circle cx="100" cy="100" r="50" fill="#1a1a1a" stroke="#333" strokeWidth="2" />
+            <circle cx="100" cy="100" r="30" fill="#0a0a0a" stroke="#333" strokeWidth="2" />
+            <circle cx="100" cy="100" r="15" fill="#dc2626" stroke="#333" strokeWidth="2" />
             
-            {/* 0 - White (miss) */}
-            <circle cx="100" cy="100" r="100" fill="white" stroke="#333" strokeWidth="1" />
-            
-            {/* 1 - Light gray */}
-            <circle cx="100" cy="100" r="85" fill="#d4d4d4" stroke="#333" strokeWidth="1" />
-            
-            {/* 2 - Dark gray */}
-            <circle cx="100" cy="100" r="70" fill="#737373" stroke="#333" strokeWidth="1" />
-            
-            {/* 3 - Black */}
-            <circle cx="100" cy="100" r="50" fill="#1a1a1a" stroke="#333" strokeWidth="1" />
-            
-            {/* 4 - Black */}
-            <circle cx="100" cy="100" r="30" fill="#0a0a0a" stroke="#333" strokeWidth="1" />
-            
-            {/* 5 - Red center (bullseye) */}
-            <circle cx="100" cy="100" r="15" fill="#dc2626" stroke="#333" strokeWidth="1" />
-            
-            {/* Crosshairs */}
-            <line x1="0" y1="100" x2="200" y2="100" stroke="#333" strokeWidth="0.5" opacity="0.3" />
-            <line x1="100" y1="0" x2="100" y2="200" stroke="#333" strokeWidth="0.5" opacity="0.3" />
-            
-            {/* Shot markers with transparency for heatmap effect */}
-            {shots.map((shot, index) => (
+            {/* Shot markers - use actual positions or randomized */}
+            {shots.map((shot, i) => (
               <circle
-                key={index}
+                key={i}
                 cx={shot.x}
                 cy={shot.y}
-                r="3.5"
-                fill={shot.ring === 0 ? "#ffffff" : "#ef4444"}
-                stroke={shot.ring === 0 ? "#333333" : "#7f1d1d"}
-                strokeWidth="0.3"
-                opacity="0.4"
+                r="1.5"
+                fill={shot.ring === 0 ? "white" : "#ef4444"}
+                stroke={shot.ring === 0 ? "#333" : "none"}
+                strokeWidth="0.5"
+                opacity="0.8"
               />
             ))}
           </svg>
@@ -165,38 +163,34 @@ export function SessionHeatmap({ sheets }: SessionHeatmapProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
-              Session Heatmap Analysis
+              Session Heatmap
             </DialogTitle>
           </DialogHeader>
           
           <div className="grid grid-cols-1 md:grid-cols-[60%_40%] gap-6 mt-4">
-            {/* Left: Large Heatmap */}
+            {/* Left: Large Heatmap View */}
             <div className="flex items-center justify-center">
               <div className="relative w-full max-w-[400px] aspect-square">
                 <svg viewBox="0 0 200 200" className="w-full h-full">
                   {/* Target rings */}
-                  <circle cx="100" cy="100" r="100" fill="white" stroke="#333" strokeWidth="1" />
-                  <circle cx="100" cy="100" r="85" fill="#d4d4d4" stroke="#333" strokeWidth="1" />
-                  <circle cx="100" cy="100" r="70" fill="#737373" stroke="#333" strokeWidth="1" />
-                  <circle cx="100" cy="100" r="50" fill="#1a1a1a" stroke="#333" strokeWidth="1" />
-                  <circle cx="100" cy="100" r="30" fill="#0a0a0a" stroke="#333" strokeWidth="1" />
-                  <circle cx="100" cy="100" r="15" fill="#dc2626" stroke="#333" strokeWidth="1" />
-                  
-                  {/* Crosshairs */}
-                  <line x1="0" y1="100" x2="200" y2="100" stroke="#333" strokeWidth="0.5" opacity="0.3" />
-                  <line x1="100" y1="0" x2="100" y2="200" stroke="#333" strokeWidth="0.5" opacity="0.3" />
+                  <circle cx="100" cy="100" r="100" fill="white" stroke="#333" strokeWidth="2" />
+                  <circle cx="100" cy="100" r="85" fill="#d4d4d4" stroke="#333" strokeWidth="2" />
+                  <circle cx="100" cy="100" r="70" fill="#737373" stroke="#333" strokeWidth="2" />
+                  <circle cx="100" cy="100" r="50" fill="#1a1a1a" stroke="#333" strokeWidth="2" />
+                  <circle cx="100" cy="100" r="30" fill="#0a0a0a" stroke="#333" strokeWidth="2" />
+                  <circle cx="100" cy="100" r="15" fill="#dc2626" stroke="#333" strokeWidth="2" />
                   
                   {/* Shot markers */}
-                  {shots.map((shot, index) => (
+                  {shots.map((shot, i) => (
                     <circle
-                      key={index}
+                      key={i}
                       cx={shot.x}
                       cy={shot.y}
-                      r="3.5"
-                      fill={shot.ring === 0 ? "#ffffff" : "#ef4444"}
-                      stroke={shot.ring === 0 ? "#333333" : "#7f1d1d"}
-                      strokeWidth="0.3"
-                      opacity="0.4"
+                      r="1.5"
+                      fill={shot.ring === 0 ? "white" : "#ef4444"}
+                      stroke={shot.ring === 0 ? "#333" : "none"}
+                      strokeWidth="0.5"
+                      opacity="0.8"
                     />
                   ))}
                 </svg>

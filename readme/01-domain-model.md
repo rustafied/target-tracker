@@ -99,8 +99,19 @@ One bullseye on a sheet with aggregated scores.
 * `score2Count` (number, default 0)
 * `score1Count` (number, default 0)
 * `score0Count` (number, default 0) - Misses
+* `shotPositions` (array of {x, y, score}, optional) - Exact XY coordinates of shots on target
+  * `x` (number, 0-200) - X coordinate in SVG viewBox
+  * `y` (number, 0-200) - Y coordinate in SVG viewBox
+  * `score` (number, 0-5) - Point value of the shot
 * `totalShots` (number, optional) - Can be derived
-* `createdAt`, `updatedAt` (dates)
+
+**Shot Position Data:**
+When using the interactive target input, exact shot positions are recorded. This enables:
+* Precise visualization of shot groups
+* True heatmap generation (vs. randomized placement)
+* Potential future analysis (group size, drift patterns, etc.)
+
+If shot positions are not recorded, the system falls back to displaying randomized positions within the appropriate scoring rings for visualization purposes.
 
 **Derived Metrics (computed in code, not stored):**
 * `totalScore` = 5×score5 + 4×score4 + 3×score3 + 2×score2 + 1×score1 + 0×score0
