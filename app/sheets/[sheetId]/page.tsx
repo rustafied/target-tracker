@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Save, Copy, Target as TargetIcon, Calendar, Crosshair, Zap, Eye, Ruler, TrendingUp, Edit, Tag as TagIconLucide, FileText, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Target as TargetIcon, Calendar, Crosshair, Zap, Eye, Ruler, TrendingUp, Edit, Tag as TagIconLucide, FileText, Trash2, Maximize2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CountButtons } from "@/components/CountButtons";
 import { TagSelector } from "@/components/TagSelector";
 import { InteractiveTargetInput } from "@/components/InteractiveTargetInput";
 import {
@@ -59,8 +58,8 @@ export default function SheetDetailPage() {
 
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [bulls, setBulls] = useState<BullRecord[]>([]);
-  const [quickInputs, setQuickInputs] = useState<{ [key: number]: string }>({});
   const [shotPositions, setShotPositions] = useState<{ [key: number]: ShotPosition[] }>({});
+  const [expandedBulls, setExpandedBulls] = useState<{ [key: number]: boolean }>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -115,7 +114,6 @@ export default function SheetDetailPage() {
         const bullsMap = new Map<number, BullRecord>(existingBulls.map((b: BullRecord) => [b.bullIndex, b]));
         
         const allBulls: BullRecord[] = [];
-        const initialQuickInputs: { [key: number]: string } = {};
         const initialShotPositions: { [key: number]: ShotPosition[] } = {};
         
         for (let i = 1; i <= 6; i++) {
@@ -131,21 +129,6 @@ export default function SheetDetailPage() {
               ...bull,
               shotPositions: positions,
             });
-            
-            // Initialize quick input for this bull
-            const counts = [
-              bull.score5Count,
-              bull.score4Count,
-              bull.score3Count,
-              bull.score2Count,
-              bull.score1Count,
-              bull.score0Count,
-            ];
-            
-            // Convert to string and trim trailing zeros
-            let result = counts.map(c => c.toString()).join('');
-            result = result.replace(/0+$/, '') || '';
-            initialQuickInputs[i] = result;
           } else {
             // Create a temporary bull record for the UI
             allBulls.push({
@@ -159,13 +142,11 @@ export default function SheetDetailPage() {
               score0Count: 0,
               shotPositions: [],
             });
-            initialQuickInputs[i] = '';
             initialShotPositions[i] = [];
           }
         }
         
         setBulls(allBulls);
-        setQuickInputs(initialQuickInputs);
         setShotPositions(initialShotPositions);
       } else {
         toast.error("Sheet not found");
@@ -259,43 +240,6 @@ export default function SheetDetailPage() {
     }
   };
 
-  const updateBull = (bullIndex: number, field: keyof BullRecord, value: number) => {
-    setBulls((prev) =>
-      prev.map((bull) =>
-        bull.bullIndex === bullIndex ? { ...bull, [field]: value } : bull
-      )
-    );
-    
-    // Update quick input when buttons are used
-    const updatedBull = bulls.find(b => b.bullIndex === bullIndex);
-    if (updatedBull) {
-      const newBull = { ...updatedBull, [field]: value };
-      updateQuickInputFromBull(bullIndex, newBull);
-    }
-  };
-
-  const copyBull = (fromIndex: number, toIndex: number) => {
-    const fromBull = bulls.find((b) => b.bullIndex === fromIndex);
-    if (!fromBull) return;
-
-    setBulls((prev) =>
-      prev.map((bull) =>
-        bull.bullIndex === toIndex
-          ? {
-              ...bull,
-              score5Count: fromBull.score5Count,
-              score4Count: fromBull.score4Count,
-              score3Count: fromBull.score3Count,
-              score2Count: fromBull.score2Count,
-              score1Count: fromBull.score1Count,
-              score0Count: fromBull.score0Count,
-            }
-          : bull
-      )
-    );
-    toast.success(`Copied Bull ${fromIndex} to Bull ${toIndex}`);
-  };
-
   const clearBull = async (bullIndex: number) => {
     const bull = bulls.find((b) => b.bullIndex === bullIndex);
     if (!bull) return;
@@ -337,55 +281,6 @@ export default function SheetDetailPage() {
 
     // Clear shot positions
     setShotPositions((prev) => ({ ...prev, [bullIndex]: [] }));
-
-    // Clear quick input
-    setQuickInputs((prev) => ({ ...prev, [bullIndex]: '' }));
-  };
-
-  const parseQuickInput = (input: string, bullIndex: number) => {
-    setQuickInputs(prev => ({ ...prev, [bullIndex]: input }));
-    
-    const digits = input.trim();
-    if (!/^\d{0,6}$/.test(digits)) return; // Only accept up to 6 digits
-
-    const counts = digits.split('').map(d => parseInt(d, 10));
-    
-    setBulls((prev) =>
-      prev.map((bull) =>
-        bull.bullIndex === bullIndex
-          ? {
-              ...bull,
-              score5Count: counts[0] || 0,
-              score4Count: counts[1] || 0,
-              score3Count: counts[2] || 0,
-              score2Count: counts[3] || 0,
-              score1Count: counts[4] || 0,
-              score0Count: counts[5] || 0,
-            }
-          : bull
-      )
-    );
-  };
-
-  const updateQuickInputFromBull = (bullIndex: number, bull: BullRecord) => {
-    const counts = [
-      bull.score5Count,
-      bull.score4Count,
-      bull.score3Count,
-      bull.score2Count,
-      bull.score1Count,
-      bull.score0Count,
-    ];
-    
-    // Convert to string and trim trailing zeros
-    let result = counts.map(c => c.toString()).join('');
-    result = result.replace(/0+$/, '') || '';
-    
-    setQuickInputs(prev => ({ ...prev, [bullIndex]: result }));
-  };
-
-  const getQuickInputValue = (bullIndex: number): string => {
-    return quickInputs[bullIndex] || '';
   };
 
   const handleShotPositionsChange = (bullIndex: number, positions: ShotPosition[]) => {
@@ -421,12 +316,6 @@ export default function SheetDetailPage() {
           : bull
       )
     );
-    
-    // Update quick input to reflect the new counts
-    const bull = bulls.find(b => b.bullIndex === bullIndex);
-    if (bull) {
-      updateQuickInputFromBull(bullIndex, { ...bull, ...counts });
-    }
   };
 
   const handleSave = async () => {
@@ -452,9 +341,7 @@ export default function SheetDetailPage() {
 
       if (res.ok) {
         toast.success("Scores saved");
-        if (sheet) {
-          router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`);
-        }
+        fetchSheet();
       } else {
         toast.error("Failed to save scores");
       }
@@ -573,53 +460,19 @@ export default function SheetDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Quick Input Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Quick Entry</CardTitle>
-          <p className="text-sm text-muted-foreground">Enter scores as 6 digits: 5pts, 4pts, 3pts, 2pts, 1pt, 0pts (e.g., "153210")</p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {bulls.map((bull) => (
-              <div key={bull.bullIndex}>
-                <Label htmlFor={`quick-${bull.bullIndex}`} className="text-sm font-medium mb-2 block">
-                  Bull {bull.bullIndex}
-                </Label>
-                <Input
-                  id={`quick-${bull.bullIndex}`}
-                  type="text"
-                  placeholder=""
-                  className="w-full"
-                  maxLength={6}
-                  value={getQuickInputValue(bull.bullIndex)}
-                  onChange={(e) => parseQuickInput(e.target.value, bull.bullIndex)}
-                />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="space-y-4">
+      {/* Bulls Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {bulls.map((bull, index) => {
           const metrics = calculateBullMetrics(bull as any);
           return (
             <Card key={bull._id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Bull {bull.bullIndex}</CardTitle>
+                  <div>
+                    <CardTitle className="text-lg">Bull {bull.bullIndex}</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">{metrics.totalShots} shots</p>
+                  </div>
                   <div className="flex gap-2">
-                    {index > 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyBull(bulls[index - 1].bullIndex, bull.bullIndex)}
-                      >
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copy Previous
-                      </Button>
-                    )}
                     {metrics.totalShots > 0 && (
                       <Button
                         variant="outline"
@@ -630,67 +483,43 @@ export default function SheetDetailPage() {
                         Clear
                       </Button>
                     )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setExpandedBulls((prev) => ({ ...prev, [bull.bullIndex]: true }))}
+                    >
+                      <Maximize2 className="h-4 w-4 mr-2" />
+                      Expand
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                {/* 2-column layout: Interactive Target (left) + Count Buttons (right) */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Left column: Interactive Target Input */}
-                  <div className="flex flex-col items-start justify-start w-full">
+                <div className="flex flex-col items-center space-y-4">
+                  {/* Interactive Target Input */}
+                  <div className="w-full max-w-md">
                     <InteractiveTargetInput
                       shots={shotPositions[bull.bullIndex] || []}
                       onShotsChange={(positions) => handleShotPositionsChange(bull.bullIndex, positions)}
                       bullIndex={bull.bullIndex}
+                      isExpanded={expandedBulls[bull.bullIndex] || false}
+                      setIsExpanded={(value) => setExpandedBulls((prev) => ({ ...prev, [bull.bullIndex]: value }))}
                     />
                   </div>
 
-                  {/* Right column: Count Buttons */}
-                  <div className="space-y-4">
-                    <CountButtons
-                      label="5 Points (Center)"
-                      value={bull.score5Count}
-                      onChange={(v) => updateBull(bull.bullIndex, "score5Count", v)}
-                    />
-                    <CountButtons
-                      label="4 Points"
-                      value={bull.score4Count}
-                      onChange={(v) => updateBull(bull.bullIndex, "score4Count", v)}
-                    />
-                    <CountButtons
-                      label="3 Points"
-                      value={bull.score3Count}
-                      onChange={(v) => updateBull(bull.bullIndex, "score3Count", v)}
-                    />
-                    <CountButtons
-                      label="2 Points"
-                      value={bull.score2Count}
-                      onChange={(v) => updateBull(bull.bullIndex, "score2Count", v)}
-                    />
-                    <CountButtons
-                      label="1 Point"
-                      value={bull.score1Count}
-                      onChange={(v) => updateBull(bull.bullIndex, "score1Count", v)}
-                    />
-                    <CountButtons
-                      label="0 Points (Miss)"
-                      value={bull.score0Count}
-                      onChange={(v) => updateBull(bull.bullIndex, "score0Count", v)}
-                    />
-
-                    <div className="pt-4 border-t grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Total Shots</p>
-                        <p className="text-xl font-bold">{metrics.totalShots}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Total Score</p>
-                        <p className="text-xl font-bold">{metrics.totalScore}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Average</p>
-                        <p className="text-xl font-bold">{metrics.averagePerShot.toFixed(2)}</p>
-                      </div>
+                  {/* Metrics */}
+                  <div className="w-full grid grid-cols-3 gap-4 text-sm border-t pt-4">
+                    <div className="text-center">
+                      <p className="text-muted-foreground">Total Shots</p>
+                      <p className="text-xl font-bold">{metrics.totalShots}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-muted-foreground">Total Score</p>
+                      <p className="text-xl font-bold">{metrics.totalScore}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-muted-foreground">Average</p>
+                      <p className="text-xl font-bold">{metrics.averagePerShot.toFixed(2)}</p>
                     </div>
                   </div>
                 </div>

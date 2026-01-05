@@ -55,7 +55,7 @@
 
 ### Custom Components
 * **TagSelector** - Wrap `Badge` or `Button` in flex/grid for tag-like selections
-* **CountButtons** - Grid of `Button` variants for 0–10 selections
+* **InteractiveTargetInput** - Visual click-to-add shot placement with expand modal
 
 ### Feedback Components
 * **Toast** - Save success/failure notifications
@@ -85,32 +85,36 @@ lucide-react icons:
 
 ## Forms for Score Entry
 
-### Per Bull Layout
+### Sheet Layout
 
-#### Label
-* "Bull 1", "Bull 2", etc.
+#### 2-Column Grid (Desktop)
+* Bulls displayed in 2-column grid (3 rows of 2)
+* Each bull card contains interactive target and metrics
+* Mobile: Single column, stacks vertically
 
-#### Two-Column Layout (Desktop/Tablet)
-* **Left Column**: Interactive Target Input
-  * Visual target with clickable zones
-  * Click to add shots to specific target locations
-  * Right-click to remove shots
-  * Shows real-time shot placement
-  * White dots for bullseye (5pts), red dots for other rings
-  * Hover feedback showing point value of hovered zone
-* **Right Column**: Count Buttons
-  * Traditional count button interface
-  * Rows for each score level (5, 4, 3, 2, 1, 0)
-  * Small, rounded buttons
-  * Selected state highlighted
-  * Syncs with interactive target input
+#### Per Bull Card
 
-#### Mobile Layout
-* Interactive target above count buttons
-* Vertical stacking for better touch input
-* Both methods stay in sync
+##### Header
+* Bull number and shot count
+* Clear button (when shots exist)
+* Expand button for full-screen precision input
 
-#### Interactive Target Features
+##### Interactive Target Input
+* Visual target with clickable zones (primary input method)
+* Click to add shots to specific target locations
+* Right-click to remove shots
+* Shows real-time shot placement
+* White dots for bullseye (5pts), red dots for other rings
+* Hover feedback showing point value of hovered zone
+* Centered below target: Instructions text
+
+##### Expanded View Modal
+* 90vw × 90vh modal with large target (80vw × 80vh)
+* Shot markers scaled to half size (1.75 radius) for precision
+* Same click/right-click interactions
+* Close button to return to normal view
+
+##### Interactive Target Features
 * SVG-based target visualization (200x200 viewBox)
 * Ring-based scoring zones:
   * Red center (0-15 radius): 5pts
@@ -120,29 +124,14 @@ lucide-react icons:
   * Light gray (70-85): 1pt
   * White outer (85-100): 0pts
 * Real-time score calculation from shot positions
-* Auto-populates count buttons and quick entry
-* Optional - if shot positions not recorded, displays randomized positions based on counts
+* Shot positions saved as XY coordinates
+* Maximum 100 shots per score level (up from 10)
 
-#### Compact Grid
-* **Rows**: Score levels (5, 4, 3, 2, 1, 0)
-* **For each row**:
-  * Label (e.g., "5pts:")
-  * Row of 0–10 buttons
-  * Small, rounded buttons
-  * Selected state highlighted
-
-#### Mobile Optimization
-* Buttons in 2–3 columns per row to fit narrow screens
-* Ensure tap targets are large enough
-* Interactive target optimized for touch input
-
-#### Derived Metrics Display
-Real-time text updates:
-* "Total shots: X"
-* "Total score: Y"
-* "Average score/shot: Z.Z"
-
-These metrics update live as the user adjusts counts or adds shots via the interactive target.
+##### Metrics Display
+Below each target (centered):
+* Total shots, Total score, Average score
+* 3-column grid layout
+* Updates live as shots are added/removed
 
 ---
 

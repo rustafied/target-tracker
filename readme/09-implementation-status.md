@@ -80,34 +80,37 @@ Current state of the Target Tracker application as of January 2026.
   - Trash icon button for quick deletion
 
 #### 4. Bull Scoring
-- **Interactive Target Input** - Visual click-to-add shot placement
-  - Left column: SVG-based interactive target (200x200 viewBox)
+- **Interactive Target Input** - Primary shot placement method
+  - SVG-based interactive target (200x200 viewBox)
   - Click anywhere on target to add a shot at that exact location
   - Right-click on existing shots to remove them
   - Automatically calculates score based on distance from center
   - Ring-based scoring zones (bullseye: 0-15 radius = 5pts, etc.)
   - White dots for bullseye shots (5pts), red dots for all other rings
   - Hover feedback shows point value of hovered zone
-  - Shot positions saved as XY coordinates (optional field)
-  - Bidirectionally syncs with count buttons and quick entry
+  - Shot positions saved as XY coordinates
+  - Maximum 100 shots per score level (increased from 10)
   - Clear button to reset individual bull's shots and scores
-- **Quick Entry Card** - Positioned at top of sheet detail page
-  - 6 input fields (one per bull) in responsive grid layout
-  - Enter scores as 6-digit strings (e.g., "543210" = 5pts:5, 4pts:4, 3pts:3, 2pts:2, 1pt:1, 0pts:0)
-  - Supports partial entry (e.g., "03" = 0 five-pointers, 3 four-pointers)
-  - Syncs bidirectionally with count buttons below
-  - Pre-populated when viewing existing sheets
+- **Expanded View Modal** - Full-screen precision input
+  - Expand button on each bull card opens 90vw × 90vh modal
+  - Large target display (80vw × 80vh) for precise shot placement
+  - Shot markers scaled to half size (1.75 radius) in expanded view for accuracy
+  - Same click/right-click interactions as normal view
+  - Close button returns to normal sheet view
+- **2-Column Grid Layout** - Bulls displayed in responsive grid
+  - Desktop/Tablet: 2 columns (3 rows of 2 bulls)
+  - Mobile: Single column stacked layout
+  - Each bull card shows target, metrics, Clear and Expand buttons
+  - Shot count displayed in card header below bull number
 - **Score Entry Interface** - `/sheets/[sheetId]` page with:
-  - Two-column layout per bull (interactive target left, count buttons right)
-  - 6 bull sections (bulls 1-6) displayed below quick entry
-  - Button grid (0-10) for each score level (5, 4, 3, 2, 1, 0)
-  - Copy Previous button for each bull (except first)
-  - Clear button to reset individual bull (scores and shot positions)
-  - Live calculation of total shots, total score, and average
-  - Active state styling with blue highlighting
-- **Save & Navigate** - After saving, automatically returns to session detail
+  - Centered interactive target in each bull card
+  - Instructions displayed below target
+  - Live calculation of total shots, total score, and average below target
+  - Clear button in header (only shows when shots exist)
+  - Expand button in header for full-screen precision mode
+- **Save & Reload** - After saving, page reloads to show updated data
 - **Edit Scores** - Modify bull scores at any time
-- **Delete Bulls** - Clear individual bulls during editing with confirmation
+- **Delete Bulls** - Clear individual bulls during editing
 - **Smart Saving** - Only saves bulls with non-zero data to database
 
 #### 5. Analytics
@@ -259,8 +262,8 @@ All using Mongoose ODM with MongoDB:
 #### `bullrecords`
 - `targetSheetId` (reference)
 - `bullIndex` (1-6)
-- `score5Count`, `score4Count`, `score3Count`, `score2Count`, `score1Count`, `score0Count`
-- `shotPositions` (array of {x, y, score}, optional) - Exact XY coordinates when using interactive input
+- `score5Count`, `score4Count`, `score3Count`, `score2Count`, `score1Count`, `score0Count` (0-100 each)
+- `shotPositions` (array of {x, y, score}) - Exact XY coordinates from interactive input
 - `totalShots` (derived)
 - `createdAt`, `updatedAt`
 
@@ -295,8 +298,11 @@ Not stored in database, calculated on-the-fly:
 - `BullseyeVisualization.tsx` - Combined bullseye for all shots on sheet (uses real positions if available)
 - `SingleBullVisualization.tsx` - Individual bull with hover tooltip
 - `SessionHeatmap.tsx` - Aggregate heatmap for session (uses real positions if available)
-- `InteractiveTargetInput.tsx` - Click-to-add shot placement interface with live feedback
-- `CountButtons.tsx` - 0-10 button grid for score entry with active state styling
+- `InteractiveTargetInput.tsx` - Click-to-add shot placement interface with expand modal
+  - Normal view: Target with instructions below
+  - Expanded view: 90vw × 90vh modal with 80vw × 80vh target
+  - Half-size shot markers (1.75 radius) in expanded mode for precision
+  - Live feedback showing score zones on hover
 - `TagSelector.tsx` - Multi-select tag interface with blue active state
 - `LocationAutocomplete.tsx` - Location input with suggestions
 

@@ -1,5 +1,51 @@
 # Changelog
 
+## January 5, 2026 - Score Entry Redesign
+
+### 🎯 Visual Target Input Focus
+
+#### Removed Legacy Input Methods
+- **Quick Entry Card Removed** - Eliminated 6-digit input card at top of sheet page
+- **Count Buttons Removed** - Removed 0-10 button grids for each score level
+- Visual target input is now the primary and only method for score entry
+- Simplified interface reduces cognitive load and focuses on precision
+
+#### Enhanced Interactive Target
+- **Expanded View Modal** - New full-screen precision mode
+  - Expand button on each bull card opens 90vw × 90vh modal
+  - Large target display (80vw × 80vh) for precise shot placement
+  - Shot markers scaled to half size (1.75 radius vs 3.5) for accuracy
+  - Same click/right-click interactions as normal view
+  - Better for detailed shot placement and fine adjustments
+- **Reorganized Controls**
+  - Clear button moved to card header (next to Expand button)
+  - Shot count displayed under bull number in header
+  - Instructions centered below target
+  - Cleaner, more focused layout
+
+#### Layout Improvements
+- **2-Column Grid** - Bulls displayed in responsive grid
+  - Desktop/Tablet: 2 columns (3 rows showing 6 bulls)
+  - Mobile: Single column stacked layout
+  - Each bull card is self-contained with target and metrics
+- **Save Behavior** - Page now reloads after save instead of navigating back
+  - Allows for iterative editing without navigation
+  - Better workflow for making adjustments
+
+### 🔢 Validation Updates
+- **Increased Score Limits** - Maximum shots per score level raised from 10 to 100
+  - Updated both Zod validation schema and Mongoose model
+  - Allows for high-volume training sessions
+  - Better accommodates bulk ammunition usage
+
+### 📝 Documentation Updates
+- Updated UI design documentation (`03-ui-design.md`)
+- Updated implementation status (`09-implementation-status.md`)
+- Removed references to Quick Entry and Count Buttons
+- Added Expand modal documentation
+
+---
+
 ## January 5, 2026 - Major UX Overhaul
 
 ### ✂️ Feature Removal

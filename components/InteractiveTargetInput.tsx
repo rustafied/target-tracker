@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { MouseEvent } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface ShotPosition {
   x: number;
@@ -13,9 +14,11 @@ interface InteractiveTargetInputProps {
   shots: ShotPosition[];
   onShotsChange: (shots: ShotPosition[]) => void;
   bullIndex: number;
+  isExpanded: boolean;
+  setIsExpanded: (value: boolean) => void;
 }
 
-export function InteractiveTargetInput({ shots, onShotsChange, bullIndex }: InteractiveTargetInputProps) {
+export function InteractiveTargetInput({ shots, onShotsChange, bullIndex, isExpanded, setIsExpanded }: InteractiveTargetInputProps) {
   const [hoveredRing, setHoveredRing] = useState<number | null>(null);
 
   // Ring definitions matching SessionHeatmap
@@ -88,143 +91,147 @@ export function InteractiveTargetInput({ shots, onShotsChange, bullIndex }: Inte
     setHoveredRing(null);
   };
 
-  const clearAllShots = () => {
-    onShotsChange([]);
+  const renderTarget = (isExpandedView = false) => {
+    const shotRadius = isExpandedView ? 1.75 : 3.5;
+    
+    return (
+      <svg 
+        viewBox="0 0 200 200" 
+        className="w-full h-full cursor-crosshair"
+        onClick={handleClick}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* Target rings (from outside to inside) */}
+        
+        {/* 0 - White (miss) */}
+        <circle 
+          cx="100" 
+          cy="100" 
+          r="100" 
+          fill="white" 
+          stroke="#333" 
+          strokeWidth="1"
+          opacity={hoveredRing === 5 ? 0.8 : 1}
+        />
+        
+        {/* 1 - Light gray */}
+        <circle 
+          cx="100" 
+          cy="100" 
+          r="85" 
+          fill="#d4d4d4" 
+          stroke="#333" 
+          strokeWidth="1"
+          opacity={hoveredRing === 4 ? 0.8 : 1}
+        />
+        
+        {/* 2 - Dark gray */}
+        <circle 
+          cx="100" 
+          cy="100" 
+          r="70" 
+          fill="#737373" 
+          stroke="#333" 
+          strokeWidth="1"
+          opacity={hoveredRing === 3 ? 0.8 : 1}
+        />
+        
+        {/* 3 - Black */}
+        <circle 
+          cx="100" 
+          cy="100" 
+          r="50" 
+          fill="#1a1a1a" 
+          stroke="#333" 
+          strokeWidth="1"
+          opacity={hoveredRing === 2 ? 0.8 : 1}
+        />
+        
+        {/* 4 - Black */}
+        <circle 
+          cx="100" 
+          cy="100" 
+          r="30" 
+          fill="#0a0a0a" 
+          stroke="#333" 
+          strokeWidth="1"
+          opacity={hoveredRing === 1 ? 0.8 : 1}
+        />
+        
+        {/* 5 - Red center (bullseye) */}
+        <circle 
+          cx="100" 
+          cy="100" 
+          r="15" 
+          fill="#dc2626" 
+          stroke="#333" 
+          strokeWidth="1"
+          opacity={hoveredRing === 0 ? 0.8 : 1}
+        />
+        
+        {/* Crosshairs */}
+        <line x1="0" y1="100" x2="200" y2="100" stroke="#333" strokeWidth="0.5" opacity="0.3" />
+        <line x1="100" y1="0" x2="100" y2="200" stroke="#333" strokeWidth="0.5" opacity="0.3" />
+        
+        {/* Shot markers */}
+        {shots.map((shot, index) => (
+          <circle
+            key={index}
+            cx={shot.x}
+            cy={shot.y}
+            r={shotRadius}
+            fill={shot.score === 5 ? "#ffffff" : "#ef4444"}
+            stroke={shot.score === 5 ? "#333333" : "#7f1d1d"}
+            strokeWidth="0.8"
+            opacity="0.9"
+            className="cursor-pointer hover:opacity-100 hover:r-4"
+            onContextMenu={(e) => handleRightClick(e, index)}
+            style={{ cursor: 'pointer' }}
+          />
+        ))}
+        
+        {/* Hover indicator */}
+        {hoveredRing !== null && (
+          <text
+            x="100"
+            y="10"
+            textAnchor="middle"
+            fill="#333"
+            fontSize="8"
+            fontWeight="bold"
+          >
+            {rings[hoveredRing].label}
+          </text>
+        )}
+      </svg>
+    );
   };
 
   return (
     <div className="w-full space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-medium">Bull {bullIndex}</h3>
-          <p className="text-xs text-muted-foreground">{shots.length} shots</p>
-        </div>
-        {shots.length > 0 && (
-          <button
-            onClick={clearAllShots}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
-          >
-            Clear All
-          </button>
-        )}
-      </div>
-
       <div className="relative w-full aspect-square max-w-full p-4">
-        <svg 
-          viewBox="0 0 200 200" 
-          className="w-full h-full cursor-crosshair"
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-        >
-          {/* Target rings (from outside to inside) */}
-          
-          {/* 0 - White (miss) */}
-          <circle 
-            cx="100" 
-            cy="100" 
-            r="100" 
-            fill="white" 
-            stroke="#333" 
-            strokeWidth="1"
-            opacity={hoveredRing === 5 ? 0.8 : 1}
-          />
-          
-          {/* 1 - Light gray */}
-          <circle 
-            cx="100" 
-            cy="100" 
-            r="85" 
-            fill="#d4d4d4" 
-            stroke="#333" 
-            strokeWidth="1"
-            opacity={hoveredRing === 4 ? 0.8 : 1}
-          />
-          
-          {/* 2 - Dark gray */}
-          <circle 
-            cx="100" 
-            cy="100" 
-            r="70" 
-            fill="#737373" 
-            stroke="#333" 
-            strokeWidth="1"
-            opacity={hoveredRing === 3 ? 0.8 : 1}
-          />
-          
-          {/* 3 - Black */}
-          <circle 
-            cx="100" 
-            cy="100" 
-            r="50" 
-            fill="#1a1a1a" 
-            stroke="#333" 
-            strokeWidth="1"
-            opacity={hoveredRing === 2 ? 0.8 : 1}
-          />
-          
-          {/* 4 - Black */}
-          <circle 
-            cx="100" 
-            cy="100" 
-            r="30" 
-            fill="#0a0a0a" 
-            stroke="#333" 
-            strokeWidth="1"
-            opacity={hoveredRing === 1 ? 0.8 : 1}
-          />
-          
-          {/* 5 - Red center (bullseye) */}
-          <circle 
-            cx="100" 
-            cy="100" 
-            r="15" 
-            fill="#dc2626" 
-            stroke="#333" 
-            strokeWidth="1"
-            opacity={hoveredRing === 0 ? 0.8 : 1}
-          />
-          
-          {/* Crosshairs */}
-          <line x1="0" y1="100" x2="200" y2="100" stroke="#333" strokeWidth="0.5" opacity="0.3" />
-          <line x1="100" y1="0" x2="100" y2="200" stroke="#333" strokeWidth="0.5" opacity="0.3" />
-          
-          {/* Shot markers */}
-          {shots.map((shot, index) => (
-            <circle
-              key={index}
-              cx={shot.x}
-              cy={shot.y}
-              r="3.5"
-              fill={shot.score === 5 ? "#ffffff" : "#ef4444"}
-              stroke={shot.score === 5 ? "#333333" : "#7f1d1d"}
-              strokeWidth="0.8"
-              opacity="0.9"
-              className="cursor-pointer hover:opacity-100 hover:r-4"
-              onContextMenu={(e) => handleRightClick(e, index)}
-              style={{ cursor: 'pointer' }}
-            />
-          ))}
-          
-          {/* Hover indicator */}
-          {hoveredRing !== null && (
-            <text
-              x="100"
-              y="10"
-              textAnchor="middle"
-              fill="#333"
-              fontSize="8"
-              fontWeight="bold"
-            >
-              {rings[hoveredRing].label}
-            </text>
-          )}
-        </svg>
+        {renderTarget()}
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
         Click to add shots · Right-click to remove
       </p>
+
+      {/* Expanded view dialog */}
+      <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
+        <DialogContent className="!max-w-none w-[90vw] h-[90vh] !p-6 flex flex-col !gap-4">
+          <DialogTitle className="text-center text-xl font-semibold">Bull {bullIndex}</DialogTitle>
+          <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+            <div className="w-[80vw] h-[80vh] max-w-[80vh] max-h-[80vw]">
+              {renderTarget(true)}
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground text-center">
+            Click to add shots · Right-click to remove · Close to return
+          </p>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
