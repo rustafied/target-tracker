@@ -15,6 +15,12 @@ export async function POST(request: Request) {
 
     await connectToDatabase();
     
+    // Ensure models are registered before any queries
+    // This prevents MissingSchemaError in serverless environments
+    void Firearm;
+    void Caliber;
+    void Optic;
+    
     // If rangeSessionId looks like a slug (contains dashes and is not 24 hex chars), look it up
     let sessionId = validated.rangeSessionId;
     if (typeof sessionId === 'string' && (sessionId.includes('-') || sessionId.length !== 24)) {
