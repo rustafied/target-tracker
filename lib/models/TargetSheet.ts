@@ -1,5 +1,10 @@
 import mongoose, { Schema, Model } from "mongoose";
 
+// Import related models to ensure they're registered
+import { RangeSession } from "./RangeSession";
+import { Firearm } from "./Firearm";
+import { Caliber } from "./Caliber";
+
 export interface ITargetSheet {
   _id?: mongoose.Types.ObjectId;
   rangeSessionId: mongoose.Types.ObjectId;
