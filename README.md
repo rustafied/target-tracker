@@ -4,8 +4,10 @@ A Next.js application for logging and visualizing shooting range sessions with p
 
 ## Features
 
+- 🔐 **Discord Authentication** - Secure login with Discord OAuth (master admin only for now)
 - 📊 **Detailed Scoring** - 5-4-3-2-1-0 system per bull (flexible 1-6 bulls per sheet)
 - ⚡ **Quick Entry** - Type 6-digit codes (e.g., "543210") to instantly populate all score counts per bull
+- 📸 **Target Image Recognition** - Upload target photos and automatically detect bullet placements using OpenCV
 - 🎯 **Comprehensive Tracking** - Associate each sheet with firearm, caliber, optic, and distance
 - 📈 **Analytics & Visualizations** - Trend graphs, multi-firearm comparison charts, bullseye visualizations, and session heatmaps
 - 🔫 **Equipment Management** - CRUD for firearms, optics, and calibers with drag-drop ordering
@@ -42,21 +44,51 @@ npm install
 3. Set up environment variables:
 ```bash
 # .env.local
-# For local development with MongoDB Atlas:
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/target-tracker?retryWrites=true&w=majority
 
-# OR for local MongoDB:
-# MONGODB_URI=mongodb://localhost:27017/target-tracker
+# MongoDB
+MONGODB_URI=mongodb://127.0.0.1:27017/target-tracker
+
+# NextAuth - Discord Authentication
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-here-generate-with-openssl-rand-base64-32
+DISCORD_CLIENT_ID=your-discord-client-id
+DISCORD_CLIENT_SECRET=your-discord-client-secret
+MASTER_DISCORD_ID=your-discord-user-id
 ```
+
+See [Authentication Setup Guide](./readme/17-authentication-setup.md) for detailed instructions on setting up Discord OAuth.
+
+See [Authentication Setup Guide](./readme/17-authentication-setup.md) for detailed instructions.
+
+**Important:** After setting up authentication and logging in for the first time, run the migration script to attach existing data to your user:
+```bash
+node scripts/attach-data-to-user.mjs
+```
+
+This only needs to be run once to prepare your existing data for multi-user support.
 
 4. (Optional) Seed sample data:
 ```bash
 node seed.mjs
 ```
 
-5. Run the development server:
+5. (Optional) Set up Target Image Recognition:
+```bash
+cd python-ocr
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+6. Run the development server:
 ```bash
 npm run dev
+```
+
+7. (Optional) Start the detection service:
+```bash
+# In a separate terminal
+cd python-ocr
+./start-detector.sh
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser.
@@ -103,6 +135,18 @@ vercel --prod
 - Push to `main` branch → Production deployment
 - Push to other branches → Preview deployment
 - All deployments trigger automatic builds and tests
+
+#### Production Environment Variables
+
+Don't forget to set these in Vercel:
+- `MONGODB_URI` - Your MongoDB Atlas connection string
+- `NEXTAUTH_URL` - Your production URL (e.g., `https://target-tracker-rho.vercel.app`)
+- `NEXTAUTH_SECRET` - Generate a new one for production (different from dev)
+- `DISCORD_CLIENT_ID` - Same as local
+- `DISCORD_CLIENT_SECRET` - Same as local
+- `MASTER_DISCORD_ID` - Your Discord user ID
+
+And add the production redirect to Discord: `https://yourdomain.com/api/auth/callback/discord`
 
 #### Database Migration
 
@@ -154,12 +198,16 @@ Comprehensive project documentation is available in the `/readme` folder:
 - [Session URL Slugs](./readme/08-session-url-slugs.md) - Descriptive URL slugs
 - **[Implementation Status](./readme/09-implementation-status.md) - Current state and completed features**
 - [Deployment Guide](./readme/10-deployment-guide.md) - Vercel & MongoDB Atlas setup
+- [Target Image Recognition](./readme/14-target-image-recognition.md) - Feature specification
+- **[Recognition Setup Guide](./readme/15-target-recognition-setup.md) - Installation and usage**
+- **[Authentication Setup](./readme/17-authentication-setup.md) - Discord OAuth configuration**
 
 ## Tech Stack
 
 - **Framework**: Next.js 16.1 (App Router, TypeScript)
 - **Styling**: Tailwind CSS 4 + shadcn/ui
 - **Database**: MongoDB Atlas + Mongoose
+- **Computer Vision**: OpenCV + Python Flask (optional)
 - **Deployment**: Vercel (with automatic GitHub integration)
 - **Forms**: React Hook Form + Zod
 - **Charts**: Recharts
@@ -235,8 +283,31 @@ All collections include:
 
 ### 🔄 Recent Updates
 
+#### Discord Authentication (January 5, 2026) ✨ NEW!
+**Secure access control with Discord OAuth:**
+- **NextAuth.js Integration**: Full Discord OAuth 2.0 authentication
+- **Master Admin Access**: Single-user mode with Discord ID allowlist
+- **Site-Wide Protection**: Middleware-based route protection
+- **Session Management**: Secure JWT-based sessions
+- **User Menu**: Avatar display with sign-out functionality
+- **Future-Proofed**: Database schema ready for multi-user expansion
+- **MongoDB User Records**: Tracks login history and user metadata
+
+#### Target Image Recognition System (January 5, 2026) ✨ NEW!
+**Automatic bullet hole detection from photos:**
+- **SimpleBlobDetector Algorithm**: Switched from HoughCircles to handle irregular/torn holes
+- **Red Bullseye Detection**: HSV color-based center detection (more reliable than outer ring)
+- **Dual-Pass Processing**: Detects holes in both light areas (paper) and dark areas (black ring)
+- **Upload/Paste Interface**: Drag-drop, file picker, or clipboard paste (Ctrl/Cmd+V)
+- **Batch Processing**: Upload multiple target images at once, assign to different bulls
+- **Image Management**: View full-size images in modal, delete when no longer needed
+- **Smart Filtering**: Excludes bullseye, target boundaries, and false positives
+- **Shot Merging**: Combines detected shots with manual entries
+- **Detection Service**: Python Flask + OpenCV running on localhost:5001
+- **Conservative Parameters**: Tuned for accuracy over false positives
+
 #### Major UX Overhaul (January 5, 2026)
-- **OCR Removed**: Removed Tesseract.js/EasyOCR due to poor handwriting detection
+- **OCR Removed**: Removed Tesseract.js/EasyOCR due to poor handwriting detection (replaced with image recognition)
 - **Quick Entry System**: 6-digit input fields for rapid score entry (e.g., "543210")
 - **Flexible Bull Count**: Only saves bulls with data (1-6 bulls per sheet)
 - **Default Distance**: Firearms can have default distance that auto-populates
@@ -277,10 +348,14 @@ All collections include:
 ## Future Enhancements
 
 See [Future Features](./readme/06-future-features.md) for planned additions:
-- Direct target photo ingestion with shot detection
-- Authentication and multi-device sync
+- ✅ ~~Direct target photo ingestion with shot detection~~ (Completed!)
+- ✅ ~~Authentication and multi-device sync~~ (MVP completed - master admin only)
+- Multi-user support with approval workflow
+- ML model training for improved detection accuracy
+- Support for different target types (IPSC, steel, etc.)
 - Drill types and structured training programs
 - Advanced analytics and exports
+- Shot grouping analysis (ES, SD calculations)
 
 ## License
 

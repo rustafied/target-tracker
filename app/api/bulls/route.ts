@@ -1,15 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { BullRecord } from "@/lib/models/BullRecord";
 import { TargetSheet } from "@/lib/models/TargetSheet";
 import { bullSchema } from "@/lib/validators/bull";
 import { calculateBullMetrics } from "@/lib/metrics";
+import { requireUserId } from "@/lib/auth-helpers";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
     await connectToDatabase();
+    const userId = await requireUserId(request);
     
     // Handle batch creation/update
     if (Array.isArray(body)) {
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
           } else {
             // Create new
             const newBull = new BullRecord({
+              userId,
               targetSheetId: sheetId,
               bullIndex: bull.bullIndex,
               score5Count: bull.score5Count,
@@ -102,6 +105,7 @@ export async function POST(request: Request) {
     const metrics = calculateBullMetrics(validated as any);
     const bull = await BullRecord.create({ 
       ...validated, 
+      userId,
       targetSheetId: sheetId,
       totalShots: metrics.totalShots 
     });
@@ -111,6 +115,9 @@ export async function POST(request: Request) {
     console.error("Error creating bull:", error);
     if (error.name === "ZodError") {
       return NextResponse.json({ error: "Validation failed", details: error.errors }, { status: 400 });
+    }
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     return NextResponse.json({ error: "Failed to create bull record" }, { status: 500 });
   }

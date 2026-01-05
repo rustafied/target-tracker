@@ -25,15 +25,19 @@
 *.pem
 
 # python
-python-ocr/
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-venv/
+python-ocr/venv/
+python-ocr/__pycache__/
 env/
 ENV/
+
+# uploaded target images (keep .gitkeep)
+/public/uploads/targets/*
+!/public/uploads/targets/.gitkeep
 
 # debug
 npm-debug.log*

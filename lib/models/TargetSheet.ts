@@ -8,6 +8,7 @@ import { Optic } from "./Optic";
 
 export interface ITargetSheet {
   _id?: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId;
   rangeSessionId: mongoose.Types.ObjectId;
   firearmId: mongoose.Types.ObjectId;
   caliberId: mongoose.Types.ObjectId;
@@ -23,6 +24,7 @@ export interface ITargetSheet {
 
 const TargetSheetSchema = new Schema<ITargetSheet>(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
     rangeSessionId: { type: Schema.Types.ObjectId, ref: "RangeSession", required: true },
     firearmId: { type: Schema.Types.ObjectId, ref: "Firearm", required: true },
     caliberId: { type: Schema.Types.ObjectId, ref: "Caliber", required: true },

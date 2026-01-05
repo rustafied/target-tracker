@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { TargetSheet } from "@/lib/models/TargetSheet";
 import { RangeSession } from "@/lib/models/RangeSession";
@@ -7,13 +7,15 @@ import { Firearm } from "@/lib/models/Firearm";
 import { Caliber } from "@/lib/models/Caliber";
 import { Optic } from "@/lib/models/Optic";
 import { sheetSchema } from "@/lib/validators/sheet";
+import { requireUserId } from "@/lib/auth-helpers";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validated = sheetSchema.parse(body);
 
     await connectToDatabase();
+    const userId = await requireUserId(request);
     
     // Ensure models are registered before any queries
     // This prevents MissingSchemaError in serverless environments
@@ -35,6 +37,7 @@ export async function POST(request: Request) {
     const sheetData = {
       ...validated,
       rangeSessionId: sessionId,
+      userId,
     };
     
     const sheet = await TargetSheet.create(sheetData);
@@ -47,6 +50,9 @@ export async function POST(request: Request) {
     console.error("Error creating sheet:", error);
     if (error.name === "ZodError") {
       return NextResponse.json({ error: "Validation failed", details: error.errors }, { status: 400 });
+    }
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     // Return the actual error message for better debugging
     return NextResponse.json({ 

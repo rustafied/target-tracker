@@ -2,15 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Target, LineChart, Settings, Menu, ChevronDown, ChevronRight, Crosshair, Eye, Zap, Radius } from "lucide-react";
+import { Target, LineChart, Settings, Menu, ChevronDown, ChevronRight, Crosshair, Eye, Zap, Radius, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { useSession, signOut } from "next-auth/react";
 
 const navigation = [
   { name: "Sessions", href: "/sessions", icon: Target },
@@ -147,6 +156,45 @@ function NavigationItems({ onItemClick, isDesktop = false }: { onItemClick?: () 
   );
 }
 
+function UserMenu() {
+  const { data: session } = useSession();
+
+  if (!session?.user) return null;
+
+  const userImage = session.user.image;
+  const userName = session.user.name || "User";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="gap-2">
+          {userImage ? (
+            <img
+              src={userImage}
+              alt={userName}
+              className="h-6 w-6 rounded-full"
+            />
+          ) : (
+            <User className="h-5 w-5" />
+          )}
+          <span className="hidden md:inline">{userName}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="text-destructive focus:text-destructive cursor-pointer"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -162,33 +210,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Target className="h-6 w-6" />
             <span className="font-semibold">Target Tracker</span>
           </Link>
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
-              <div className="flex flex-col h-full py-6">
-                <div className="px-6 mb-6">
-                  <Link href="/sessions" className="flex items-center gap-2">
-                    <Target className="h-6 w-6" />
-                    <span className="font-semibold">Target Tracker</span>
-                  </Link>
+          <div className="flex items-center gap-2">
+            <UserMenu />
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-0">
+                <div className="flex flex-col h-full py-6">
+                  <div className="px-6 mb-6">
+                    <Link href="/sessions" className="flex items-center gap-2">
+                      <Target className="h-6 w-6" />
+                      <span className="font-semibold">Target Tracker</span>
+                    </Link>
+                  </div>
+                  <nav className="flex-1 px-3 space-y-1">
+                    <NavigationItems onItemClick={() => setMobileMenuOpen(false)} />
+                  </nav>
                 </div>
-                <nav className="flex-1 px-3 space-y-1">
-                  <NavigationItems onItemClick={() => setMobileMenuOpen(false)} />
-                </nav>
-              </div>
-            </SheetContent>
-          </Sheet>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
 
       {/* Desktop Sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col border-r border-border bg-card">
         <div className="flex flex-col h-full py-6">
-          <div className="px-6 mb-6">
+          <div className="px-6 mb-6 flex items-center justify-between">
             <Link href="/sessions" className="flex items-center gap-2">
               <Target className="h-6 w-6" />
               <span className="font-semibold text-lg">Target Tracker</span>
@@ -197,6 +248,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="flex-1 px-3 space-y-1">
             <NavigationItems isDesktop={true} />
           </nav>
+          <div className="px-6 pt-4 border-t border-border">
+            <UserMenu />
+          </div>
         </div>
       </aside>
 

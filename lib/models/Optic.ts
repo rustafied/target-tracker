@@ -2,6 +2,7 @@ import mongoose, { Schema, Model } from "mongoose";
 
 export interface IOptic {
   _id?: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId;
   name: string;
   type?: string;
   magnification?: string;
@@ -14,6 +15,7 @@ export interface IOptic {
 
 const OpticSchema = new Schema<IOptic>(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
     name: { type: String, required: true },
     type: { type: String },
     magnification: { type: String },

@@ -1,13 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { RangeSession } from "@/lib/models/RangeSession";
 import { TargetSheet } from "@/lib/models/TargetSheet";
 import { BullRecord } from "@/lib/models/BullRecord";
 import { sessionSchema } from "@/lib/validators/session";
+import { requireUserId } from "@/lib/auth-helpers";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
+    const userId = await requireUserId(request);
+    
+    // TODO: When multi-user is enabled, filter by userId
+    // For now, return all sessions (only master admin can access)
     const sessions = await RangeSession.find().sort({ date: -1 });
     
     // Get summary stats for each session
@@ -72,19 +77,27 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validated = sessionSchema.parse(body);
 
     await connectToDatabase();
-    const session = await RangeSession.create(validated);
+    const userId = await requireUserId(request);
+    
+    const session = await RangeSession.create({
+      ...validated,
+      userId,
+    });
 
     return NextResponse.json(session, { status: 201 });
   } catch (error: any) {
     console.error("Error creating session:", error);
     if (error.name === "ZodError") {
       return NextResponse.json({ error: "Validation failed", details: error.errors }, { status: 400 });
+    }
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     return NextResponse.json({ error: "Failed to create session" }, { status: 500 });
   }

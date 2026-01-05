@@ -3,6 +3,7 @@ import { format } from "date-fns";
 
 export interface IRangeSession {
   _id?: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId;
   date: Date;
   slug: string;
   location?: string;
@@ -15,6 +16,7 @@ export interface IRangeSession {
 
 const RangeSessionSchema = new Schema<IRangeSession>(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
     date: { type: Date, required: true },
     slug: { type: String, required: true, unique: true },
     location: { type: String },

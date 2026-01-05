@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Save, Target as TargetIcon, Calendar, Crosshair, Zap, Eye, Ruler, TrendingUp, Edit, Tag as TagIconLucide, FileText, Trash2, Maximize2 } from "lucide-react";
+import { ArrowLeft, Save, Target as TargetIcon, Calendar, Crosshair, Zap, Eye, Ruler, TrendingUp, Edit, Tag as TagIconLucide, FileText, Trash2, Maximize2, Upload, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TagSelector } from "@/components/TagSelector";
 import { InteractiveTargetInput } from "@/components/InteractiveTargetInput";
+import { TargetUploadModal } from "@/components/TargetUploadModal";
+import { ImageViewerModal } from "@/components/ImageViewerModal";
 import {
   Dialog,
   DialogContent,
@@ -49,6 +51,9 @@ interface BullRecord {
   score1Count: number;
   score0Count: number;
   shotPositions?: ShotPosition[];
+  imageUrl?: string;
+  imageUploadedAt?: Date;
+  detectedShotCount?: number;
 }
 
 export default function SheetDetailPage() {
@@ -63,6 +68,9 @@ export default function SheetDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [selectedImageBull, setSelectedImageBull] = useState<BullRecord | null>(null);
   
   const [firearms, setFirearms] = useState<{ _id: string; name: string; caliberIds?: string[]; opticIds?: string[] }[]>([]);
   const [allOptics, setAllOptics] = useState<{ _id: string; name: string }[]>([]);
@@ -318,6 +326,36 @@ export default function SheetDetailPage() {
     );
   };
 
+  const handleShotsDetected = (bullIndex: number, detectedShots: ShotPosition[], imageUrl: string) => {
+    // Merge detected shots with existing shots
+    const existingShots = shotPositions[bullIndex] || [];
+    const mergedShots = [...existingShots, ...detectedShots];
+    
+    // Update shot positions
+    handleShotPositionsChange(bullIndex, mergedShots);
+    
+    // Update bull record with image info
+    setBulls((prev) =>
+      prev.map((bull) =>
+        bull.bullIndex === bullIndex
+          ? {
+              ...bull,
+              imageUrl,
+              imageUploadedAt: new Date(),
+              detectedShotCount: detectedShots.length,
+            }
+          : bull
+      )
+    );
+    
+    toast.success(`Added ${detectedShots.length} shots to Bull ${bullIndex}`);
+  };
+
+  const handleViewImage = (bull: BullRecord) => {
+    setSelectedImageBull(bull);
+    setImageViewerOpen(true);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -335,6 +373,9 @@ export default function SheetDetailPage() {
             score1Count: bull.score1Count,
             score0Count: bull.score0Count,
             shotPositions: shotPositions[bull.bullIndex]?.length > 0 ? shotPositions[bull.bullIndex] : undefined,
+            imageUrl: bull.imageUrl,
+            imageUploadedAt: bull.imageUploadedAt,
+            detectedShotCount: bull.detectedShotCount,
           }))
         ),
       });
@@ -383,6 +424,10 @@ export default function SheetDetailPage() {
           <Button variant="outline" onClick={openEditDialog}>
             <Edit className="h-4 w-4 mr-2" />
             Edit Sheet
+          </Button>
+          <Button variant="outline" onClick={() => setUploadModalOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Upload
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             <Save className="h-4 w-4 mr-2" />
@@ -483,6 +528,16 @@ export default function SheetDetailPage() {
                         Clear
                       </Button>
                     )}
+                    {bull.imageUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewImage(bull)}
+                      >
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -535,6 +590,30 @@ export default function SheetDetailPage() {
           {saving ? "Saving..." : "Save All Scores"}
         </Button>
       </div>
+
+      {/* Upload Modal */}
+      <TargetUploadModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
+        sheetId={sheetId}
+        onShotsDetected={handleShotsDetected}
+      />
+
+      {/* Image Viewer Modal */}
+      {selectedImageBull && (
+        <ImageViewerModal
+          open={imageViewerOpen}
+          onOpenChange={setImageViewerOpen}
+          imageUrl={selectedImageBull.imageUrl || ""}
+          bullIndex={selectedImageBull.bullIndex}
+          shotCount={selectedImageBull.detectedShotCount}
+          bullId={selectedImageBull._id}
+          onImageDeleted={() => {
+            // Refresh the sheet data to update UI
+            fetchSheet();
+          }}
+        />
+      )}
 
       {/* Edit Sheet Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

@@ -8,6 +8,7 @@ export interface IShotPosition {
 
 export interface IBullRecord {
   _id?: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId;
   targetSheetId: mongoose.Types.ObjectId;
   bullIndex: number;
   score5Count: number;
@@ -18,6 +19,9 @@ export interface IBullRecord {
   score0Count: number;
   shotPositions?: IShotPosition[]; // Optional array of exact shot positions
   totalShots?: number;
+  imageUrl?: string; // Path to stored target image
+  imageUploadedAt?: Date; // When the image was uploaded
+  detectedShotCount?: number; // Number of shots detected from image
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +34,7 @@ const ShotPositionSchema = new Schema({
 
 const BullRecordSchema = new Schema<IBullRecord>(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
     targetSheetId: { type: Schema.Types.ObjectId, ref: "TargetSheet", required: true },
     bullIndex: { type: Number, required: true, min: 1, max: 6 },
     score5Count: { type: Number, default: 0, min: 0, max: 10 },
@@ -40,6 +45,9 @@ const BullRecordSchema = new Schema<IBullRecord>(
     score0Count: { type: Number, default: 0, min: 0, max: 10 },
     shotPositions: [ShotPositionSchema],
     totalShots: { type: Number },
+    imageUrl: { type: String },
+    imageUploadedAt: { type: Date },
+    detectedShotCount: { type: Number },
   },
   { timestamps: true }
 );

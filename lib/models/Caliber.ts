@@ -2,6 +2,7 @@ import mongoose, { Schema, Model } from "mongoose";
 
 export interface ICaliber {
   _id?: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId;
   name: string;
   shortCode?: string;
   category?: string;
@@ -14,6 +15,7 @@ export interface ICaliber {
 
 const CaliberSchema = new Schema<ICaliber>(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
     name: { type: String, required: true },
     shortCode: { type: String },
     category: { type: String },

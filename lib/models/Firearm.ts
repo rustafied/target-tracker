@@ -2,6 +2,7 @@ import mongoose, { Schema, Model } from "mongoose";
 
 export interface IFirearm {
   _id?: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId;
   name: string;
   manufacturer?: string;
   model?: string;
@@ -18,6 +19,7 @@ export interface IFirearm {
 
 const FirearmSchema = new Schema<IFirearm>(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
     name: { type: String, required: true },
     manufacturer: { type: String },
     model: { type: String },
