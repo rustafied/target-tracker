@@ -233,7 +233,7 @@ export function calculateTightnessScore(
   // Lower meanRadius = better, lower centroidDistance = better, fewer misses = better
   // Normalize meanRadius: assume 0-85 range (0=perfect, 85=edge)
   const radiusFactor = Math.max(0, 1 - positionMetrics.meanRadius / 85);
-  const centroidFactor = Math.max(0, 1 - positionMetrics.centroidDistance / 85);
+  const centroidFactor = Math.max(0, 1 - positionMetrics.centroid.centroidDistance / 85);
   const misspenalty = countMetrics.missRate;
 
   return Math.round((radiusFactor * 0.5 + centroidFactor * 0.3 - misspenalty * 0.2) * 100);
@@ -283,7 +283,7 @@ export function aggregateBullMetrics(bulls: IBullRecord[]): WeightedMetrics {
     if (positionMetrics && countMetrics.totalShots > 0) {
       positionShotsCount += countMetrics.totalShots;
       weightedMeanRadius += positionMetrics.meanRadius * countMetrics.totalShots;
-      weightedCentroidDistance += positionMetrics.centroidDistance * countMetrics.totalShots;
+      weightedCentroidDistance += positionMetrics.centroid.centroidDistance * countMetrics.totalShots;
     }
   });
 
