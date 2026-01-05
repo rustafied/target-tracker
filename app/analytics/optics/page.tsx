@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+
+export const dynamic = 'force-dynamic';
 import {
   Eye,
   TrendingUp,

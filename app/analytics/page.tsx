@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "sonner";
+
+export const dynamic = 'force-dynamic';
 import {
   TrendingUp,
   Target,
