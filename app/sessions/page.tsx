@@ -129,8 +129,80 @@ export default function SessionsPage() {
               className="cursor-pointer hover:bg-accent transition-colors group"
               onClick={() => router.push(`/sessions/${session.slug || session._id}`)}
             >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-6">
+              <CardContent className="p-4 md:p-6">
+                {/* Mobile: Vertical Card Layout */}
+                <div className="md:hidden">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <h3 className="text-lg font-bold">{format(new Date(session.date), "MMM d, yyyy")}</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground ml-5.5">
+                        {format(new Date(session.date), "EEEE")}
+                        {session.location && (
+                          <>
+                            <span className="mx-1">@</span>
+                            <span className="font-medium">{session.location}</span>
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
+                  </div>
+                  
+                  {/* Stats Grid - 2 columns on mobile */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {session.sheetCount !== undefined && (
+                      <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                        <Target className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground">Sheets</p>
+                          <p className="text-lg font-bold leading-tight">{session.sheetCount}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {session.totalShots !== undefined && (
+                      <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                        <Crosshair className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground">Shots</p>
+                          <p className="text-lg font-bold leading-tight">{session.totalShots}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {session.avgScore !== undefined && session.avgScore !== null && (
+                      <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                        <TrendingUp className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground">Avg Score</p>
+                          <p className="text-lg font-bold leading-tight">{session.avgScore.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {session.improvement !== undefined && session.improvement !== null && (
+                      <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                        {session.improvement >= 0 ? (
+                          <ArrowUp className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                        ) : (
+                          <ArrowDown className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground">vs Last</p>
+                          <p className={`text-lg font-bold leading-tight ${session.improvement >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {session.improvement >= 0 ? '+' : ''}{session.improvement.toFixed(1)}%
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Desktop: Horizontal Layout */}
+                <div className="hidden md:flex items-start justify-between gap-6">
                   {/* Left: Date & Location */}
                   <div className="flex-shrink-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -149,7 +221,7 @@ export default function SessionsPage() {
                   </div>
 
                   {/* Right: Stats Grid */}
-                  <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6 items-center">
+                  <div className="flex-1 grid grid-cols-4 gap-6 items-center">
                     {session.sheetCount !== undefined && (
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-2 mb-1">
