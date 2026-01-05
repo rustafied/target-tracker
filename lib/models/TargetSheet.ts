@@ -41,9 +41,9 @@ TargetSheetSchema.pre('validate', async function() {
   if (this.isNew && !this.slug) {
     // We'll need to populate the references to build the slug
     const [session, firearm, caliber] = await Promise.all([
-      mongoose.models.RangeSession.findById(this.rangeSessionId),
-      mongoose.models.Firearm.findById(this.firearmId),
-      mongoose.models.Caliber.findById(this.caliberId),
+      RangeSession.findById(this.rangeSessionId),
+      Firearm.findById(this.firearmId),
+      Caliber.findById(this.caliberId),
     ]);
 
     if (!session) {
@@ -66,7 +66,9 @@ TargetSheetSchema.pre('validate', async function() {
     let slug = baseSlug;
     let counter = 1;
     
-    while (await mongoose.models.TargetSheet.findOne({ slug, _id: { $ne: this._id } })) {
+    // Use the TargetSheet model reference instead of mongoose.models
+    const TargetSheetModel = mongoose.models.TargetSheet || mongoose.model<ITargetSheet>("TargetSheet", TargetSheetSchema);
+    while (await TargetSheetModel.findOne({ slug, _id: { $ne: this._id } })) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
