@@ -119,10 +119,9 @@ export default function NewSheetPage() {
         ? calibersData.filter((c) => selectedFirearm.caliberIds!.includes(c._id))
         : calibersData;
 
+      // Batch all state updates together to prevent scroll jumps
       setOptics(filteredOptics);
       setCalibers(filteredCalibers);
-
-      // Update form to select first available after filtering and use default distance
       setFormData((prev) => ({
         ...prev,
         firearmId,
@@ -176,7 +175,7 @@ export default function NewSheetPage() {
   }
 
   return (
-    <div>
+    <div className="pb-20">
       <Button
         variant="ghost"
         onClick={() => router.back()}
@@ -204,106 +203,102 @@ export default function NewSheetPage() {
                   hideSearch
                 />
 
-                {formData.firearmId && (
-                  <>
-                    <TagSelector
-                      items={calibers}
-                      selectedId={formData.caliberId}
-                      onSelect={(id) => setFormData({ ...formData, caliberId: id })}
-                      label="Caliber"
-                      required
-                      hideSearch
-                    />
+                <div className={!formData.firearmId ? "opacity-50 pointer-events-none" : ""}>
+                  <TagSelector
+                    items={calibers}
+                    selectedId={formData.caliberId}
+                    onSelect={(id) => setFormData({ ...formData, caliberId: id })}
+                    label="Caliber"
+                    required
+                    hideSearch
+                  />
+                </div>
 
-                    <TagSelector
-                      items={optics}
-                      selectedId={formData.opticId}
-                      onSelect={(id) => setFormData({ ...formData, opticId: id })}
-                      label="Optic"
-                      required
-                      hideSearch
-                    />
-                  </>
-                )}
+                <div className={!formData.firearmId ? "opacity-50 pointer-events-none" : ""}>
+                  <TagSelector
+                    items={optics}
+                    selectedId={formData.opticId}
+                    onSelect={(id) => setFormData({ ...formData, opticId: id })}
+                    label="Optic"
+                    required
+                    hideSearch
+                  />
+                </div>
               </div>
 
               {/* Right Column - Distance, Label, Notes */}
-              {formData.firearmId && (
-                <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="distance" className="flex items-center gap-2">
-                      <Ruler className="h-4 w-4" />
-                      Distance (yards) *
-                    </Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => adjustDistance(-5)}
-                        className="h-12 w-12"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <Input
-                        id="distance"
-                        type="number"
-                        value={formData.distanceYards}
-                        onChange={(e) => setFormData({ ...formData, distanceYards: e.target.value })}
-                        required
-                        min="1"
-                        className="text-center text-lg font-semibold h-12"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => adjustDistance(5)}
-                        className="h-12 w-12"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="sheetLabel" className="flex items-center gap-2">
-                      <TagIcon className="h-4 w-4" />
-                      Sheet Label
-                    </Label>
+              <div className={`space-y-6 ${!formData.firearmId ? "opacity-50 pointer-events-none" : ""}`}>
+                <div>
+                  <Label htmlFor="distance" className="flex items-center gap-2">
+                    <Ruler className="h-4 w-4" />
+                    Distance (yards) *
+                  </Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => adjustDistance(-5)}
+                      className="h-12 w-12"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
                     <Input
-                      id="sheetLabel"
-                      value={formData.sheetLabel}
-                      onChange={(e) => setFormData({ ...formData, sheetLabel: e.target.value })}
-                      placeholder="e.g., Zeroing, Group Practice"
+                      id="distance"
+                      type="number"
+                      value={formData.distanceYards}
+                      onChange={(e) => setFormData({ ...formData, distanceYards: e.target.value })}
+                      required
+                      min="1"
+                      className="text-center text-lg font-semibold h-12"
                     />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="notes" className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Notes
-                    </Label>
-                    <Textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      placeholder="Additional notes about this sheet..."
-                      rows={3}
-                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => adjustDistance(5)}
+                      className="h-12 w-12"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-              )}
+
+                <div>
+                  <Label htmlFor="sheetLabel" className="flex items-center gap-2">
+                    <TagIcon className="h-4 w-4" />
+                    Sheet Label
+                  </Label>
+                  <Input
+                    id="sheetLabel"
+                    value={formData.sheetLabel}
+                    onChange={(e) => setFormData({ ...formData, sheetLabel: e.target.value })}
+                    placeholder="e.g., Zeroing, Group Practice"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="notes" className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Notes
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Additional notes about this sheet..."
+                    rows={3}
+                  />
+                </div>
+              </div>
             </div>
 
-            {formData.firearmId && (
-              <div className="flex gap-2 justify-end pt-4 border-t">
-                <Button type="button" variant="outline" onClick={() => router.back()}>
-                  Cancel
-                </Button>
-                <Button type="submit">Create Sheet</Button>
-              </div>
-            )}
+            <div className={`flex gap-2 justify-end pt-4 border-t ${!formData.firearmId ? "opacity-50 pointer-events-none" : ""}`}>
+              <Button type="button" variant="outline" onClick={() => router.back()}>
+                Cancel
+              </Button>
+              <Button type="submit">Create Sheet</Button>
+            </div>
           </form>
         </CardContent>
         </Card>
