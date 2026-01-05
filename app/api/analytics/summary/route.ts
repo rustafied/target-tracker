@@ -73,6 +73,7 @@ export async function GET(request: Request) {
 
         return {
           sessionId: session._id,
+          slug: session.slug,
           date: session.date,
           location: session.location,
           totalShots,

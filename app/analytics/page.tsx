@@ -8,11 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { TagSelector } from "@/components/TagSelector";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Calendar, Target, Crosshair, TrendingUp, Filter, Ruler, ChevronDown, ChevronUp, TrendingDown, Minus } from "lucide-react";
+import Link from "next/link";
 
 interface SessionMetric {
   sessionId: string;
+  slug: string;
   date: string;
   location?: string;
   totalShots: number;
@@ -396,7 +398,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={chartData}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="date" className="text-xs" />
                 <YAxis domain={[0, 5]} className="text-xs" />
@@ -408,15 +410,12 @@ export default function AnalyticsPage() {
                   }}
                 />
                 <Legend />
-                <Line
-                  type="monotone"
+                <Bar
                   dataKey="score"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
+                  fill="hsl(var(--primary))"
                   name="Average Score"
                 />
-              </LineChart>
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -454,7 +453,14 @@ export default function AnalyticsPage() {
 
                     return (
                       <tr key={session.sessionId} className="border-b hover:bg-accent">
-                        <td className="p-2">{format(new Date(session.date), "MMM d, yyyy")}</td>
+                        <td className="p-2">
+                          <Link 
+                            href={`/sessions/${session.slug}`}
+                            className="text-primary hover:underline"
+                          >
+                            {format(new Date(session.date), "MMM d, yyyy")}
+                          </Link>
+                        </td>
                         <td className="p-2 text-muted-foreground">{session.location || "-"}</td>
                         <td className="p-2 text-right">{session.totalShots}</td>
                         <td className="p-2 text-right">{session.totalScore}</td>
