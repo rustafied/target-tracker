@@ -376,7 +376,7 @@ export default function SessionDetailPage() {
           <div className="flex gap-2">
             <Button onClick={() => router.push(`/sessions/${sessionId}/sheets/new`)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Sheet
+              <span className="hidden sm:inline">Add Sheet</span>
             </Button>
             <Button variant="outline" size="icon" onClick={openEditDialog}>
               <Edit className="h-4 w-4" />
