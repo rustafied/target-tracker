@@ -25,8 +25,8 @@ const RangeSessionSchema = new Schema<IRangeSession>(
   { timestamps: true }
 );
 
-// Generate slug before saving
-RangeSessionSchema.pre('save', async function(next: any) {
+// Generate slug before validation (runs before save)
+RangeSessionSchema.pre('validate', async function() {
   if (this.isNew || this.isModified('date') || this.isModified('location')) {
     const dateStr = format(this.date, 'yyyy-MM-dd');
     
@@ -51,7 +51,6 @@ RangeSessionSchema.pre('save', async function(next: any) {
     
     this.slug = slug;
   }
-  next();
 });
 
 export const RangeSession: Model<IRangeSession> =
