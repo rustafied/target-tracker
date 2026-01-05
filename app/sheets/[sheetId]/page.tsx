@@ -112,7 +112,7 @@ export default function SheetDetailPage() {
         
         // Always ensure we have 6 bulls for the UI, even if they don't exist in DB yet
         const existingBulls = data.bulls || [];
-        const bullsMap = new Map(existingBulls.map((b: BullRecord) => [b.bullIndex, b]));
+        const bullsMap = new Map<number, BullRecord>(existingBulls.map((b: BullRecord) => [b.bullIndex, b]));
         
         const allBulls: BullRecord[] = [];
         const initialQuickInputs: { [key: number]: string } = {};

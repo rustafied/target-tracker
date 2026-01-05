@@ -229,34 +229,6 @@ export default function SessionDetailPage() {
     }
   };
 
-  const filterByFirearm = (
-    firearmId: string,
-    firearmsData = firearms,
-    opticsData = allOptics,
-    calibersData = allCalibers
-  ) => {
-    const selectedFirearm = firearmsData.find((f) => f._id === firearmId);
-    if (selectedFirearm) {
-      const filteredOpts = selectedFirearm.opticIds && selectedFirearm.opticIds.length > 0
-        ? opticsData.filter((o) => selectedFirearm.opticIds!.includes(o._id))
-        : opticsData;
-      
-      const filteredCals = selectedFirearm.caliberIds && selectedFirearm.caliberIds.length > 0
-        ? calibersData.filter((c) => selectedFirearm.caliberIds!.includes(c._id))
-        : calibersData;
-
-      setFilteredOptics(filteredOpts);
-      setFilteredCalibers(filteredCals);
-
-      setQuickSheetFormData((prev) => ({
-        ...prev,
-        firearmId,
-        opticId: filteredOpts.length > 0 ? filteredOpts[0]._id : "",
-        caliberId: filteredCals.length > 0 ? filteredCals[0]._id : "",
-      }));
-    }
-  };
-
   if (loading) {
     return <div>Loading...</div>;
   }

@@ -17,7 +17,7 @@ export async function GET() {
         const sheetIds = sheets.map(s => s._id);
         const bulls = await BullRecord.find({ targetSheetId: { $in: sheetIds } });
         
-        const totalShots = bulls.reduce((sum, bull) => sum + bull.totalShots, 0);
+        const totalShots = bulls.reduce((sum, bull) => sum + (bull.totalShots || 0), 0);
         
         // Calculate total score from score counts
         const totalScore = bulls.reduce((sum, bull) => {
