@@ -51,6 +51,7 @@ export default function SheetDetailPage() {
 
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [bulls, setBulls] = useState<BullRecord[]>([]);
+  const [quickInputs, setQuickInputs] = useState<{ [key: number]: string }>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -99,7 +100,51 @@ export default function SheetDetailPage() {
       if (res.ok) {
         const data = await res.json();
         setSheet(data.sheet);
-        setBulls(data.bulls);
+        
+        // Always ensure we have 6 bulls for the UI, even if they don't exist in DB yet
+        const existingBulls = data.bulls || [];
+        const bullsMap = new Map(existingBulls.map((b: BullRecord) => [b.bullIndex, b]));
+        
+        const allBulls: BullRecord[] = [];
+        const initialQuickInputs: { [key: number]: string } = {};
+        
+        for (let i = 1; i <= 6; i++) {
+          if (bullsMap.has(i)) {
+            const bull = bullsMap.get(i)!;
+            allBulls.push(bull);
+            
+            // Initialize quick input for this bull
+            const counts = [
+              bull.score5Count,
+              bull.score4Count,
+              bull.score3Count,
+              bull.score2Count,
+              bull.score1Count,
+              bull.score0Count,
+            ];
+            
+            // Convert to string and trim trailing zeros
+            let result = counts.map(c => c.toString()).join('');
+            result = result.replace(/0+$/, '') || '';
+            initialQuickInputs[i] = result;
+          } else {
+            // Create a temporary bull record for the UI
+            allBulls.push({
+              _id: `temp-${i}`,
+              bullIndex: i,
+              score5Count: 0,
+              score4Count: 0,
+              score3Count: 0,
+              score2Count: 0,
+              score1Count: 0,
+              score0Count: 0,
+            });
+            initialQuickInputs[i] = '';
+          }
+        }
+        
+        setBulls(allBulls);
+        setQuickInputs(initialQuickInputs);
       } else {
         toast.error("Sheet not found");
         router.push("/sessions");
@@ -198,6 +243,13 @@ export default function SheetDetailPage() {
         bull.bullIndex === bullIndex ? { ...bull, [field]: value } : bull
       )
     );
+    
+    // Update quick input when buttons are used
+    const updatedBull = bulls.find(b => b.bullIndex === bullIndex);
+    if (updatedBull) {
+      const newBull = { ...updatedBull, [field]: value };
+      updateQuickInputFromBull(bullIndex, newBull);
+    }
   };
 
   const copyBull = (fromIndex: number, toIndex: number) => {
@@ -220,6 +272,52 @@ export default function SheetDetailPage() {
       )
     );
     toast.success(`Copied Bull ${fromIndex} to Bull ${toIndex}`);
+  };
+
+  const parseQuickInput = (input: string, bullIndex: number) => {
+    setQuickInputs(prev => ({ ...prev, [bullIndex]: input }));
+    
+    const digits = input.trim();
+    if (!/^\d{0,6}$/.test(digits)) return; // Only accept up to 6 digits
+
+    const counts = digits.split('').map(d => parseInt(d, 10));
+    
+    setBulls((prev) =>
+      prev.map((bull) =>
+        bull.bullIndex === bullIndex
+          ? {
+              ...bull,
+              score5Count: counts[0] || 0,
+              score4Count: counts[1] || 0,
+              score3Count: counts[2] || 0,
+              score2Count: counts[3] || 0,
+              score1Count: counts[4] || 0,
+              score0Count: counts[5] || 0,
+            }
+          : bull
+      )
+    );
+  };
+
+  const updateQuickInputFromBull = (bullIndex: number, bull: BullRecord) => {
+    const counts = [
+      bull.score5Count,
+      bull.score4Count,
+      bull.score3Count,
+      bull.score2Count,
+      bull.score1Count,
+      bull.score0Count,
+    ];
+    
+    // Convert to string and trim trailing zeros
+    let result = counts.map(c => c.toString()).join('');
+    result = result.replace(/0+$/, '') || '';
+    
+    setQuickInputs(prev => ({ ...prev, [bullIndex]: result }));
+  };
+
+  const getQuickInputValue = (bullIndex: number): string => {
+    return quickInputs[bullIndex] || '';
   };
 
   const handleSave = async () => {
@@ -362,6 +460,34 @@ export default function SheetDetailPage() {
           {sheet.notes && (
             <p className="text-sm text-muted-foreground mt-4">{sheet.notes}</p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Quick Input Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Quick Entry</CardTitle>
+          <p className="text-sm text-muted-foreground">Enter scores as 6 digits: 5pts, 4pts, 3pts, 2pts, 1pt, 0pts (e.g., "153210")</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {bulls.map((bull) => (
+              <div key={bull.bullIndex}>
+                <Label htmlFor={`quick-${bull.bullIndex}`} className="text-sm font-medium mb-2 block">
+                  Bull {bull.bullIndex}
+                </Label>
+                <Input
+                  id={`quick-${bull.bullIndex}`}
+                  type="text"
+                  placeholder=""
+                  className="w-full"
+                  maxLength={6}
+                  value={getQuickInputValue(bull.bullIndex)}
+                  onChange={(e) => parseQuickInput(e.target.value, bull.bullIndex)}
+                />
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

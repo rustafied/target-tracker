@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Calendar, MapPin, FileText } from "lucide-react";
+import { Plus, Calendar, MapPin, FileText, Target, TrendingUp, Crosshair, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,10 @@ interface RangeSession {
   date: string;
   location?: string;
   notes?: string;
+  sheetCount?: number;
+  totalShots?: number;
+  avgScore?: number;
+  improvement?: number | null;
 }
 
 export default function SessionsPage() {
@@ -49,6 +53,7 @@ export default function SessionsPage() {
       const res = await fetch("/api/sessions");
       if (res.ok) {
         const data = await res.json();
+        console.log('Sessions data:', data.sessions); // Debug
         setSessions(data.sessions || data); // Handle both old and new format
         setLocations(data.locations || []);
       }
@@ -117,31 +122,86 @@ export default function SessionsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-3">
           {sessions.map((session) => (
             <Card
               key={session._id}
-              className="cursor-pointer hover:bg-accent transition-colors"
+              className="cursor-pointer hover:bg-accent transition-colors group"
               onClick={() => router.push(`/sessions/${session.slug || session._id}`)}
             >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  {format(new Date(session.date), "MMM d, yyyy")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {session.location && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    {session.location}
-                  </p>
-                )}
-                {session.notes && (
-                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                    {session.notes}
-                  </p>
-                )}
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between gap-6">
+                  {/* Left: Date & Location */}
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Calendar className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-xl font-bold">{format(new Date(session.date), "MMM d, yyyy")}</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground ml-7">
+                      {format(new Date(session.date), "EEEE")}
+                      {session.location && (
+                        <>
+                          <span className="mx-1.5">@</span>
+                          <span className="font-medium">{session.location}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Right: Stats Grid */}
+                  <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6 items-center">
+                    {session.sheetCount !== undefined && (
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <Target className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Sheets</p>
+                        </div>
+                        <p className="text-2xl font-bold">{session.sheetCount}</p>
+                      </div>
+                    )}
+                    
+                    {session.totalShots !== undefined && (
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <Crosshair className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Shots</p>
+                        </div>
+                        <p className="text-2xl font-bold">{session.totalShots}</p>
+                      </div>
+                    )}
+                    
+                    {session.avgScore !== undefined && session.avgScore !== null && (
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Avg Score</p>
+                        </div>
+                        <p className="text-2xl font-bold">{session.avgScore.toFixed(2)}</p>
+                      </div>
+                    )}
+                    
+                    {session.improvement !== undefined && session.improvement !== null && (
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          {session.improvement >= 0 ? (
+                            <ArrowUp className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <ArrowDown className="h-4 w-4 text-red-500" />
+                          )}
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">vs Last</p>
+                        </div>
+                        <p className={`text-2xl font-bold ${session.improvement >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {session.improvement >= 0 ? '+' : ''}{session.improvement.toFixed(1)}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Chevron */}
+                  <div className="flex-shrink-0 self-center">
+                    <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ))}

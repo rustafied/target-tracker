@@ -5,6 +5,9 @@ export const firearmSchema = z.object({
   manufacturer: z.string().optional(),
   model: z.string().optional(),
   defaultCaliberId: z.string().optional(),
+  defaultDistanceYards: z.number().positive().optional().or(z.undefined()),
+  caliberIds: z.array(z.string()).optional().default([]),
+  opticIds: z.array(z.string()).optional().default([]),
   notes: z.string().optional(),
   isActive: z.boolean().default(true),
 });

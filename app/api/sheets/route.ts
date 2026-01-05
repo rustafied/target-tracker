@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { TargetSheet } from "@/lib/models/TargetSheet";
+import { RangeSession } from "@/lib/models/RangeSession";
 import { BullRecord } from "@/lib/models/BullRecord";
 import { sheetSchema } from "@/lib/validators/sheet";
 
@@ -10,24 +11,27 @@ export async function POST(request: Request) {
     const validated = sheetSchema.parse(body);
 
     await connectToDatabase();
-    const sheet = await TargetSheet.create(validated);
-
-    // Create 6 empty bull records for this sheet
-    const bulls = [];
-    for (let i = 1; i <= 6; i++) {
-      bulls.push({
-        targetSheetId: sheet._id,
-        bullIndex: i,
-        score5Count: 0,
-        score4Count: 0,
-        score3Count: 0,
-        score2Count: 0,
-        score1Count: 0,
-        score0Count: 0,
-        totalShots: 0,
-      });
+    
+    // If rangeSessionId looks like a slug (contains dashes and is not 24 hex chars), look it up
+    let sessionId = validated.rangeSessionId;
+    if (typeof sessionId === 'string' && (sessionId.includes('-') || sessionId.length !== 24)) {
+      const session = await RangeSession.findOne({ slug: sessionId });
+      if (!session) {
+        return NextResponse.json({ error: "Session not found" }, { status: 404 });
+      }
+      sessionId = session._id.toString();
     }
-    await BullRecord.insertMany(bulls);
+
+    // Create sheet with resolved sessionId, let pre-save hook generate slug
+    const sheetData = {
+      ...validated,
+      rangeSessionId: sessionId,
+    };
+    
+    const sheet = await TargetSheet.create(sheetData);
+
+    // Don't create any bull records on sheet creation
+    // Bulls will be created only when they have actual data
 
     return NextResponse.json(sheet, { status: 201 });
   } catch (error: any) {

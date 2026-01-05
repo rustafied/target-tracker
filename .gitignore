@@ -24,6 +24,17 @@
 .DS_Store
 *.pem
 
+# python
+python-ocr/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

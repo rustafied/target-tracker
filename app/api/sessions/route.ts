@@ -10,12 +10,58 @@ export async function GET() {
     await connectToDatabase();
     const sessions = await RangeSession.find().sort({ date: -1 });
     
+    // Get summary stats for each session
+    const sessionsWithStats = await Promise.all(
+      sessions.map(async (session) => {
+        const sheets = await TargetSheet.find({ rangeSessionId: session._id });
+        const sheetIds = sheets.map(s => s._id);
+        const bulls = await BullRecord.find({ targetSheetId: { $in: sheetIds } });
+        
+        const totalShots = bulls.reduce((sum, bull) => sum + bull.totalShots, 0);
+        
+        // Calculate total score from score counts
+        const totalScore = bulls.reduce((sum, bull) => {
+          return sum + 
+            (bull.score5Count * 5) + 
+            (bull.score4Count * 4) + 
+            (bull.score3Count * 3) + 
+            (bull.score2Count * 2) + 
+            (bull.score1Count * 1);
+        }, 0);
+        
+        const avgScore = totalShots > 0 ? totalScore / totalShots : 0;
+        
+        return {
+          ...session.toObject(),
+          sheetCount: sheets.length,
+          totalShots,
+          avgScore,
+        };
+      })
+    );
+    
+    // Calculate improvement from previous session (chronologically)
+    const sessionsWithImprovement = sessionsWithStats.map((session, index) => {
+      // Find the previous session chronologically (next in the sorted array since we sort by date desc)
+      const previousSession = sessionsWithStats[index + 1];
+      
+      let improvement: number | null = null;
+      if (previousSession && previousSession.avgScore > 0 && session.avgScore > 0) {
+        improvement = ((session.avgScore - previousSession.avgScore) / previousSession.avgScore) * 100;
+      }
+      
+      return {
+        ...session,
+        improvement,
+      };
+    });
+    
     // Get unique locations for autocomplete
     const locations = await RangeSession.distinct("location", { 
       location: { $exists: true, $nin: [null, ""] } 
     });
     
-    return NextResponse.json({ sessions, locations });
+    return NextResponse.json({ sessions: sessionsWithImprovement, locations });
   } catch (error: any) {
     console.error("Error fetching sessions:", error);
     return NextResponse.json({ 

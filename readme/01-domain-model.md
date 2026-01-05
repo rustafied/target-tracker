@@ -13,8 +13,9 @@ Represents a specific gun.
 * `manufacturer` (string, optional)
 * `model` (string, optional)
 * `defaultCaliberId` (ObjectId → Caliber, optional)
-* `compatibleCaliberIds` (ObjectId[] → Caliber, optional) - List of compatible calibers
-* `compatibleOpticIds` (ObjectId[] → Optic, optional) - List of compatible optics
+* `defaultDistanceYards` (number, optional) - Default distance for this firearm when creating sheets
+* `caliberIds` (ObjectId[] → Caliber) - List of compatible calibers (many-to-many relationship)
+* `opticIds` (ObjectId[] → Optic) - List of compatible optics (many-to-many relationship)
 * `sortOrder` (number, default 0) - User-defined display order
 * `notes` (string, optional)
 * `isActive` (boolean, default true)
@@ -57,6 +58,7 @@ One "range day" or range visit.
 
 **Fields:**
 * `_id` - MongoDB ObjectId
+* `slug` (string, unique) - URL-friendly identifier (auto-generated from date)
 * `date` (date, required)
 * `location` (string, optional)
 * `notes` (string, optional) - Weather, drills, etc.
@@ -65,10 +67,11 @@ One "range day" or range visit.
 ---
 
 ### 5. TargetSheet
-One physical sheet of paper (up to six bulls) associated with a single firearm/optic/caliber/distance combination.
+One physical sheet of paper (flexible 1-6 bulls) associated with a single firearm/optic/caliber/distance combination.
 
 **Fields:**
 * `_id` - MongoDB ObjectId
+* `slug` (string, unique) - URL-friendly identifier (auto-generated)
 * `rangeSessionId` (ObjectId → RangeSession, required)
 * `firearmId` (ObjectId → Firearm, required)
 * `caliberId` (ObjectId → Caliber, required)
@@ -78,6 +81,8 @@ One physical sheet of paper (up to six bulls) associated with a single firearm/o
 * `notes` (string, optional)
 * `photoUrl` (string, optional) - For future target photos
 * `createdAt`, `updatedAt` (dates)
+
+**Note**: Bulls are only created/saved if they contain non-zero score data. Not all sheets require 6 bulls.
 
 ---
 
@@ -118,7 +123,12 @@ Firearm (1) ──→ (many) Optic [via compatibleOpticIds]
 ```
 
 **Equipment Filtering:**
-When creating a target sheet, the available calibers and optics are filtered based on the selected firearm's `compatibleCaliberIds` and `compatibleOpticIds` arrays.
+When creating a target sheet:
+1. Select firearm first
+2. Available calibers are filtered based on the firearm's `caliberIds` array
+3. Available optics are filtered based on the firearm's `opticIds` array
+4. First compatible caliber and optic are auto-selected
+5. If the firearm has a `defaultDistanceYards` value, it pre-populates the distance field
 
 ## Validation Rules
 

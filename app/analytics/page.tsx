@@ -156,12 +156,13 @@ export default function AnalyticsPage() {
   };
 
   // Calculate overall trend (comparing first half vs second half)
+  // Sessions are now ordered by date (oldest first), so first half is older
   const getOverallTrend = () => {
     if (sessions.length < 2) return null;
     
     const midpoint = Math.floor(sessions.length / 2);
-    const firstHalf = sessions.slice(midpoint);
-    const secondHalf = sessions.slice(0, midpoint);
+    const firstHalf = sessions.slice(0, midpoint); // Older sessions
+    const secondHalf = sessions.slice(midpoint); // Newer sessions
     
     if (firstHalf.length === 0 || secondHalf.length === 0) return null;
     
@@ -443,7 +444,8 @@ export default function AnalyticsPage() {
                 </thead>
                 <tbody>
                   {sessions.map((session, index) => {
-                    const previousSession = index < sessions.length - 1 ? sessions[index + 1] : null;
+                    // Since sessions are sorted by date (oldest first), previous session is at index - 1
+                    const previousSession = index > 0 ? sessions[index - 1] : null;
                     const improvement = calculateImprovement(
                       session.averageScore,
                       previousSession?.averageScore ?? null

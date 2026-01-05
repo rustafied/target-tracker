@@ -12,6 +12,7 @@ Current state of the Target Tracker application as of January 2026.
 
 #### 1. Equipment Management (Setup)
 - **Firearms CRUD** - Full create, read, update, delete functionality
+  - Default distance field - Pre-populates distance when creating sheets
 - **Optics CRUD** - Complete management interface
 - **Calibers CRUD** - Full lifecycle management
 - **Drag-Drop Reordering** - Custom ordering for all equipment using `@dnd-kit`
@@ -21,42 +22,68 @@ Current state of the Target Tracker application as of January 2026.
 - **Equipment Relationships** - Firearms can have multiple compatible calibers and optics
   - Multi-select interface when editing firearms
   - Filtered selection when creating target sheets
+  - Auto-selects first compatible option
 
 #### 2. Range Sessions
 - **Create Sessions** - Date picker (defaults to today), location, notes
+- **URL Slugs** - Sessions use date-based slugs (e.g., `2026-01-04-reloaderz`) for clean URLs
 - **Edit Sessions** - Modify date, location, and notes
 - **Location Autocomplete** - Suggests previously used locations as you type
 - **Delete Sessions** - With confirmation dialog
-- **Session List** - All sessions displayed with cards, sorted by date
+- **Session List** - Clean line-item layout with:
+  - Date display with day of week and location (e.g., "Sunday @ Reloaderz")
+  - Stats grid showing: sheets, shots, avg score, improvement %
+  - Improvement indicator with color-coded arrows (green/red) vs previous session
+  - Responsive 2-column (mobile) to 4-column (desktop) grid
+  - Hover effects and chevron indicator
 - **Session Detail View** - Comprehensive view with:
   - Session metadata (date, location, notes)
+  - Session summary card with:
+    - Bullets fired, bullseye %, avg score
+    - Best weapon by average score
+    - Breakdown by firearm with individual averages
+  - Multi-firearm comparison chart (see Visualizations)
   - All target sheets with equipment details
   - Aggregate visualizations (see Visualizations section)
 
 #### 3. Target Sheets
-- **Add Sheets to Sessions** - From session detail page
+- **Add Sheets to Sessions** - From session detail page or via "Add Sheet" button
+- **URL Slugs** - Sheets use descriptive slugs for clean URLs
 - **Equipment Selection** - Tag-based UI with filtered options:
   - Firearms shown in custom sort order
   - Calibers filtered by selected firearm's compatible list
   - Optics filtered by selected firearm's compatible list
   - Auto-selects first available option by default
-- **Distance Entry** - Numeric input in yards
+  - Default distance auto-populates from firearm setting
+- **Two-Column Form Layout** - Equipment selection in left column, distance/label/notes in right
+- **Distance Entry** - Numeric input in yards with +/- buttons
 - **Sheet Labels & Notes** - Optional metadata
 - **Edit Sheets** - Modify all sheet details after creation
+- **Flexible Bull Count** - Sheets can have 1-6 bulls; only non-zero bulls are saved to database
 - **Sheet Cards** - Display on session page with:
   - Equipment details (firearm, caliber, optic, distance)
+  - Individual bull visualizations (only for bulls with data)
   - Total shots and total score
+  - Per-bull bar chart showing average scores
   - Large average score in top-right
   - Icons for all equipment types
-  - 2-column layout with labels
 
 #### 4. Bull Scoring
+- **Quick Entry Card** - Positioned at top of sheet detail page
+  - 6 input fields (one per bull) in responsive grid layout
+  - Enter scores as 6-digit strings (e.g., "543210" = 5pts:5, 4pts:4, 3pts:3, 2pts:2, 1pt:1, 0pts:0)
+  - Supports partial entry (e.g., "03" = 0 five-pointers, 3 four-pointers)
+  - Syncs bidirectionally with count buttons below
+  - Pre-populated when viewing existing sheets
 - **Score Entry Interface** - `/sheets/[sheetId]` page with:
-  - 6 bull sections (bulls 1-6)
+  - 6 bull sections (bulls 1-6) displayed below quick entry
   - Button grid (0-10) for each score level (5, 4, 3, 2, 1, 0)
+  - Copy Previous button for each bull (except first)
   - Live calculation of total shots, total score, and average
+  - Active state styling with blue highlighting
 - **Save & Navigate** - After saving, automatically returns to session detail
 - **Edit Scores** - Modify bull scores at any time
+- **Smart Saving** - Only saves bulls with non-zero data to database
 
 #### 5. Analytics
 - **Filters** - Collapsible filter section (collapsed by default):
@@ -101,27 +128,41 @@ Custom SVG components with realistic target rings:
 
 #### Session Detail Visualizations
 
-1. **Average Score Progression Chart**
-   - Line chart at top of session detail page
-   - X-axis: Sheet number (1st, 2nd, 3rd, etc.)
-   - Y-axis: Average score per shot
-   - Shows improvement/consistency across sheets
+1. **Session Summary Card**
+   - Displays key metrics with icons
+   - Bullets fired (total shots)
+   - Bullseye % (percentage of 5-point shots)
+   - Avg Score (overall session average)
+   - Best Weapon (firearm with highest avg, with score)
+   - By Firearm breakdown (avg for each firearm used)
 
-2. **Session Heatmap**
+2. **Multi-Firearm Comparison Chart**
+   - Line chart comparing multiple firearms in same session
+   - X-axis: Sheet number/label
+   - Y-axis: Average score per shot (0-5 scale)
+   - Separate colored line for each firearm used
+   - Each firearm gets unique color (purple, blue, green, amber, red, pink, teal, orange)
+   - Lines only appear where that firearm was used (gaps shown with `connectNulls={false}`)
+   - Legend shows which color represents which firearm
+   - Positioned next to session heatmap
+
+3. **Session Heatmap**
    - Large aggregate bullseye visualization
    - Displays all shots from all sheets in session
    - Uses transparent dots to show density/concentration
-   - Positioned next to line chart
+   - Positioned next to comparison chart
 
-3. **Per-Sheet Visualizations**
-   - Each sheet card shows 6 smaller bullseye targets
-   - One visualization per bull (3×2 grid layout)
+4. **Per-Sheet Visualizations**
+   - Each sheet card shows bullseye targets for bulls with data
+   - Only displays bulls that have non-zero shots
    - Randomized shot placement within correct rings
    - Hover to enlarge and see detailed tooltip
 
-4. **Scores by Bull Chart**
-   - Bar chart showing average score per bull (1-6)
+5. **Scores by Bull Chart**
+   - Bar chart showing average score per bull
+   - Only shows bulls with data
    - Average score text printed directly on bars
+   - Disabled hover cursor (no background highlight)
    - Helps identify consistent vs. inconsistent bulls
 
 ### Theme & Design
@@ -143,8 +184,9 @@ All using Mongoose ODM with MongoDB:
 #### `firearms`
 - `name`, `manufacturer`, `model`
 - `defaultCaliberId` (reference)
-- `compatibleCaliberIds` (array of references)
-- `compatibleOpticIds` (array of references)
+- `defaultDistanceYards` (number) - Auto-populates when creating sheets
+- `caliberIds` (array of references) - Many-to-many relationship
+- `opticIds` (array of references) - Many-to-many relationship
 - `sortOrder` (number, for custom ordering)
 - `notes`, `isActive`
 - `createdAt`, `updatedAt`
@@ -162,12 +204,14 @@ All using Mongoose ODM with MongoDB:
 - `createdAt`, `updatedAt`
 
 #### `rangesessions`
+- `slug` (string, unique) - URL-friendly identifier based on date and location
 - `date` (stored as noon UTC to avoid timezone shifts)
 - `location` (with autocomplete from previous entries)
 - `notes`
 - `createdAt`, `updatedAt`
 
 #### `targetsheets`
+- `slug` (string, unique) - URL-friendly identifier
 - `rangeSessionId` (reference)
 - `firearmId`, `caliberId`, `opticId` (references)
 - `distanceYards` (number)
@@ -205,7 +249,6 @@ Not stored in database, calculated on-the-fly:
 - **@dnd-kit** - Drag-and-drop functionality
 - **Lucide React** - Icon library
 - **date-fns** - Date formatting
-- **Tesseract.js** - OCR for range notes
 
 ### Notable Components
 
@@ -214,8 +257,8 @@ Not stored in database, calculated on-the-fly:
 - `BullseyeVisualization.tsx` - Combined bullseye for all shots on sheet
 - `SingleBullVisualization.tsx` - Individual bull with hover tooltip
 - `SessionHeatmap.tsx` - Aggregate heatmap for session
-- `CountButtons.tsx` - 0-10 button grid for score entry
-- `TagSelector.tsx` - Multi-select tag interface
+- `CountButtons.tsx` - 0-10 button grid for score entry with active state styling
+- `TagSelector.tsx` - Multi-select tag interface with blue active state
 - `LocationAutocomplete.tsx` - Location input with suggestions
 
 #### shadcn/ui Components Used
@@ -238,13 +281,13 @@ All CRUD operations exposed via `/api/*`:
 ### Navigation Structure
 ```
 / (redirects to /sessions)
-/sessions - List of all sessions
-/sessions/[id] - Session detail with visualizations
-/sessions/[id]/sheets/new - Create new target sheet
-/sheets/[sheetId] - Score entry and editing
+/sessions - List of all sessions with stats and improvement indicators
+/sessions/[slug] - Session detail with visualizations (supports slug or ID)
+/sessions/[slug]/sheets/new - Create new target sheet
+/sheets/[slug] - Score entry and editing (supports slug or ID)
 /analytics - Trends and filtering
 /setup - Equipment management overview
-/setup/firearms - Firearms CRUD with drag-drop
+/setup/firearms - Firearms CRUD with drag-drop and default distance
 /setup/optics - Optics CRUD with drag-drop
 /setup/calibers - Calibers CRUD with drag-drop
 ```
@@ -285,6 +328,40 @@ All CRUD operations exposed via `/api/*`:
    - Issue: `rangeSessionId` required error when editing sheets
    - Fix: Made `rangeSessionId` optional in Zod schema for PUT requests
 
+8. **Slug vs ObjectId Handling**
+   - Issue: API routes expected ObjectIds but received URL slugs
+   - Fix: Added slug resolution logic in `/api/sheets` and `/api/bulls` routes
+   - Now checks if ID is a slug and resolves to ObjectId before database operations
+
+9. **Firearm Equipment Relationships**
+   - Issue: Caliber/optic selection not persisting on firearm edit
+   - Root causes: String vs ObjectId comparison, stale state closures, Zod stripping arrays
+   - Fix: Consistent ID conversion, functional `setState`, updated Zod schemas
+
+10. **Default Distance Field**
+    - Issue: `defaultDistanceYards` not saving on firearms
+    - Fix: Added field to Mongoose schema and Zod validator with `z.preprocess` for type conversion
+    - Required cache clearing (`.next` folder) to reload updated schema
+
+11. **Flexible Bull Count**
+    - Issue: System required all 6 bulls even if only using 3-4
+    - Fix: Modified bull creation to filter out empty bulls (totalShots === 0)
+    - UI still displays 6 bulls for input, but only saves non-empty ones
+
+12. **Analytics Date Order**
+    - Issue: Sessions displayed in entry order, not chronological order
+    - Fix: Changed session sorting and improvement calculation to use chronological order
+    - Improvement % now compares current vs previous session by date
+
+13. **Session List UX**
+    - Issue: Session list was card-based and lacked summary statistics
+    - Fix: Redesigned as line-item list with stats grid, improvement indicators, and responsive layout
+
+14. **Quick Entry Input**
+    - Issue: Input field showing default "543210" and not allowing leading zeros
+    - Fix: Added separate state for quick entry, bidirectional sync with count buttons
+    - Now supports partial entry like "03" and shows blank for all-zero bulls
+
 ---
 
 ## 📋 Seeded Data
@@ -313,7 +390,6 @@ Sample data provided via `seed.mjs`:
 
 See [Future Features](./06-future-features.md) for detailed plans:
 
-- Photo OCR for range notebook pages
 - Direct target photo ingestion with shot detection
 - Authentication and user accounts
 - Multi-device sync
@@ -374,5 +450,5 @@ https://github.com/rustafied/target-tracker
 
 ---
 
-_Last Updated: January 4, 2026_
+_Last Updated: January 5, 2026_
 

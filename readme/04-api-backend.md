@@ -5,11 +5,12 @@
 Base: `/api`
 
 ### Firearms
-* `GET /api/firearms` - List all firearms
+* `GET /api/firearms` - List all firearms (with `caliberIds`, `opticIds`, `defaultDistanceYards`)
 * `POST /api/firearms` - Create firearm
 * `GET /api/firearms/[id]` - Firearm detail
-* `PUT /api/firearms/[id]` - Update firearm
+* `PUT /api/firearms/[id]` - Update firearm (includes equipment relationships and default distance)
 * `DELETE /api/firearms/[id]` - Archive or delete firearm
+* `PUT /api/firearms/reorder` - Update `sortOrder` for custom ordering
 
 ### Optics
 * `GET /api/optics` - List all optics
@@ -17,6 +18,7 @@ Base: `/api`
 * `GET /api/optics/[id]` - Optic detail
 * `PUT /api/optics/[id]` - Update optic
 * `DELETE /api/optics/[id]` - Archive or delete optic
+* `PUT /api/optics/reorder` - Update `sortOrder` for custom ordering
 
 ### Calibers
 * `GET /api/calibers` - List all calibers
@@ -24,24 +26,27 @@ Base: `/api`
 * `GET /api/calibers/[id]` - Caliber detail
 * `PUT /api/calibers/[id]` - Update caliber
 * `DELETE /api/calibers/[id]` - Archive or delete caliber
+* `PUT /api/calibers/reorder` - Update `sortOrder` for custom ordering
 
 ### Range Sessions
-* `GET /api/sessions` - List sessions (with pagination/filtering)
-* `POST /api/sessions` - Create session
-* `GET /api/sessions/[id]` - Session detail (with sheets aggregated)
-* `PUT /api/sessions/[id]` - Update session
-* `DELETE /api/sessions/[id]` - Delete session
+* `GET /api/sessions` - List sessions with stats (shots, avg score, improvement %)
+* `POST /api/sessions` - Create session (auto-generates slug)
+* `GET /api/sessions/[id]` - Session detail (supports slug or ObjectId)
+* `PUT /api/sessions/[id]` - Update session (slug regenerates on date/location change)
+* `DELETE /api/sessions/[id]` - Delete session (supports slug or ObjectId)
 
 ### Target Sheets
-* `POST /api/sheets` - Create sheet
-* `GET /api/sheets/[id]` - Sheet detail (with bull records)
-* `PUT /api/sheets/[id]` - Update sheet metadata
-* `DELETE /api/sheets/[id]` - Delete sheet
+* `POST /api/sheets` - Create sheet (auto-generates slug, accepts session slug or ObjectId)
+* `GET /api/sheets/[id]` - Sheet detail with bull records (supports slug or ObjectId)
+* `PUT /api/sheets/[id]` - Update sheet metadata (supports slug or ObjectId)
+* `DELETE /api/sheets/[id]` - Delete sheet (supports slug or ObjectId)
 
 ### Bull Records
-* `POST /api/bulls` - Create or batch-save bull records
+* `POST /api/bulls` - Batch-save bull records (accepts sheet slug or ObjectId, filters out empty bulls)
 * `PUT /api/bulls/[id]` - Update bull record
 * `DELETE /api/bulls/[id]` - Delete bull record
+
+**Note**: Bull records with all zero counts (`totalShots === 0`) are filtered out before saving.
 
 ### Analytics
 * `GET /api/analytics/summary` - Aggregated metrics with filters
@@ -119,8 +124,9 @@ Consistent error format:
 ### Per-Session Aggregation
 For each session, aggregate across all sheets and bulls:
 * `totalShots` = sum of all score counts
-* `totalScore` = weighted sum (5×score5 + 4×score4 + ...)
+* `totalScore` = sum(5×score5 + 4×score4 + 3×score3 + 2×score2 + 1×score1)
 * `averageScore` = totalScore / totalShots
+* `improvement` = percentage change from chronologically previous session
 
 ### Filtered Views
 Query and group by filters (firearm, caliber, distance):
@@ -130,8 +136,9 @@ Query and group by filters (firearm, caliber, distance):
 ### Graph Data Preparation
 * One data point per session
 * Filter by date range, firearms, calibers, distances
-* Sort by session date
+* **Sort by session date (chronological order)** for accurate trends
 * Return as array of objects for Recharts
+* Multi-firearm charts: separate data series per firearm with unique colors
 
 ### Performance Considerations
 * Use MongoDB aggregation pipelines for efficiency
@@ -140,14 +147,16 @@ Query and group by filters (firearm, caliber, distance):
   * `targetSheetId` on BullRecord
   * `date` on RangeSession
   * `firearmId`, `caliberId`, `opticId` on TargetSheet
+  * `slug` on RangeSession and TargetSheet (unique index)
+  * `sortOrder` on Firearm, Optic, and Caliber
 
 ---
 
 ## Future Backend Considerations
 
-### Photo OCR (Not MVP)
+### Target Photo Ingestion (Not MVP)
 * Add `ImportJob` entity
-* External Python/serverless service for OCR
+* External Python/serverless service for image processing
 * Async job processing
 
 ### Authentication (Not MVP)

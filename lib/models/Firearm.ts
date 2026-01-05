@@ -6,6 +6,7 @@ export interface IFirearm {
   manufacturer?: string;
   model?: string;
   defaultCaliberId?: mongoose.Types.ObjectId;
+  defaultDistanceYards?: number;
   caliberIds: mongoose.Types.ObjectId[]; // Multiple calibers
   opticIds: mongoose.Types.ObjectId[]; // Multiple optics
   notes?: string;
@@ -21,6 +22,7 @@ const FirearmSchema = new Schema<IFirearm>(
     manufacturer: { type: String },
     model: { type: String },
     defaultCaliberId: { type: Schema.Types.ObjectId, ref: "Caliber" },
+    defaultDistanceYards: { type: Number },
     caliberIds: [{ type: Schema.Types.ObjectId, ref: "Caliber" }],
     opticIds: [{ type: Schema.Types.ObjectId, ref: "Optic" }],
     notes: { type: String },

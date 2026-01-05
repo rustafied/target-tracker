@@ -1,5 +1,160 @@
 # Changelog
 
+## January 5, 2026 - Major UX Overhaul
+
+### ✂️ Feature Removal
+- **OCR Functionality Removed** - Removed Tesseract.js/EasyOCR integration due to poor handwriting detection
+  - Deleted `OCRUploader` component, `ocr-parser.ts`, Python OCR service
+  - Removed "Upload Range Notes" button and dialog from session view
+  - Cleaned up all OCR references from documentation
+
+### 🎯 Target Sheet Improvements
+
+#### Flexible Bull Count
+- **Smart Saving** - Only saves bulls with non-zero scores (previously forced 6 bulls per sheet)
+- Bulls with all zeros are filtered out before database save
+- UI still displays 6 bull forms for data entry
+- Sheet cards only show bulls with actual data
+
+#### Quick Entry System
+- **Single Input Card** - New card at top of sheet edit page with 6 input fields
+- **6-Digit Entry Format** - Enter scores as compact strings (e.g., "543210" or "03")
+  - Each position represents count for that score level (5pts, 4pts, 3pts, 2pts, 1pts, 0pts)
+  - Supports leading zeros (e.g., "03" = 0 five-pointers, 3 four-pointers)
+- **Bidirectional Sync** - Quick entry updates when count buttons clicked, and vice versa
+- **Smart Display** - Shows existing scores when viewing/editing, blank for new/empty bulls
+- Responsive grid layout (3 columns on mobile, 6 on desktop)
+
+#### Form Layout Redesign
+- **Two-Column Layout** - Equipment selection (firearm/caliber/optic) in left column
+- Distance, sheet label, and notes in right column
+- Removed redundant search input when equipment count is low
+- Better visual hierarchy and spacing
+
+### 🔫 Firearm Management
+
+#### Default Distance Field
+- Added `defaultDistanceYards` to firearm schema
+- Set on firearm edit page (moved notes below optics selection)
+- Auto-populates distance field when creating new sheet after selecting firearm
+- Uses `z.preprocess` in validator for proper number handling
+
+#### Equipment Relationship Fixes
+- Fixed caliber/optic selection not showing active styling on firearm edit
+- Resolved state management issues with functional `setState`
+- Consistent ObjectId string conversion for comparison
+- Updated Zod schemas to include `caliberIds` and `opticIds` arrays
+- Blue active state styling (`bg-blue-600 text-white ring-2 ring-blue-400`)
+
+### 📊 Session View Enhancements
+
+#### Session Summary Card
+- New card above charts displaying key metrics with icons:
+  - **Total Bullets Fired** (Crosshair icon)
+  - **Bullseye %** (Target icon)
+  - **Session Avg Score** (TrendingUp icon)
+  - **Best Weapon** (Award icon) - Shows firearm with highest average
+  - **By Firearm** (BarChart3 icon) - Average for each firearm used
+- Clean grid layout with responsive design
+
+#### Multi-Firearm Comparison Chart
+- **Separate Lines Per Firearm** - Each firearm gets its own colored line on chart
+- 8 distinct colors (purple, blue, green, amber, red, pink, teal, orange)
+- **Gap Handling** - Lines only appear where that firearm was used (`connectNulls={false}`)
+- Legend shows which color represents which firearm
+- Enables direct comparison of different weapons in same session
+
+#### UI Polish
+- Moved "Add Sheet" button to top right next to Edit/Delete buttons
+- Bar charts on sheet cards: removed hover effect, cleaner look
+- Individual bull visualizations only show for bulls with data
+
+### 📅 Session List Redesign
+
+#### Line-Item Format
+- Changed from card grid to vertical line-item list
+- Each session displays as horizontal card with:
+  - **Large Date** with day of week
+  - **Location** with uppercase styling
+  - **Stats Grid** (responsive 2→4 columns):
+    - Sheets count
+    - Total shots
+    - Average score
+    - Improvement percentage
+  - **Color-Coded Improvement**:
+    - Green with ↑ icon for positive change
+    - Red with ↓ icon for negative change
+    - Based on comparison with previous session by date
+
+#### Better Statistics
+- Shows overall average score for each session
+- Displays improvement % from chronologically previous session
+- Null-safe score display
+- Responsive layout for mobile and desktop
+
+### 📈 Analytics Fixes
+- **Chronological Order** - Sessions sorted by date (oldest first) for proper trend analysis
+- **Accurate Improvements** - Percentage changes now compare against chronologically previous session
+- Fixed overall trend calculation (first half vs second half of time period)
+
+### 🗄️ Database & API Updates
+
+#### Slug Handling
+- All relevant API routes now resolve slugs to ObjectIds before database operations
+- `/api/sheets` POST route converts session slug to ObjectId
+- `/api/bulls` POST route converts sheet slug to ObjectId
+- Maintains backward compatibility with direct ObjectId usage
+
+#### Schema Updates
+- `Firearm`: Added `defaultDistanceYards`, renamed arrays to `caliberIds`/`opticIds`
+- `TargetSheet`: Made `slug` optional with empty string default
+- Moved slug generation from `pre('save')` to `pre('validate')` hook
+- Removed `next()` callback from async pre-validate hook
+
+#### API Enhancements
+- `/api/sessions` GET now includes:
+  - Total shots per session
+  - Average score per session
+  - Improvement % vs previous session (by date)
+- `/api/bulls` POST filters out empty bulls before saving
+
+### 🔧 Technical Fixes
+
+#### Mongoose Schema Caching
+- Resolved `defaultDistanceYards` not saving due to schema caching
+- Required manual `.next` folder deletion and dev server restart
+- Forced Mongoose to reload updated schema definitions
+
+#### State Management
+- Fixed stale state closures in firearm equipment selection
+- Used functional `setState` pattern for reliable updates
+- Proper ID type conversion throughout
+
+#### Validation
+- Updated Zod schemas for all firearm fields
+- Added `z.preprocess` for number field handling
+- Ensured arrays aren't stripped during validation
+
+### 🎨 Styling Improvements
+- Consistent blue active states across all selection interfaces
+- Removed bright hover effects from charts
+- Cleaner spacing and alignment throughout
+- Better mobile responsiveness
+
+### 📝 Documentation
+- Updated `/readme/01-domain-model.md` with:
+  - New firearm fields and relationship names
+  - Slug fields for sessions and sheets
+  - Flexible bull count notes
+- Updated `/readme/09-implementation-status.md` with:
+  - All new features and UI improvements
+  - Resolved issues section expanded
+  - Updated navigation structure
+  - New component descriptions
+- Removed `/readme/07-ocr-feature.md` (feature removed)
+
+---
+
 ## January 4, 2026 - UI Polish & Mobile Improvements
 
 ### 🎨 Visual Improvements

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp, Crosshair, Eye, Ruler, FileText, Image as ImageIcon } from "lucide-react";
+import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp, Crosshair, Eye, Ruler, FileText, Zap, Award, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +21,6 @@ import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { BullseyeVisualization } from "@/components/BullseyeVisualization";
 import { SingleBullVisualization } from "@/components/SingleBullVisualization";
 import { SessionHeatmap } from "@/components/SessionHeatmap";
-import { OCRUploader } from "@/components/OCRUploader";
-import type { ParsedSheetData } from "@/lib/ocr-parser";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -78,27 +76,13 @@ export default function SessionDetailPage() {
 
   const [session, setSession] = useState<RangeSession | null>(null);
   const [sheets, setSheets] = useState<Sheet[]>([]);
+  const [allSessions, setAllSessions] = useState<any[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [ocrDialogOpen, setOcrDialogOpen] = useState(false);
-  const [ocrData, setOcrData] = useState<ParsedSheetData | null>(null);
-  const [firearms, setFirearms] = useState<{ _id: string; name: string; caliberIds?: string[]; opticIds?: string[] }[]>([]);
-  const [allOptics, setAllOptics] = useState<{ _id: string; name: string }[]>([]);
-  const [allCalibers, setAllCalibers] = useState<{ _id: string; name: string }[]>([]);
-  const [filteredOptics, setFilteredOptics] = useState<{ _id: string; name: string }[]>([]);
-  const [filteredCalibers, setFilteredCalibers] = useState<{ _id: string; name: string }[]>([]);
   const [formData, setFormData] = useState({
     date: "",
     location: "",
-    notes: "",
-  });
-  const [quickSheetFormData, setQuickSheetFormData] = useState({
-    firearmId: "",
-    caliberId: "",
-    opticId: "",
-    distanceYards: "25",
-    sheetLabel: "",
     notes: "",
   });
 
@@ -106,53 +90,9 @@ export default function SessionDetailPage() {
     if (sessionId) {
       fetchSession();
       fetchLocations();
-      fetchReferenceData();
+      fetchAllSessions();
     }
   }, [sessionId]);
-
-  const fetchReferenceData = async () => {
-    try {
-      const [firearmsRes, opticsRes, calibersRes] = await Promise.all([
-        fetch("/api/firearms"),
-        fetch("/api/optics"),
-        fetch("/api/calibers"),
-      ]);
-
-      let firearmsData: { _id: string; name: string; caliberIds?: string[]; opticIds?: string[] }[] = [];
-      let opticsData: { _id: string; name: string }[] = [];
-      let calibersData: { _id: string; name: string }[] = [];
-
-      if (firearmsRes.ok) {
-        firearmsData = await firearmsRes.json();
-        setFirearms(firearmsData);
-      }
-      if (opticsRes.ok) {
-        opticsData = await opticsRes.json();
-        setAllOptics(opticsData);
-        setFilteredOptics(opticsData);
-      }
-      if (calibersRes.ok) {
-        calibersData = await calibersRes.json();
-        setAllCalibers(calibersData);
-        setFilteredCalibers(calibersData);
-      }
-
-      // Set defaults
-      if (firearmsData.length > 0 && opticsData.length > 0 && calibersData.length > 0) {
-        setQuickSheetFormData({
-          firearmId: firearmsData[0]._id,
-          opticId: opticsData[0]._id,
-          caliberId: calibersData[0]._id,
-          distanceYards: "25",
-          sheetLabel: "",
-          notes: "",
-        });
-        filterByFirearm(firearmsData[0]._id, firearmsData, opticsData, calibersData);
-      }
-    } catch (error) {
-      // Silent fail
-    }
-  };
 
   const fetchLocations = async () => {
     try {
@@ -163,6 +103,18 @@ export default function SessionDetailPage() {
       }
     } catch (error) {
       // Silent fail for locations
+    }
+  };
+
+  const fetchAllSessions = async () => {
+    try {
+      const res = await fetch("/api/sessions");
+      if (res.ok) {
+        const data = await res.json();
+        setAllSessions(data.sessions || []);
+      }
+    } catch (error) {
+      // Silent fail
     }
   };
 
@@ -277,77 +229,6 @@ export default function SessionDetailPage() {
     }
   };
 
-  const handleOCRDataParsed = (data: ParsedSheetData) => {
-    setOcrData(data);
-    
-    // Auto-populate distance if found
-    if (data.distance) {
-      setQuickSheetFormData((prev) => ({
-        ...prev,
-        distanceYards: data.distance!.toString(),
-      }));
-    }
-    
-    toast.success(
-      `Data ready: ${data.bullsData.length} bulls${data.distance ? `, ${data.distance} yards` : ''}. Review and create sheet.`
-    );
-  };
-
-  const handleCreateSheetFromOCR = async () => {
-    if (!session || !ocrData || ocrData.bullsData.length === 0) {
-      toast.error("No OCR data available");
-      return;
-    }
-
-    if (!quickSheetFormData.firearmId || !quickSheetFormData.caliberId || !quickSheetFormData.opticId) {
-      toast.error("Please select firearm, caliber, and optic");
-      return;
-    }
-
-    try {
-      // Create the sheet
-      const sheetRes = await fetch("/api/sheets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rangeSessionId: session._id,
-          ...quickSheetFormData,
-          distanceYards: parseInt(quickSheetFormData.distanceYards),
-        }),
-      });
-
-      if (!sheetRes.ok) {
-        toast.error("Failed to create sheet");
-        return;
-      }
-
-      const sheet = await sheetRes.json();
-      
-      // Save the bull records
-      const bullsRes = await fetch("/api/bulls", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          ocrData.bullsData.map((bull) => ({
-            targetSheetId: sheet._id,
-            ...bull,
-          }))
-        ),
-      });
-
-      if (bullsRes.ok) {
-        toast.success("Sheet created with OCR data!");
-        setOcrDialogOpen(false);
-        setOcrData(null);
-        fetchSession(); // Refresh to show new sheet
-      } else {
-        toast.warning("Sheet created but failed to save OCR data");
-      }
-    } catch (error) {
-      toast.error("Failed to create sheet");
-    }
-  };
-
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -356,18 +237,125 @@ export default function SessionDetailPage() {
     return null;
   }
 
-  // Data for sheet averages graph (top of page)
-  const sheetAveragesData = sheets.map((sheet, index) => {
+  // Group sheets by firearm and create chart data
+  const firearmColors = [
+    "#8b5cf6", // purple
+    "#3b82f6", // blue
+    "#10b981", // green
+    "#f59e0b", // amber
+    "#ef4444", // red
+    "#ec4899", // pink
+    "#14b8a6", // teal
+    "#f97316", // orange
+  ];
+
+  // Create a unified dataset with all sheets and their firearm scores
+  const sheetsByFirearm = new Map<string, { name: string; sheets: any[] }>();
+  
+  sheets.forEach((sheet, index) => {
+    const firearmId = sheet.firearmId._id;
+    const firearmName = sheet.firearmId?.name || "Unknown";
+    
+    if (!sheetsByFirearm.has(firearmId)) {
+      sheetsByFirearm.set(firearmId, { name: firearmName, sheets: [] });
+    }
+    
     const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
     const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
     const avgScore = totalShots > 0 ? parseFloat((totalScore / totalShots).toFixed(2)) : 0;
-
-    return {
-      name: sheet.sheetLabel || `Sheet ${index + 1}`,
+    
+    sheetsByFirearm.get(firearmId)!.sheets.push({
+      sheetLabel: sheet.sheetLabel || `Sheet ${index + 1}`,
       avgScore,
       totalShots,
-    };
+      sheetIndex: index,
+    });
   });
+
+  // Create chart data with all sheet labels as x-axis
+  const allSheetLabels = sheets.map((sheet, index) => sheet.sheetLabel || `Sheet ${index + 1}`);
+  const chartData = allSheetLabels.map((label, index) => {
+    const dataPoint: any = { name: label };
+    
+    // Add score for each firearm if they have a sheet at this position
+    Array.from(sheetsByFirearm.entries()).forEach(([firearmId, firearmData]) => {
+      const sheet = sheets[index];
+      if (sheet && sheet.firearmId._id === firearmId) {
+        const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
+        const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
+        const avgScore = totalShots > 0 ? parseFloat((totalScore / totalShots).toFixed(2)) : 0;
+        dataPoint[firearmData.name] = avgScore;
+      }
+    });
+    
+    return dataPoint;
+  });
+
+  // Calculate session summary stats
+  const totalBulletsFired = sheets.reduce((sum, sheet) => 
+    sum + (sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0), 0
+  );
+
+  const totalScore = sheets.reduce((sum, sheet) => 
+    sum + (sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0), 0
+  );
+
+  const sessionAvgScore = totalBulletsFired > 0 ? (totalScore / totalBulletsFired).toFixed(2) : "0.00";
+
+  // Calculate bullseye percentage (5 points)
+  const total5Points = sheets.reduce((sum, sheet) => 
+    sum + (sheet.bulls?.reduce((acc, bull) => acc + bull.score5Count, 0) || 0), 0
+  );
+  const bullseyePercentage = totalBulletsFired > 0 ? ((total5Points / totalBulletsFired) * 100).toFixed(1) : "0.0";
+
+  // Calculate average score by firearm for this session
+  const firearmAvgs = new Map<string, { name: string; avgScore: number; shots: number }>();
+  sheets.forEach(sheet => {
+    const firearmId = sheet.firearmId._id;
+    const firearmName = sheet.firearmId?.name || "Unknown";
+    const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
+    const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
+
+    if (!firearmAvgs.has(firearmId)) {
+      firearmAvgs.set(firearmId, { name: firearmName, avgScore: 0, shots: 0 });
+    }
+    
+    const current = firearmAvgs.get(firearmId)!;
+    current.shots += totalShots;
+    current.avgScore = current.shots > 0 ? (current.avgScore * (current.shots - totalShots) + totalScore) / current.shots : 0;
+  });
+
+  // Find best weapon
+  let bestWeapon = { name: "N/A", avgScore: 0 };
+  firearmAvgs.forEach((data) => {
+    if (data.shots > 0 && data.avgScore > bestWeapon.avgScore) {
+      bestWeapon = { name: data.name, avgScore: data.avgScore };
+    }
+  });
+
+  // Calculate improvement vs last session and overall average by firearm
+  const firearmImprovements = new Map<string, { vsLast: number | null; vsOverall: number | null }>();
+  
+  if (allSessions.length > 0) {
+    const currentSessionDate = new Date(session.date);
+    const previousSessions = allSessions
+      .filter(s => s._id !== session._id && new Date(s.date) < currentSessionDate)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    firearmAvgs.forEach((currentData, firearmId) => {
+      // Calculate vs last session
+      let lastSessionAvg: number | null = null;
+      for (const prevSession of previousSessions) {
+        // We'd need to fetch sheets for previous sessions - for now, skip this
+        // This would require an API call to get historical data
+      }
+
+      // Calculate vs overall average
+      // This would also require historical data across all sessions
+      
+      firearmImprovements.set(firearmId, { vsLast: null, vsOverall: null });
+    });
+  }
 
   return (
     <div>
@@ -386,6 +374,10 @@ export default function SessionDetailPage() {
             )}
           </div>
           <div className="flex gap-2">
+            <Button onClick={() => router.push(`/sessions/${sessionId}/sheets/new`)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Sheet
+            </Button>
             <Button variant="outline" size="icon" onClick={openEditDialog}>
               <Edit className="h-4 w-4" />
             </Button>
@@ -403,22 +395,81 @@ export default function SessionDetailPage() {
         )}
       </div>
 
+      {/* Session Summary Stats */}
+      {sheets.length > 0 && totalBulletsFired > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TargetIcon className="h-5 w-5" />
+              Session Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                  <Crosshair className="h-4 w-4" />
+                  Bullets Fired
+                </p>
+                <p className="text-2xl font-bold">{totalBulletsFired}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                  <TargetIcon className="h-4 w-4" />
+                  Bullseye %
+                </p>
+                <p className="text-2xl font-bold">{bullseyePercentage}%</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                  <TrendingUp className="h-4 w-4" />
+                  Avg Score
+                </p>
+                <p className="text-2xl font-bold">{sessionAvgScore}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                  <Award className="h-4 w-4" />
+                  Best Weapon
+                </p>
+                <p className="text-lg font-bold">{bestWeapon.name}</p>
+                <p className="text-xs text-muted-foreground">{bestWeapon.avgScore.toFixed(2)} avg</p>
+              </div>
+              <div className="col-span-2 md:col-span-4 lg:col-span-1">
+                <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1">
+                  <BarChart3 className="h-4 w-4" />
+                  By Firearm
+                </p>
+                <div className="space-y-1">
+                  {Array.from(firearmAvgs.entries()).map(([id, data]) => (
+                    <div key={id} className="text-xs">
+                      <span className="font-medium">{data.name}:</span>{" "}
+                      <span className="text-muted-foreground">{data.avgScore.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Sheet Averages Graph */}
-      {sheets.length > 0 && sheetAveragesData.some((s) => s.totalShots > 0) && (
+      {sheets.length > 0 && sheets.some((s) => (s.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0) > 0) && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Session Overview
+              Session Overview - Comparison by Firearm
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Line Chart - 2/3 width on large screens */}
               <div className="lg:col-span-2">
-                <h3 className="text-sm font-semibold mb-3">Average Score per Sheet</h3>
+                <h3 className="text-sm font-semibold mb-3">Average Score per Sheet by Firearm</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={sheetAveragesData}>
+                  <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                     <XAxis dataKey="name" stroke="#888" />
                     <YAxis domain={[0, 5]} stroke="#888" />
@@ -431,14 +482,18 @@ export default function SessionDetailPage() {
                       labelStyle={{ color: "#fff" }}
                     />
                     <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="avgScore"
-                      stroke="#8b5cf6"
-                      strokeWidth={2}
-                      name="Avg Score"
-                      dot={{ fill: "#8b5cf6", r: 4 }}
-                    />
+                    {Array.from(sheetsByFirearm.entries()).map(([firearmId, firearmData], index) => (
+                      <Line
+                        key={firearmId}
+                        type="monotone"
+                        dataKey={firearmData.name}
+                        stroke={firearmColors[index % firearmColors.length]}
+                        strokeWidth={2}
+                        name={firearmData.name}
+                        dot={{ fill: firearmColors[index % firearmColors.length], r: 4 }}
+                        connectNulls={false}
+                      />
+                    ))}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -452,19 +507,7 @@ export default function SessionDetailPage() {
         </Card>
       )}
 
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">Target Sheets</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setOcrDialogOpen(true)}>
-            <ImageIcon className="h-4 w-4 mr-2" />
-            Upload Range Notes
-          </Button>
-          <Button onClick={() => router.push(`/sessions/${sessionId}/sheets/new`)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Sheet
-          </Button>
-        </div>
-      </div>
+      <h2 className="text-2xl font-bold mb-4">Target Sheets</h2>
 
       {sheets.length === 0 ? (
         <Card>
@@ -481,15 +524,17 @@ export default function SessionDetailPage() {
             const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
             const avgScore = totalShots > 0 ? (totalScore / totalShots).toFixed(2) : "0.00";
 
-            // Data for per-sheet bull scores graph
+            // Data for per-sheet bull scores graph (filter out empty bulls)
             const bullChartData =
-              sheet.bulls?.map((bull) => ({
-                name: `Bull ${bull.bullIndex}`,
-                avgScore:
-                  bull.totalShots > 0 ? parseFloat((bull.totalScore / bull.totalShots).toFixed(2)) : 0,
-                totalShots: bull.totalShots,
-                totalScore: bull.totalScore,
-              })) || [];
+              sheet.bulls
+                ?.filter((bull) => bull.totalShots > 0)
+                .map((bull) => ({
+                  name: `Bull ${bull.bullIndex}`,
+                  avgScore:
+                    bull.totalShots > 0 ? parseFloat((bull.totalScore / bull.totalShots).toFixed(2)) : 0,
+                  totalShots: bull.totalShots,
+                  totalScore: bull.totalScore,
+                })) || [];
 
             return (
               <Card key={sheet._id}>
@@ -537,9 +582,12 @@ export default function SessionDetailPage() {
                     {/* Individual Bull Visualizations */}
                     {sheet.bulls && sheet.bulls.length > 0 && (
                       <div className="grid grid-cols-3 gap-3">
-                        {sheet.bulls.slice(0, 6).map((bull) => (
-                          <SingleBullVisualization key={bull.bullIndex} bull={bull} size={100} />
-                        ))}
+                        {sheet.bulls
+                          .filter((bull) => bull.totalShots > 0)
+                          .slice(0, 6)
+                          .map((bull) => (
+                            <SingleBullVisualization key={bull.bullIndex} bull={bull} size={100} />
+                          ))}
                       </div>
                     )}
 
@@ -572,6 +620,7 @@ export default function SessionDetailPage() {
                                 borderRadius: "6px",
                               }}
                               labelStyle={{ color: "#fff" }}
+                              cursor={false}
                             />
                             <Bar dataKey="avgScore" fill="#8b5cf6" name="Avg Score">
                               <LabelList dataKey="avgScore" position="inside" fill="#fff" fontSize={12} />
@@ -652,135 +701,6 @@ export default function SessionDetailPage() {
               <Button type="submit">Update Session</Button>
             </DialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* OCR Upload Dialog */}
-      <Dialog open={ocrDialogOpen} onOpenChange={setOcrDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Upload Range Notes</DialogTitle>
-            <DialogDescription>
-              Upload a photo of your handwritten range notes to automatically create a sheet
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-6 py-4">
-            <OCRUploader onDataParsed={handleOCRDataParsed} />
-
-            {ocrData && ocrData.bullsData.length > 0 && (
-              <Card className="border-primary">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-primary">
-                    ✓ Data Parsed - Configure Sheet Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-sm space-y-1 mb-4">
-                    <p>
-                      <span className="font-semibold">{ocrData.bullsData.length}</span> bulls detected
-                    </p>
-                    {ocrData.distance && (
-                      <p>
-                        Distance: <span className="font-semibold">{ocrData.distance}</span> yards
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Firearm *</Label>
-                      <select
-                        className="w-full mt-1 px-3 py-2 border rounded-md"
-                        value={quickSheetFormData.firearmId}
-                        onChange={(e) => filterByFirearm(e.target.value)}
-                      >
-                        {firearms.map((f) => (
-                          <option key={f._id} value={f._id}>{f.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <Label>Caliber *</Label>
-                      <select
-                        className="w-full mt-1 px-3 py-2 border rounded-md"
-                        value={quickSheetFormData.caliberId}
-                        onChange={(e) => setQuickSheetFormData({ ...quickSheetFormData, caliberId: e.target.value })}
-                      >
-                        {filteredCalibers.map((c) => (
-                          <option key={c._id} value={c._id}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <Label>Optic *</Label>
-                      <select
-                        className="w-full mt-1 px-3 py-2 border rounded-md"
-                        value={quickSheetFormData.opticId}
-                        onChange={(e) => setQuickSheetFormData({ ...quickSheetFormData, opticId: e.target.value })}
-                      >
-                        {filteredOptics.map((o) => (
-                          <option key={o._id} value={o._id}>{o.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="ocrDistance">Distance (yards) *</Label>
-                      <Input
-                        id="ocrDistance"
-                        type="number"
-                        value={quickSheetFormData.distanceYards}
-                        onChange={(e) => setQuickSheetFormData({ ...quickSheetFormData, distanceYards: e.target.value })}
-                        required
-                        min="1"
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="ocrSheetLabel">Sheet Label</Label>
-                      <Input
-                        id="ocrSheetLabel"
-                        value={quickSheetFormData.sheetLabel}
-                        onChange={(e) => setQuickSheetFormData({ ...quickSheetFormData, sheetLabel: e.target.value })}
-                        placeholder="e.g., Zeroing, Group Practice"
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="ocrNotes">Notes</Label>
-                      <Textarea
-                        id="ocrNotes"
-                        value={quickSheetFormData.notes}
-                        onChange={(e) => setQuickSheetFormData({ ...quickSheetFormData, notes: e.target.value })}
-                        placeholder="Additional notes..."
-                        rows={2}
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => {
-              setOcrDialogOpen(false);
-              setOcrData(null);
-            }}>
-              Cancel
-            </Button>
-            {ocrData && ocrData.bullsData.length > 0 && (
-              <Button onClick={handleCreateSheetFromOCR}>
-                Create Sheet with Data
-              </Button>
-            )}
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

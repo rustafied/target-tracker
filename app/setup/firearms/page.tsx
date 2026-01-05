@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Target, Building2, Package, FileText, GripVertical } from "lucide-react";
+import { Plus, Edit, Trash2, Target, Building2, Package, FileText, GripVertical, Ruler } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -39,6 +39,7 @@ interface Firearm {
   name: string;
   manufacturer?: string;
   model?: string;
+  defaultDistanceYards?: number;
   notes?: string;
   isActive: boolean;
   sortOrder: number;
@@ -137,6 +138,7 @@ export default function FirearmsPage() {
     name: "",
     manufacturer: "",
     model: "",
+    defaultDistanceYards: "",
     notes: "",
     caliberIds: [] as string[],
     opticIds: [] as string[],
@@ -215,10 +217,17 @@ export default function FirearmsPage() {
       const url = editingFirearm ? `/api/firearms/${editingFirearm._id}` : "/api/firearms";
       const method = editingFirearm ? "PUT" : "POST";
 
+      const payload = {
+        ...formData,
+        defaultDistanceYards: formData.defaultDistanceYards && formData.defaultDistanceYards.trim() !== "" 
+          ? parseInt(formData.defaultDistanceYards, 10) 
+          : undefined,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -257,13 +266,19 @@ export default function FirearmsPage() {
 
   const openEditDialog = (firearm: Firearm) => {
     setEditingFirearm(firearm);
+    
+    // Convert ObjectIds to strings for comparison
+    const caliberIds = (firearm.caliberIds || []).map(id => String(id));
+    const opticIds = (firearm.opticIds || []).map(id => String(id));
+    
     setFormData({
       name: firearm.name,
       manufacturer: firearm.manufacturer || "",
       model: firearm.model || "",
+      defaultDistanceYards: firearm.defaultDistanceYards?.toString() || "",
       notes: firearm.notes || "",
-      caliberIds: firearm.caliberIds || [],
-      opticIds: firearm.opticIds || [],
+      caliberIds,
+      opticIds,
     });
     setDialogOpen(true);
   };
@@ -273,7 +288,8 @@ export default function FirearmsPage() {
     setFormData({ 
       name: "", 
       manufacturer: "", 
-      model: "", 
+      model: "",
+      defaultDistanceYards: "",
       notes: "",
       caliberIds: [],
       opticIds: [],
@@ -372,6 +388,86 @@ export default function FirearmsPage() {
                 />
               </div>
               <div>
+                <Label htmlFor="defaultDistanceYards" className="flex items-center gap-2">
+                  <Ruler className="h-4 w-4" />
+                  Default Distance (yards)
+                </Label>
+                <Input
+                  id="defaultDistanceYards"
+                  type="number"
+                  min="1"
+                  value={formData.defaultDistanceYards}
+                  onChange={(e) => setFormData({ ...formData, defaultDistanceYards: e.target.value })}
+                  placeholder="e.g., 25"
+                />
+              </div>
+              <div>
+                <Label>Compatible Calibers</Label>
+                <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-md min-h-[60px]">
+                  {calibers.map((caliber) => {
+                    const caliberId = String(caliber._id);
+                    const isSelected = formData.caliberIds.includes(caliberId);
+                    return (
+                      <button
+                        key={caliber._id}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const newCaliberIds = isSelected
+                            ? formData.caliberIds.filter((id) => id !== caliberId)
+                            : [...formData.caliberIds, caliberId];
+                          setFormData((prev) => ({
+                            ...prev,
+                            caliberIds: newCaliberIds,
+                          }));
+                        }}
+                        className={`px-3 py-2 rounded-md text-sm transition-colors font-medium ${
+                          isSelected
+                            ? "bg-blue-600 text-white ring-2 ring-blue-400"
+                            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                        }`}
+                      >
+                        {caliber.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <Label>Compatible Optics</Label>
+                <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-md min-h-[60px]">
+                  {optics.map((optic) => {
+                    const opticId = String(optic._id);
+                    const isSelected = formData.opticIds.includes(opticId);
+                    return (
+                      <button
+                        key={optic._id}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const newOpticIds = isSelected
+                            ? formData.opticIds.filter((id) => id !== opticId)
+                            : [...formData.opticIds, opticId];
+                          setFormData((prev) => ({
+                            ...prev,
+                            opticIds: newOpticIds,
+                          }));
+                        }}
+                        className={`px-3 py-2 rounded-md text-sm transition-colors font-medium ${
+                          isSelected
+                            ? "bg-blue-600 text-white ring-2 ring-blue-400"
+                            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                        }`}
+                      >
+                        {optic.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
                 <Label htmlFor="notes" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Notes
@@ -383,60 +479,6 @@ export default function FirearmsPage() {
                   placeholder="Additional notes..."
                   rows={3}
                 />
-              </div>
-              <div>
-                <Label>Compatible Calibers</Label>
-                <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-md min-h-[60px]">
-                  {calibers.map((caliber) => (
-                    <button
-                      key={caliber._id}
-                      type="button"
-                      onClick={() => {
-                        const isSelected = formData.caliberIds.includes(caliber._id);
-                        setFormData({
-                          ...formData,
-                          caliberIds: isSelected
-                            ? formData.caliberIds.filter((id) => id !== caliber._id)
-                            : [...formData.caliberIds, caliber._id],
-                        });
-                      }}
-                      className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                        formData.caliberIds.includes(caliber._id)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-accent"
-                      }`}
-                    >
-                      {caliber.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Label>Compatible Optics</Label>
-                <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-md min-h-[60px]">
-                  {optics.map((optic) => (
-                    <button
-                      key={optic._id}
-                      type="button"
-                      onClick={() => {
-                        const isSelected = formData.opticIds.includes(optic._id);
-                        setFormData({
-                          ...formData,
-                          opticIds: isSelected
-                            ? formData.opticIds.filter((id) => id !== optic._id)
-                            : [...formData.opticIds, optic._id],
-                        });
-                      }}
-                      className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                        formData.opticIds.includes(optic._id)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-accent"
-                      }`}
-                    >
-                      {optic.name}
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
             <DialogFooter>

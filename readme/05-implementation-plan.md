@@ -234,7 +234,7 @@ This structure allows easy addition of:
 * New pages in `app/`
 * New API routes in `app/api/`
 * New components in `components/`
-* Future services (e.g., `services/` for OCR integrations)
+* Future services (e.g., `services/` for external integrations)
 
 ### Best Practices
 * Use server components by default

@@ -4,35 +4,7 @@ These features are **not implemented in the MVP** but the data model and archite
 
 ---
 
-## 1. Photo OCR for Range Notebook Pages
-
-Import and parse handwritten or printed range notebook pages.
-
-### New Entity: ImportJob
-**Fields:**
-* `_id`
-* `rangeSessionId` (ObjectId → RangeSession)
-* `sourceImageUrl` (string) - Stored image path
-* `status` (enum) - pending, processing, completed, failed
-* `rawText` (string, optional) - Raw OCR output
-* `parsedData` (JSON, optional) - Structured data extracted
-* `createdAt`, `updatedAt`
-
-### Implementation Approach
-* Upload image to storage (local or cloud)
-* External service (Python with Tesseract/Paddle OCR, or serverless function)
-* Parse structured data and create TargetSheets/BullRecords
-* Manual review/correction interface
-
-### UI Flow
-1. Upload photo from session detail page
-2. Show processing status
-3. Display parsed data for confirmation/editing
-4. Create sheets and bulls from confirmed data
-
----
-
-## 2. Direct Target Photo Ingestion
+## 1. Direct Target Photo Ingestion
 
 Upload photos of physical targets and automatically extract shot locations.
 
@@ -64,7 +36,7 @@ Upload photos of physical targets and automatically extract shot locations.
 
 ---
 
-## 3. Authentication and Multi-Device Sync
+## 2. Authentication and Multi-Device Sync
 
 Support multiple users and sync data across devices.
 
@@ -99,7 +71,7 @@ Add `userId` field to all entities:
 
 ---
 
-## 4. Drill Types and Structured Training
+## 3. Drill Types and Structured Training
 
 Track specific shooting drills and exercises.
 
@@ -128,7 +100,7 @@ Add to **BullRecord** or **TargetSheet**:
 
 ---
 
-## 5. Advanced Analytics
+## 4. Advanced Analytics
 
 Enhanced metrics and visualizations.
 
@@ -154,7 +126,7 @@ Enhanced metrics and visualizations.
 
 ---
 
-## 6. Social & Community Features
+## 5. Social & Community Features
 
 Share progress and compare with others (optional, privacy-respecting).
 
@@ -172,7 +144,7 @@ Share progress and compare with others (optional, privacy-respecting).
 
 ---
 
-## 7. Equipment Maintenance Tracking
+## 6. Equipment Maintenance Tracking
 
 Track maintenance, round counts, and equipment lifecycle.
 
@@ -193,7 +165,7 @@ Add to **Firearm** and **Optic**:
 
 ---
 
-## 8. Mobile App
+## 7. Mobile App
 
 Native mobile application for iOS and Android.
 
@@ -219,10 +191,9 @@ When expanding beyond MVP, suggested priority order:
 2. **Advanced Analytics** - High value, builds on existing data
 3. **Drill Types** - Adds structure to training tracking
 4. **Target Photo Ingestion** - High automation value
-5. **Photo OCR** - Nice-to-have automation
-6. **Mobile App** - Depends on user demand
-7. **Social Features** - Community building
-8. **Equipment Maintenance** - Niche but useful
+5. **Mobile App** - Depends on user demand
+6. **Social Features** - Community building
+7. **Equipment Maintenance** - Niche but useful
 
 Each feature should be implemented with:
 * Clear user value proposition

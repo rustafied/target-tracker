@@ -9,7 +9,7 @@ A Next.js application for logging and visualizing shooting range sessions with p
 * **Comprehensive tracking**: Associate each bull with firearm, caliber, optic, and distance
 * **Local storage**: MongoDB for all data
 * **Performance visualization**: Simple views and graphs to track improvement over time
-* **Future-proof data model**: Designed to support photo OCR, shot-level data, drill types, authentication, and multi-device sync without breaking changes
+* **Future-proof data model**: Designed to support target photo ingestion, shot-level data, drill types, authentication, and multi-device sync without breaking changes
 * **Mobile-first**: Minimal, compressed inputs to reduce clicks and typing
 
 ## Tech Stack
