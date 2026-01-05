@@ -4,6 +4,7 @@ import mongoose, { Schema, Model } from "mongoose";
 import { RangeSession } from "./RangeSession";
 import { Firearm } from "./Firearm";
 import { Caliber } from "./Caliber";
+import { Optic } from "./Optic";
 
 export interface ITargetSheet {
   _id?: mongoose.Types.ObjectId;
