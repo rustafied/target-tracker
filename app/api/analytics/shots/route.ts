@@ -154,7 +154,7 @@ export async function GET(request: Request) {
         shotsCount: bullShots.length,
         avgScore,
         meanRadius: bullPositionMetrics?.meanRadius || null,
-        centroidDistance: bullPositionMetrics?.centroidDistance || null,
+        centroidDistance: bullPositionMetrics?.centroid.centroidDistance || null,
       });
     }
 
