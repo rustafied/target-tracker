@@ -61,6 +61,8 @@ One "range day" or range visit.
 * `slug` (string, unique) - URL-friendly identifier (auto-generated from date)
 * `date` (date, required)
 * `location` (string, optional)
+* `startTime` (string, optional) - Start time in HH:MM format
+* `endTime` (string, optional) - End time in HH:MM format
 * `notes` (string, optional) - Weather, drills, etc.
 * `createdAt`, `updatedAt` (dates)
 

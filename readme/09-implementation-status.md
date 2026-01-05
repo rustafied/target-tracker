@@ -25,19 +25,28 @@ Current state of the Target Tracker application as of January 2026.
   - Auto-selects first compatible option
 
 #### 2. Range Sessions
-- **Create Sessions** - Date picker (defaults to today), location, notes
+- **Create Sessions** - Date picker (defaults to today), location, start time, end time, notes
 - **URL Slugs** - Sessions use date-based slugs (e.g., `2026-01-04-reloaderz`) for clean URLs
-- **Edit Sessions** - Modify date, location, and notes
+- **Time Tracking** - Optional start time and end time fields for tracking session duration
+  - HTML5 time inputs with native pickers
+  - Positioned between location and notes in forms
+  - Fully optional - can be left blank
+- **Edit Sessions** - Modify date, location, times, and notes
 - **Location Autocomplete** - Suggests previously used locations as you type
 - **Delete Sessions** - With confirmation dialog
-- **Session List** - Clean line-item layout with:
-  - Date display with day of week and location (e.g., "Sunday @ Reloaderz")
-  - Stats grid showing: sheets, shots, avg score, improvement %
+- **Session List** - Responsive card-based layout:
+  - **Desktop**: Horizontal line-item layout with date, location, and stats grid
+  - **Mobile**: Compact vertical cards with:
+    - Date and location at top with smaller icons (h-4/w-4)
+    - Stats in 2-column grid below with muted backgrounds
+    - Smaller text and tighter spacing (p-4, text-xs, text-lg)
+    - Each stat in mini-card with icon + label + value
+  - Stats shown: sheets, shots, avg score, improvement %
   - Improvement indicator with color-coded arrows (green/red) vs previous session
-  - Responsive 2-column (mobile) to 4-column (desktop) grid
   - Hover effects and chevron indicator
 - **Session Detail View** - Comprehensive view with:
-  - Session metadata (date, location, notes)
+  - Session metadata (date, location, times if set, notes)
+  - "Add Sheet" button (icon only on mobile, full text on desktop)
   - Session summary card with:
     - Bullets fired, bullseye %, avg score
     - Best weapon by average score
@@ -233,6 +242,8 @@ All using Mongoose ODM with MongoDB:
 - `slug` (string, unique) - URL-friendly identifier based on date and location
 - `date` (stored as noon UTC to avoid timezone shifts)
 - `location` (with autocomplete from previous entries)
+- `startTime` (string, optional) - Session start time in HH:MM format
+- `endTime` (string, optional) - Session end time in HH:MM format
 - `notes`
 - `createdAt`, `updatedAt`
 
@@ -427,6 +438,28 @@ All CRUD operations exposed via `/api/*`:
     - Fix: Added `bg-background/95`, `backdrop-blur-sm`, `border-border`, and `shadow-lg` to Sonner component
     - Now has semi-opaque background with blur effect for better readability
 
+20. **Mobile UX Improvements**
+    - **Session List**: Redesigned for mobile with compact vertical card layout
+      - Stats displayed in 2-column grid with muted backgrounds
+      - Smaller icons (3.5w/3.5h) and text (text-xs, text-lg)
+      - Tighter padding (p-4 vs p-6) for better space utilization
+    - **Session Detail**: "Add Sheet" button shows only icon on mobile, full text on desktop
+    - Improved touch targets and mobile-first responsive design
+
+21. **Session Time Tracking**
+    - Feature: Added optional start time and end time fields to sessions
+    - HTML5 time inputs with native time pickers (mobile-friendly)
+    - Displayed in 2-column grid layout between location and notes
+    - Clock icon for visual clarity
+    - Works in both create and edit dialogs
+    - Backward compatible with existing sessions
+
+22. **Model Registration and Slug Generation**
+    - Fixed: Optic model import missing in TargetSheet causing MissingSchemaError
+    - Fixed: Session slug validation error by moving generation from `pre('save')` to `pre('validate')`
+    - Fixed: Explicit model references in sheets POST route to prevent serverless tree-shaking
+    - Pattern: Use `pre('validate')` hooks for auto-generated required fields
+
 ---
 
 ## 📋 Seeded Data
@@ -515,5 +548,5 @@ https://github.com/rustafied/target-tracker
 
 ---
 
-_Last Updated: January 4, 2026_
+_Last Updated: January 5, 2026_
 
