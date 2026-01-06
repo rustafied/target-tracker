@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Target } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -25,6 +26,9 @@ function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
+        <div className="flex justify-center mb-4">
+          <Target className="h-16 w-16 text-primary" />
+        </div>
         <CardTitle className="text-3xl font-bold">Target Tracker</CardTitle>
         <CardDescription>Log in with Discord to continue</CardDescription>
       </CardHeader>
