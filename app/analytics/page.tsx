@@ -175,7 +175,6 @@ export default function AnalyticsPage() {
   const { kpis, deltas, trends, sessions, ringDistributions, shotsPerSession } = data;
 
   // Debug logging
-  console.log("Analytics data:", { sessions, ringDistributions, shotsPerSession });
 
   // Chart: Average Score Per Shot Over Sessions
   const avgScoreChartOption: EChartsOption = {

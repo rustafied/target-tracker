@@ -20,7 +20,6 @@ export function EChart({ option, height = 400, className = "" }: EChartProps) {
 
     try {
       chartInstance.current = echarts.init(chartRef.current);
-      console.log("EChart initialized");
     } catch (error) {
       console.error("Failed to initialize ECharts:", error);
     }
@@ -93,7 +92,6 @@ export function EChart({ option, height = 400, className = "" }: EChartProps) {
       };
 
       chartInstance.current.setOption(themedOption, true);
-      console.log("EChart option updated successfully");
     } catch (error) {
       console.error("Failed to set ECharts option:", error, option);
     }
