@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -17,9 +17,24 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const debug = searchParams.get("debug");
+  const [envDebug, setEnvDebug] = useState<any>(null);
+
+  useEffect(() => {
+    if (error) {
+      fetch("/api/debug/env-public")
+        .then((res) => res.json())
+        .then(setEnvDebug)
+        .catch(() => setEnvDebug({ error: "Failed to load env debug" }));
+    }
+  }, [error]);
 
   const copyDebugInfo = () => {
-    const info = `Error: ${error}\nDetails: ${debug}\nTimestamp: ${new Date().toISOString()}`;
+    const info = `Error: ${error}
+Details: ${debug}
+Timestamp: ${new Date().toISOString()}
+
+Environment Check:
+${JSON.stringify(envDebug, null, 2)}`;
     navigator.clipboard.writeText(info);
   };
 
@@ -37,15 +52,23 @@ function LoginForm() {
           <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
             <div className="text-center mb-2">This account is not authorized.</div>
             {debug && (
-              <div className="text-xs font-mono bg-black/20 p-2 rounded mt-2">
-                {debug}
+              <div className="text-xs font-mono bg-black/20 p-2 rounded mt-2 break-all">
+                <div className="mb-2">{debug}</div>
+                {envDebug && (
+                  <div className="text-[10px] opacity-80 border-t border-current pt-2 mt-2">
+                    <div>NextAuth URL: {envDebug.nextAuthUrl || "MISSING"}</div>
+                    <div>Discord ID set: {envDebug.hasDiscordClientId ? "✓" : "✗"}</div>
+                    <div>Discord Secret set: {envDebug.hasDiscordClientSecret ? "✓" : "✗"}</div>
+                    <div>Master Discord ID: {envDebug.masterDiscordIdValue || "MISSING"}</div>
+                  </div>
+                )}
                 <Button
                   onClick={copyDebugInfo}
                   variant="ghost"
                   size="sm"
-                  className="ml-2 h-6 px-2"
+                  className="mt-2 h-6 px-2 w-full"
                 >
-                  Copy
+                  Copy Debug Info
                 </Button>
               </div>
             )}
@@ -54,16 +77,24 @@ function LoginForm() {
         {error && error !== "not_allowed" && (
           <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
             <div className="text-center mb-2">Login failed. Try again.</div>
-            {debug && (
-              <div className="text-xs font-mono bg-black/20 p-2 rounded mt-2">
-                {debug}
+            {(debug || envDebug) && (
+              <div className="text-xs font-mono bg-black/20 p-2 rounded mt-2 break-all">
+                {debug && <div className="mb-2">{debug}</div>}
+                {envDebug && (
+                  <div className="text-[10px] opacity-80 border-t border-current pt-2 mt-2">
+                    <div>NextAuth URL: {envDebug.nextAuthUrl || "MISSING"}</div>
+                    <div>Discord ID: {envDebug.discordClientIdPrefix || "MISSING"}</div>
+                    <div>Discord Secret: {envDebug.discordClientSecretPrefix || "MISSING"}</div>
+                    <div>Master Discord ID: {envDebug.masterDiscordIdValue || "MISSING"}</div>
+                  </div>
+                )}
                 <Button
                   onClick={copyDebugInfo}
                   variant="ghost"
                   size="sm"
-                  className="ml-2 h-6 px-2"
+                  className="mt-2 h-6 px-2 w-full"
                 >
-                  Copy
+                  Copy Debug Info
                 </Button>
               </div>
             )}
