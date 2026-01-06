@@ -27,7 +27,7 @@ function LoginForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-          <Target className="h-16 w-16 text-primary" />
+          <Target className="h-32 w-32 text-primary" />
         </div>
         <CardTitle className="text-3xl font-bold">Target Tracker</CardTitle>
         <CardDescription>Log in with Discord to continue</CardDescription>
