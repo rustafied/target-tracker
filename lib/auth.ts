@@ -11,22 +11,29 @@ interface DiscordProfile {
   email?: string;
 }
 
+// Validate env vars
+if (!process.env.DISCORD_CLIENT_ID || !process.env.DISCORD_CLIENT_SECRET) {
+  throw new Error("Missing Discord OAuth credentials");
+}
+if (!process.env.NEXTAUTH_URL) {
+  throw new Error("Missing NEXTAUTH_URL");
+}
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("Missing NEXTAUTH_SECRET");
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     DiscordProvider({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      clientId: process.env.DISCORD_CLIENT_ID,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET,
       authorization: {
         params: {
           scope: "identify email",
-          prompt: "none",
         },
       },
-      token: {
-        url: "https://discord.com/api/oauth2/token",
-      },
-      userinfo: {
-        url: "https://discord.com/api/users/@me",
+      httpOptions: {
+        timeout: 10000,
       },
     }),
   ],
