@@ -8,6 +8,7 @@ export async function middleware(request: NextRequest) {
   // Allow auth routes and static assets
   if (
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/debug") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico") ||
     pathname.startsWith("/icon.svg") ||
