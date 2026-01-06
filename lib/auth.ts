@@ -61,7 +61,7 @@ export const authOptions: NextAuthOptions = {
         const discordProfile = profile as DiscordProfile;
         
         if (!discordProfile?.id) {
-          return `/login?error=no_profile&debug=${encodeURIComponent("Discord profile missing")}`;
+          return false;
         }
 
         const discordId = discordProfile.id;
@@ -69,7 +69,7 @@ export const authOptions: NextAuthOptions = {
 
         // Only allow master admin
         if (discordId !== masterDiscordId) {
-          return `/login?error=not_allowed&debug=${encodeURIComponent(`Discord ID: ${discordId}`)}`;
+          return "/login?error=not_allowed";
         }
 
         // Connect to DB and create/update user
@@ -101,8 +101,7 @@ export const authOptions: NextAuthOptions = {
 
         return true;
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        return `/login?error=server_error&debug=${encodeURIComponent(errorMsg)}`;
+        return false;
       }
     },
     async jwt({ token, profile, account }) {
