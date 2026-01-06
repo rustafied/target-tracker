@@ -53,33 +53,19 @@ export const authOptions: NextAuthOptions = {
       try {
         const discordProfile = profile as DiscordProfile;
         
-        console.log("[AUTH] SignIn callback started", { 
-          hasProfile: !!profile, 
-          profileId: discordProfile?.id 
-        });
-
         if (!discordProfile?.id) {
-          console.error("[AUTH] No Discord profile ID");
-          return false;
+          return `/login?error=no_profile&debug=${encodeURIComponent("Discord profile missing")}`;
         }
 
         const discordId = discordProfile.id;
         const masterDiscordId = process.env.MASTER_DISCORD_ID;
 
-        console.log("[AUTH] Checking authorization", { 
-          discordId, 
-          masterDiscordId,
-          matches: discordId === masterDiscordId 
-        });
-
         // Only allow master admin
         if (discordId !== masterDiscordId) {
-          console.error("[AUTH] User not authorized");
-          return "/login?error=not_allowed";
+          return `/login?error=not_allowed&debug=${encodeURIComponent(`Discord ID: ${discordId}`)}`;
         }
 
         // Connect to DB and create/update user
-        console.log("[AUTH] Connecting to database");
         await connectToDatabase();
 
         const existingUser = await User.findOne({ discordId });
@@ -93,7 +79,6 @@ export const authOptions: NextAuthOptions = {
           existingUser.role = "admin";
           existingUser.lastLoginAt = new Date();
           await existingUser.save();
-          console.log("[AUTH] User updated successfully");
         } else {
           // Create new user
           await User.create({
@@ -105,13 +90,12 @@ export const authOptions: NextAuthOptions = {
             role: "admin",
             lastLoginAt: new Date(),
           });
-          console.log("[AUTH] User created successfully");
         }
 
         return true;
       } catch (error) {
-        console.error("[AUTH] SignIn callback error:", error);
-        return false;
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return `/login?error=server_error&debug=${encodeURIComponent(errorMsg)}`;
       }
     },
     async jwt({ token, profile, account }) {

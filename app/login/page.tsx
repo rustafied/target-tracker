@@ -15,6 +15,12 @@ import {
 function LoginForm() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  const debug = searchParams.get("debug");
+
+  const copyDebugInfo = () => {
+    const info = `Error: ${error}\nDetails: ${debug}\nTimestamp: ${new Date().toISOString()}`;
+    navigator.clipboard.writeText(info);
+  };
 
   return (
     <Card className="w-full max-w-md">
@@ -24,13 +30,39 @@ function LoginForm() {
       </CardHeader>
       <CardContent className="space-y-4">
         {error === "not_allowed" && (
-          <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm text-center">
-            This account is not authorized.
+          <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+            <div className="text-center mb-2">This account is not authorized.</div>
+            {debug && (
+              <div className="text-xs font-mono bg-black/20 p-2 rounded mt-2">
+                {debug}
+                <Button
+                  onClick={copyDebugInfo}
+                  variant="ghost"
+                  size="sm"
+                  className="ml-2 h-6 px-2"
+                >
+                  Copy
+                </Button>
+              </div>
+            )}
           </div>
         )}
         {error && error !== "not_allowed" && (
-          <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm text-center">
-            Login failed. Try again.
+          <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+            <div className="text-center mb-2">Login failed. Try again.</div>
+            {debug && (
+              <div className="text-xs font-mono bg-black/20 p-2 rounded mt-2">
+                {debug}
+                <Button
+                  onClick={copyDebugInfo}
+                  variant="ghost"
+                  size="sm"
+                  className="ml-2 h-6 px-2"
+                >
+                  Copy
+                </Button>
+              </div>
+            )}
           </div>
         )}
         <Button
