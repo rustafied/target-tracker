@@ -16,10 +16,33 @@ export const authOptions: NextAuthOptions = {
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID!,
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: "identify email",
+          prompt: "none",
+        },
+      },
+      token: {
+        url: "https://discord.com/api/oauth2/token",
+      },
+      userinfo: {
+        url: "https://discord.com/api/users/@me",
+      },
     }),
   ],
   session: {
     strategy: "jwt",
+  },
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
   pages: {
     signIn: "/login",

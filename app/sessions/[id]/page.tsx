@@ -6,6 +6,7 @@ import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp,
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -84,6 +85,7 @@ export default function SessionDetailPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteSheetDialogOpen, setDeleteSheetDialogOpen] = useState(false);
   const [sheetToDelete, setSheetToDelete] = useState<Sheet | null>(null);
+  const [selectedFirearmId, setSelectedFirearmId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     date: "",
     location: "",
@@ -517,6 +519,31 @@ export default function SessionDetailPage() {
 
       <h2 className="text-2xl font-bold mb-4">Target Sheets</h2>
 
+      {/* Firearm Filter */}
+      {(() => {
+        const uniqueFirearms = Array.from(
+          new Map(sheets.map(s => [s.firearmId._id, { id: s.firearmId._id, name: s.firearmId.name }])).values()
+        );
+        
+        if (uniqueFirearms.length > 1) {
+          return (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {uniqueFirearms.map((firearm) => (
+                <Badge
+                  key={firearm.id}
+                  variant={selectedFirearmId === firearm.id ? "default" : "outline"}
+                  className="cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setSelectedFirearmId(selectedFirearmId === firearm.id ? null : firearm.id)}
+                >
+                  {firearm.name}
+                </Badge>
+              ))}
+            </div>
+          );
+        }
+        return null;
+      })()}
+
       {sheets.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
@@ -527,7 +554,11 @@ export default function SessionDetailPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-          {sheets.map((sheet, index) => {
+          {sheets
+            .filter(sheet => !selectedFirearmId || sheet.firearmId._id === selectedFirearmId)
+            .map((sheet) => {
+            // Get original index from full sheets array
+            const originalIndex = sheets.findIndex(s => s._id === sheet._id);
             const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
             const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
             const avgScore = totalShots > 0 ? (totalScore / totalShots).toFixed(2) : "0.00";
@@ -548,7 +579,7 @@ export default function SessionDetailPage() {
               <Card key={sheet._id}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4 mb-4">
-                    <CardTitle className="text-lg">{sheet.sheetLabel || `Sheet ${index + 1}`}</CardTitle>
+                    <CardTitle className="text-lg">{sheet.sheetLabel || `Sheet ${originalIndex + 1}`}</CardTitle>
                     <div className="text-right">
                       <p className="text-xs text-muted-foreground mb-1">Average Score</p>
                       <p className="text-3xl font-bold">{avgScore}</p>
