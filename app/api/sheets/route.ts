@@ -35,10 +35,28 @@ export async function POST(request: NextRequest) {
       sessionId = session._id.toString();
     }
 
+    // If targetTemplateId not provided, use default template
+    let targetTemplateId = validated.targetTemplateId;
+    if (!targetTemplateId) {
+      const defaultTemplate = await TargetTemplate.findOne({ name: "Six Bull (Default)", isSystem: true });
+      if (!defaultTemplate) {
+        return NextResponse.json({ error: "Default template not found. Run migration script." }, { status: 500 });
+      }
+      targetTemplateId = defaultTemplate._id.toString();
+    }
+
+    // Verify template exists and get its version
+    const template = await TargetTemplate.findById(targetTemplateId);
+    if (!template) {
+      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    }
+
     // Create sheet with resolved sessionId, let pre-save hook generate slug
     const sheetData = {
       ...validated,
       rangeSessionId: sessionId,
+      targetTemplateId: template._id,
+      targetTemplateVersion: template.version,
       userId,
     };
     

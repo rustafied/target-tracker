@@ -126,6 +126,39 @@ Current state of the Target Tracker application as of January 2026.
 
 ---
 
+#### 5. Custom Target Templates (January 2026) ✨ NEW!
+- **Template System** - Flexible target type architecture
+  - TargetTemplate model with SVG rendering and aim point definitions
+  - ScoringModel model for ring-based and region-based scoring
+  - AimPointRecord model (replaces BullRecord) for flexible aim point tracking
+  - Backward compatible with existing data
+- **Built-In Templates** - Four pre-configured target types:
+  - **Six Bull (Default)**: Traditional 6-bull practice sheet with colored ring target (6 aim points)
+  - **Single Bullseye**: Large precision target for accuracy training (1 aim point, 9-5 scoring)
+  - **Sight-In Grid**: 5-square grid for optic zeroing (5 aim points, hit/miss scoring)
+  - **Silhouette**: Head and torso zones for defensive training (2 aim points, zone scoring)
+- **Visual Template Selection** - Card-based selector on sheet creation form
+  - Grid of template cards with SVG previews
+  - Shows template name and aim point count
+  - Visual feedback for selected template
+  - Checkmark badge on selected card
+  - Templates positioned below equipment selection
+- **Template-Driven Rendering** - Dynamic UI based on selected template
+  - InteractiveTargetInput renders actual template SVG
+  - Session view shows correct template visuals on sheet cards
+  - SingleBullVisualization displays template-specific graphics
+  - Aim points show proper names ("Head", "Torso", "Center") instead of "Bull 1-6"
+- **Template Gallery** - Browse templates at `/setup/targets`
+  - Visual preview of each template
+  - Template metadata and descriptions
+  - System templates marked with badge
+  - "Use Template" action buttons
+- **Data Migration** - Seamless upgrade path
+  - Migration scripts for existing data
+  - All existing sheets use "Six Bull (Default)" template
+  - Bull records migrated to aim point records
+  - No data loss during migration
+
 ## 🎨 Visual Features & UI
 
 ### Visualizations
@@ -465,6 +498,43 @@ All CRUD operations exposed via `/api/*`:
     - Fixed: Session slug validation error by moving generation from `pre('save')` to `pre('validate')`
     - Fixed: Explicit model references in sheets POST route to prevent serverless tree-shaking
     - Pattern: Use `pre('validate')` hooks for auto-generated required fields
+
+23. **Custom Target Types and User-Defined Scoring**
+    - **Phase 1: Template Infrastructure**
+      - Created `TargetTemplate` model with coordinate systems, aim points, and rendering config
+      - Created `ScoringModel` for ring-based and region-based scoring definitions
+      - Migrated `BullRecord` to `AimPointRecord` with backward compatibility
+      - Added `targetTemplateId` and `targetTemplateVersion` to sheets
+      - Migration scripts for zero-downtime data migration
+    
+    - **Phase 2: Template-Driven UI**
+      - Sheet pages dynamically render based on template configuration
+      - Replaced hardcoded 6-bull assumption with template-driven aim points
+      - Display template-specific names (e.g., "Head", "Torso" vs "Bull 1")
+      - API routes populate template data for proper rendering
+    
+    - **Phase 3: Built-In Templates**
+      - Added four built-in templates:
+        - Six Bull (Default) - Traditional 6-bull practice sheet
+        - Single Bullseye - Large precision target (9-5 ring scoring)
+        - Sight-In Grid - 5-square zeroing grid (hit/miss)
+        - Silhouette - Head and torso tactical training zones
+      - Visual template selector with SVG preview cards
+      - Template-specific SVG rendering in interactive target input
+      - Template gallery at `/setup/targets`
+    
+    - **Phase 4: Template Sorting**
+      - Added `sortOrder` field to templates
+      - Drag-and-drop reordering on template setup page
+      - Custom order persists across all template selections
+      - Fixed Mongoose model caching issues in Next.js hot reload
+      - Created `/api/templates/reorder` endpoint for saving sort order
+    
+    - **Technical Challenges Resolved**:
+      - Mongoose schema caching in Next.js serverless environment
+      - Model registration with `void ModelName;` pattern
+      - Explicit field selection with `.select('+sortOrder')`
+      - Backward compatibility with existing bull records
 
 ---
 

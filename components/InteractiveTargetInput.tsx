@@ -10,15 +10,38 @@ interface ShotPosition {
   score: number;
 }
 
+interface AimPoint {
+  id: string;
+  name: string;
+  order: number;
+  centerX: number;
+  centerY: number;
+  interactiveRadius?: number;
+  tags?: string[];
+}
+
+interface TargetTemplate {
+  _id: string;
+  name: string;
+  render?: {
+    type: string;
+    svgMarkup?: string;
+    imageUrl?: string;
+  };
+  aimPoints: AimPoint[];
+}
+
 interface InteractiveTargetInputProps {
   shots: ShotPosition[];
   onShotsChange: (shots: ShotPosition[]) => void;
   bullIndex: number;
   isExpanded: boolean;
   setIsExpanded: (value: boolean) => void;
+  template?: TargetTemplate;
+  aimPointId?: string;
 }
 
-export function InteractiveTargetInput({ shots, onShotsChange, bullIndex, isExpanded, setIsExpanded }: InteractiveTargetInputProps) {
+export function InteractiveTargetInput({ shots, onShotsChange, bullIndex, isExpanded, setIsExpanded, template, aimPointId }: InteractiveTargetInputProps) {
   const [hoveredRing, setHoveredRing] = useState<number | null>(null);
 
   // Ring definitions matching SessionHeatmap
@@ -94,6 +117,58 @@ export function InteractiveTargetInput({ shots, onShotsChange, bullIndex, isExpa
   const renderTarget = (isExpandedView = false) => {
     const shotRadius = isExpandedView ? 1.75 : 3.5;
     
+    // If template provided with SVG, use it
+    if (template?.render?.svgMarkup) {
+      return (
+        <div className="relative w-full h-full">
+          <svg 
+            viewBox="0 0 200 200" 
+            className="absolute inset-0 w-full h-full cursor-crosshair pointer-events-none"
+            dangerouslySetInnerHTML={{ __html: template.render.svgMarkup.replace(/<svg[^>]*>|<\/svg>/g, '') }}
+          />
+          <svg 
+            viewBox="0 0 200 200" 
+            className="absolute inset-0 w-full h-full cursor-crosshair"
+            onClick={handleClick}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            {/* Shot markers */}
+            {shots.map((shot, index) => (
+              <circle
+                key={index}
+                cx={shot.x}
+                cy={shot.y}
+                r={shotRadius}
+                fill={shot.score === 5 ? "#ffffff" : "#ef4444"}
+                stroke={shot.score === 5 ? "#333333" : "#7f1d1d"}
+                strokeWidth="0.8"
+                opacity="0.9"
+                className="cursor-pointer hover:opacity-100 hover:r-4"
+                onContextMenu={(e) => handleRightClick(e, index)}
+                style={{ cursor: 'pointer' }}
+              />
+            ))}
+            
+            {/* Hover indicator */}
+            {hoveredRing !== null && (
+              <text
+                x="100"
+                y="10"
+                textAnchor="middle"
+                fill="#333"
+                fontSize="8"
+                fontWeight="bold"
+              >
+                {rings[hoveredRing].label}
+              </text>
+            )}
+          </svg>
+        </div>
+      );
+    }
+    
+    // Fallback to default ring target
     return (
       <svg 
         viewBox="0 0 200 200" 
@@ -221,7 +296,9 @@ export function InteractiveTargetInput({ shots, onShotsChange, bullIndex, isExpa
       {/* Expanded view dialog */}
       <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
         <DialogContent className="!max-w-none w-[90vw] h-[90vh] !p-6 flex flex-col !gap-4">
-          <DialogTitle className="text-center text-xl font-semibold">Bull {bullIndex}</DialogTitle>
+          <DialogTitle className="text-center text-xl font-semibold">
+            {template?.aimPoints?.find(ap => ap.id === aimPointId)?.name || `Bull ${bullIndex}`}
+          </DialogTitle>
           <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
             <div className="w-[80vw] h-[80vh] max-w-[80vh] max-h-[80vw]">
               {renderTarget(true)}

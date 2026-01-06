@@ -8,6 +8,7 @@ export const sheetSchema = z.object({
   distanceYards: z.coerce.number().positive("Distance must be positive"),
   sheetLabel: z.string().optional(),
   notes: z.string().optional(),
+  targetTemplateId: z.string().optional(), // Optional - will use default if not provided
 });
 
 export type SheetFormData = z.infer<typeof sheetSchema>;

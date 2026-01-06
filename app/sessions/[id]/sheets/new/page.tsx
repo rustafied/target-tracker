@@ -10,7 +10,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { TagSelector } from "@/components/TagSelector";
 import { LoadingScreen } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Minus, Ruler, Tag as TagIcon, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Ruler, Tag as TagIcon, FileText, LayoutGrid } from "lucide-react";
+
+interface TargetTemplate {
+  _id: string;
+  name: string;
+  description?: string;
+  aimPoints: any[];
+  render?: {
+    type: string;
+    svgMarkup?: string;
+    imageUrl?: string;
+  };
+}
 
 export default function NewSheetPage() {
   const router = useRouter();
@@ -22,6 +34,7 @@ export default function NewSheetPage() {
   const [calibers, setCalibers] = useState<{ _id: string; name: string }[]>([]);
   const [allOptics, setAllOptics] = useState<{ _id: string; name: string }[]>([]);
   const [allCalibers, setAllCalibers] = useState<{ _id: string; name: string }[]>([]);
+  const [templates, setTemplates] = useState<TargetTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -31,6 +44,7 @@ export default function NewSheetPage() {
     distanceYards: "25",
     sheetLabel: "",
     notes: "",
+    targetTemplateId: "",
   });
 
   useEffect(() => {
@@ -39,15 +53,17 @@ export default function NewSheetPage() {
 
   const fetchReferenceData = async () => {
     try {
-      const [firearmsRes, opticsRes, calibersRes] = await Promise.all([
+      const [firearmsRes, opticsRes, calibersRes, templatesRes] = await Promise.all([
         fetch("/api/firearms"),
         fetch("/api/optics"),
         fetch("/api/calibers"),
+        fetch("/api/templates"),
       ]);
 
       let firearmsData: { _id: string; name: string; defaultDistanceYards?: number; caliberIds?: string[]; opticIds?: string[] }[] = [];
       let opticsData: { _id: string; name: string }[] = [];
       let calibersData: { _id: string; name: string }[] = [];
+      let templatesData: TargetTemplate[] = [];
 
       if (firearmsRes.ok) {
         firearmsData = await firearmsRes.json();
@@ -61,10 +77,23 @@ export default function NewSheetPage() {
         calibersData = await calibersRes.json();
         setAllCalibers(calibersData);
       }
+      if (templatesRes.ok) {
+        templatesData = await templatesRes.json();
+        console.log('Loaded templates:', templatesData);
+        setTemplates(templatesData);
+        // Auto-select default template if available
+        const defaultTemplate = templatesData.find(t => t.name === "Six Bull (Default)");
+        if (defaultTemplate) {
+          setFormData(prev => ({ ...prev, targetTemplateId: defaultTemplate._id }));
+        }
+      } else {
+        console.error('Failed to fetch templates:', templatesRes.status);
+      }
 
       // Don't auto-select - let user choose firearm first
       // This will trigger filterByFirearm when they select
     } catch (error) {
+      console.error('Error loading reference data:', error);
       toast.error("Failed to load reference data");
     } finally {
       setLoading(false);
@@ -292,6 +321,73 @@ export default function NewSheetPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Template Selection */}
+            <div className={!formData.firearmId ? "opacity-50 pointer-events-none" : ""}>
+              <Label className="flex items-center gap-2 mb-3">
+                <LayoutGrid className="h-4 w-4" />
+                Target Template * ({templates.length} available)
+              </Label>
+              {templates.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Loading templates...</p>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {templates.map((template) => {
+                  const isSelected = formData.targetTemplateId === template._id;
+                  return (
+                    <button
+                      key={template._id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, targetTemplateId: template._id })}
+                      className={`relative flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary/5 dark:bg-primary/10"
+                          : "border-border hover:border-primary/50 hover:bg-accent"
+                      }`}
+                    >
+                      {/* Template Preview */}
+                      <div className="w-full aspect-square bg-white dark:bg-zinc-900 rounded border dark:border-white/10 p-2 mb-2">
+                        {template.render?.svgMarkup ? (
+                          <div
+                            className="w-full h-full"
+                            dangerouslySetInnerHTML={{ __html: template.render.svgMarkup }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <LayoutGrid className="h-8 w-8" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Template Info */}
+                      <div className="text-center">
+                        <p className={`text-xs font-medium ${isSelected ? "text-primary" : ""}`}>
+                          {template.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {template.aimPoints.length} aim point{template.aimPoints.length !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                      
+                      {/* Selected indicator */}
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  );
+                  })}
+                </div>
+              )}
+              {templates.find(t => t._id === formData.targetTemplateId)?.description && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {templates.find(t => t._id === formData.targetTemplateId)?.description}
+                </p>
+              )}
             </div>
 
             <div className={`flex gap-2 justify-end pt-4 border-t ${!formData.firearmId ? "opacity-50 pointer-events-none" : ""}`}>

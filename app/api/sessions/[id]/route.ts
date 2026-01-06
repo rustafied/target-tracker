@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/db";
 import { RangeSession } from "@/lib/models/RangeSession";
 import { TargetSheet } from "@/lib/models/TargetSheet";
 import { BullRecord } from "@/lib/models/BullRecord";
+import { TargetTemplate } from "@/lib/models/TargetTemplate";
 import { Firearm } from "@/lib/models/Firearm";
 import { Caliber } from "@/lib/models/Caliber";
 import { Optic } from "@/lib/models/Optic";
@@ -18,7 +19,10 @@ export async function GET(
     await connectToDatabase();
     
     // Ensure models are registered
-    const _ = [Firearm, Caliber, Optic];
+    void Firearm;
+    void Caliber;
+    void Optic;
+    void TargetTemplate;
     
     // Try to find by slug first, fallback to _id for backward compatibility
     let session = await RangeSession.findOne({ slug: id });
@@ -35,6 +39,7 @@ export async function GET(
       .populate("firearmId")
       .populate("caliberId")
       .populate("opticId")
+      .populate("targetTemplateId", "name aimPoints render")
       .sort({ createdAt: 1 });
 
     // Get bull records for each sheet

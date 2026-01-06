@@ -38,6 +38,7 @@ export interface ITargetTemplate {
   aimPoints: IAimPoint[];
   isSystem: boolean; // Built-in templates
   createdBy?: mongoose.Types.ObjectId;
+  sortOrder: number; // Display order in UI
   createdAt: Date;
   updatedAt: Date;
 }
@@ -84,6 +85,7 @@ const TargetTemplateSchema = new Schema<ITargetTemplate>(
     aimPoints: [AimPointSchema],
     isSystem: { type: Boolean, default: false },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
+    sortOrder: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
@@ -92,7 +94,12 @@ const TargetTemplateSchema = new Schema<ITargetTemplate>(
 TargetTemplateSchema.index({ name: 1 });
 TargetTemplateSchema.index({ isSystem: 1 });
 TargetTemplateSchema.index({ createdBy: 1 });
+TargetTemplateSchema.index({ sortOrder: 1 });
+
+// Delete cached model to ensure schema updates are picked up
+if (mongoose.models.TargetTemplate) {
+  delete mongoose.models.TargetTemplate;
+}
 
 export const TargetTemplate: Model<ITargetTemplate> =
-  mongoose.models.TargetTemplate ||
   mongoose.model<ITargetTemplate>("TargetTemplate", TargetTemplateSchema);

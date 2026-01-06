@@ -37,6 +37,11 @@ interface Sheet {
   targetTemplateId?: {
     _id: string;
     name: string;
+    render?: {
+      type: string;
+      svgMarkup?: string;
+      imageUrl?: string;
+    };
     aimPoints: AimPoint[];
   };
 }
@@ -474,7 +479,7 @@ export default function SheetDetailPage() {
           <CardTitle>{sheet.sheetLabel || "Target Sheet"}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
@@ -509,6 +514,13 @@ export default function SheetDetailPage() {
                 Distance
               </p>
               <p className="font-medium">{sheet.distanceYards} yards</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground flex items-center gap-1">
+                <TargetIcon className="h-3 w-3" />
+                Target Type
+              </p>
+              <p className="font-medium">{sheet.targetTemplateId?.name || "Six Bull (Default)"}</p>
             </div>
             <div>
               <p className="text-muted-foreground flex items-center gap-1">
@@ -547,7 +559,9 @@ export default function SheetDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg">Bull {bull.bullIndex}</CardTitle>
+                    <CardTitle className="text-lg">
+                      {sheet?.targetTemplateId?.aimPoints?.find(ap => ap.id === bull.aimPointId)?.name || `Bull ${bull.bullIndex}`}
+                    </CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">{metrics.totalShots} shots</p>
                   </div>
                   <div className="flex gap-2">
@@ -592,6 +606,8 @@ export default function SheetDetailPage() {
                       bullIndex={bull.bullIndex}
                       isExpanded={expandedBulls[bull.bullIndex] || false}
                       setIsExpanded={(value) => setExpandedBulls((prev) => ({ ...prev, [bull.bullIndex]: value }))}
+                      template={sheet.targetTemplateId as any}
+                      aimPointId={bull.aimPointId}
                     />
                   </div>
 

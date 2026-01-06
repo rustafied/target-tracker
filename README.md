@@ -5,10 +5,11 @@ A Next.js application for logging and visualizing shooting range sessions with p
 ## Features
 
 - 🔐 **Discord Authentication** - Secure login with Discord OAuth (master admin only for now)
-- 📊 **Detailed Scoring** - 5-4-3-2-1-0 system per bull (flexible 1-6 bulls per sheet)
-- ⚡ **Quick Entry** - Type 6-digit codes (e.g., "543210") to instantly populate all score counts per bull
+- 🎯 **Custom Target Templates** - Multiple built-in target types with visual selection (Six Bull, Single Bullseye, Sight-In Grid, Silhouette)
+- 📊 **Detailed Scoring** - 5-4-3-2-1-0 system per aim point (flexible based on template)
+- ⚡ **Quick Entry** - Type 6-digit codes (e.g., "543210") to instantly populate all score counts per aim point
 - 📸 **Target Image Recognition** - Upload target photos and automatically detect bullet placements using OpenCV
-- 🎯 **Comprehensive Tracking** - Associate each sheet with firearm, caliber, optic, and distance
+- 🎯 **Comprehensive Tracking** - Associate each sheet with firearm, caliber, optic, distance, and target type
 - 📈 **Analytics & Visualizations** - Trend graphs, multi-firearm comparison charts, bullseye visualizations, and session heatmaps
 - 🔫 **Equipment Management** - CRUD for firearms, optics, and calibers with drag-drop ordering
 - 🔗 **Equipment Relationships** - Firearms can be linked to specific compatible calibers and optics with auto-filtering
@@ -201,6 +202,7 @@ Comprehensive project documentation is available in the `/readme` folder:
 - [Target Image Recognition](./readme/14-target-image-recognition.md) - Feature specification
 - **[Recognition Setup Guide](./readme/15-target-recognition-setup.md) - Installation and usage**
 - **[Authentication Setup](./readme/17-authentication-setup.md) - Discord OAuth configuration**
+- **[Custom Target Templates](./readme/18-custom-target-types.md) - Template system specification**
 
 ## Tech Stack
 
@@ -278,12 +280,32 @@ All collections include:
 - **Optics** with `sortOrder` for custom ordering
 - **Calibers** with `sortOrder` for custom ordering
 - **Range Sessions** with `slug`, location, date, and notes
-- **Target Sheets** with `slug`, linked to sessions and equipment (firearm, caliber, optic, distance)
-- **Bull Records** with aggregated score counts (0-10 per score level) - only saved if non-zero
+- **Target Sheets** with `slug`, linked to sessions, equipment, and target template
+- **Target Templates** with SVG rendering, aim points, and scoring models (system and custom)
+- **Scoring Models** with ring or region-based scoring definitions
+- **Aim Point Records** (formerly Bull Records) with aggregated score counts - only saved if non-zero
 
 ### 🔄 Recent Updates
 
-#### Discord Authentication (January 5, 2026) ✨ NEW!
+#### Custom Target Templates (January 6, 2026) ✨ NEW!
+**Multiple target types for different training purposes:**
+- **Built-In Templates**: 
+  - **Six Bull (Default)**: Traditional 6-bull practice sheet with ring-based scoring (6 aim points)
+  - **Single Bullseye**: Large precision target for accuracy work (1 aim point, 9-5 scoring)
+  - **Sight-In Grid**: 5-square grid for optic zeroing (5 aim points, hit/miss scoring)
+  - **Silhouette**: Head and torso zones for defensive training (2 aim points, zone scoring)
+- **Visual Template Selection**: Card-based selector with SVG previews on sheet creation
+- **Template-Driven UI**: Interactive targets and visualizations render actual template graphics
+- **Smart Rendering**: Each aim point displays template-specific SVG (silhouette, grid, bullseye)
+- **Flexible Aim Points**: Bulls renamed to "aim points" - can be "Head", "Torso", "Center", etc.
+- **Template Gallery**: Browse all templates at `/setup/targets`
+- **Drag-and-Drop Sorting**: Customize template display order with smooth drag-and-drop reordering
+- **Persistent Order**: Custom sort order applies across all template selection interfaces
+- **Backward Compatible**: Existing sheets automatically use "Six Bull (Default)" template
+- **Data Migration**: Seamless migration of existing bull records to new template system
+- **Session View Updates**: Sheet cards show correct template visuals and aim point names
+
+#### Discord Authentication (January 5, 2026)
 **Secure access control with Discord OAuth:**
 - **NextAuth.js Integration**: Full Discord OAuth 2.0 authentication
 - **Master Admin Access**: Single-user mode with Discord ID allowlist
@@ -293,7 +315,7 @@ All collections include:
 - **Future-Proofed**: Database schema ready for multi-user expansion
 - **MongoDB User Records**: Tracks login history and user metadata
 
-#### Target Image Recognition System (January 5, 2026) ✨ NEW!
+#### Target Image Recognition System (January 5, 2026)
 **Automatic bullet hole detection from photos:**
 - **SimpleBlobDetector Algorithm**: Switched from HoughCircles to handle irregular/torn holes
 - **Red Bullseye Detection**: HSV color-based center detection (more reliable than outer ring)
@@ -350,9 +372,12 @@ All collections include:
 See [Future Features](./readme/06-future-features.md) for planned additions:
 - ✅ ~~Direct target photo ingestion with shot detection~~ (Completed!)
 - ✅ ~~Authentication and multi-device sync~~ (MVP completed - master admin only)
+- ✅ ~~Support for different target types~~ (Completed - built-in templates!)
+- Custom template creation UI
+- Region-based scoring (non-ring shapes)
 - Multi-user support with approval workflow
 - ML model training for improved detection accuracy
-- Support for different target types (IPSC, steel, etc.)
+- Additional target types (IPSC, steel, B-27, etc.)
 - Drill types and structured training programs
 - Advanced analytics and exports
 - Shot grouping analysis (ES, SD calculations)

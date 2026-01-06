@@ -41,6 +41,7 @@ import {
 interface BullRecord {
   _id: string;
   bullIndex: number;
+  aimPointId?: string;
   score5Count: number;
   score4Count: number;
   score3Count: number;
@@ -71,6 +72,19 @@ interface Sheet {
   sheetLabel?: string;
   notes?: string;
   bulls: BullRecord[];
+  targetTemplateId?: {
+    _id: string;
+    name: string;
+    render?: {
+      type: string;
+      svgMarkup?: string;
+      imageUrl?: string;
+    };
+    aimPoints?: Array<{
+      id: string;
+      name: string;
+    }>;
+  };
 }
 
 export default function SessionDetailPage() {
@@ -546,11 +560,19 @@ export default function SessionDetailPage() {
       })()}
 
       {sheets.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">
-              No target sheets yet. Click "Add Sheet" to record your shooting.
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <div className="rounded-full bg-muted p-6 mb-6">
+              <TargetIcon className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No Target Sheets Yet</h3>
+            <p className="text-center text-muted-foreground mb-6 max-w-md">
+              Start recording your shooting session by adding your first target sheet. Track your accuracy with different firearms, calibers, and optics.
             </p>
+            <Button onClick={() => router.push(`/sessions/${sessionId}/sheets/new`)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Your First Sheet
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -615,6 +637,13 @@ export default function SessionDetailPage() {
                       </div>
                       <p className="font-medium">{sheet.distanceYards} yards</p>
                     </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <TargetIcon className="h-3 w-3" />
+                        <span>Target</span>
+                      </div>
+                      <p className="font-medium text-xs">{sheet.targetTemplateId?.name || "Six Bull"}</p>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -626,7 +655,12 @@ export default function SessionDetailPage() {
                           .filter((bull) => bull.totalShots > 0)
                           .slice(0, 6)
                           .map((bull) => (
-                            <SingleBullVisualization key={bull.bullIndex} bull={bull} size={100} />
+                            <SingleBullVisualization 
+                              key={bull.bullIndex} 
+                              bull={bull} 
+                              size={100}
+                              template={sheet.targetTemplateId}
+                            />
                           ))}
                       </div>
                     )}
