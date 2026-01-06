@@ -55,7 +55,6 @@ export default function SessionsPage() {
       const res = await fetch("/api/sessions");
       if (res.ok) {
         const data = await res.json();
-        console.log('Sessions data:', data.sessions); // Debug
         setSessions(data.sessions || data); // Handle both old and new format
         setLocations(data.locations || []);
       }
