@@ -50,45 +50,69 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      const discordProfile = profile as DiscordProfile;
-      if (!discordProfile?.id) return false;
-
-      const discordId = discordProfile.id;
-      const masterDiscordId = process.env.MASTER_DISCORD_ID;
-
-      // Only allow master admin
-      if (discordId !== masterDiscordId) {
-        return "/login?error=not_allowed";
-      }
-
-      // Connect to DB and create/update user
-      await connectToDatabase();
-
-      const existingUser = await User.findOne({ discordId });
-
-      if (existingUser) {
-        // Update existing user
-        existingUser.username = discordProfile.username;
-        existingUser.discriminator = discordProfile.discriminator;
-        existingUser.avatar = discordProfile.avatar;
-        existingUser.isApproved = true;
-        existingUser.role = "admin";
-        existingUser.lastLoginAt = new Date();
-        await existingUser.save();
-      } else {
-        // Create new user
-        await User.create({
-          discordId,
-          username: discordProfile.username,
-          discriminator: discordProfile.discriminator,
-          avatar: discordProfile.avatar,
-          isApproved: true,
-          role: "admin",
-          lastLoginAt: new Date(),
+      try {
+        const discordProfile = profile as DiscordProfile;
+        
+        console.log("[AUTH] SignIn callback started", { 
+          hasProfile: !!profile, 
+          profileId: discordProfile?.id 
         });
-      }
 
-      return true;
+        if (!discordProfile?.id) {
+          console.error("[AUTH] No Discord profile ID");
+          return false;
+        }
+
+        const discordId = discordProfile.id;
+        const masterDiscordId = process.env.MASTER_DISCORD_ID;
+
+        console.log("[AUTH] Checking authorization", { 
+          discordId, 
+          masterDiscordId,
+          matches: discordId === masterDiscordId 
+        });
+
+        // Only allow master admin
+        if (discordId !== masterDiscordId) {
+          console.error("[AUTH] User not authorized");
+          return "/login?error=not_allowed";
+        }
+
+        // Connect to DB and create/update user
+        console.log("[AUTH] Connecting to database");
+        await connectToDatabase();
+
+        const existingUser = await User.findOne({ discordId });
+
+        if (existingUser) {
+          // Update existing user
+          existingUser.username = discordProfile.username;
+          existingUser.discriminator = discordProfile.discriminator;
+          existingUser.avatar = discordProfile.avatar;
+          existingUser.isApproved = true;
+          existingUser.role = "admin";
+          existingUser.lastLoginAt = new Date();
+          await existingUser.save();
+          console.log("[AUTH] User updated successfully");
+        } else {
+          // Create new user
+          await User.create({
+            discordId,
+            username: discordProfile.username,
+            discriminator: discordProfile.discriminator,
+            avatar: discordProfile.avatar,
+            isApproved: true,
+            role: "admin",
+            lastLoginAt: new Date(),
+          });
+          console.log("[AUTH] User created successfully");
+        }
+
+        return true;
+      } catch (error) {
+        console.error("[AUTH] SignIn callback error:", error);
+        return false;
+      }
     },
     async jwt({ token, profile, account }) {
       const discordProfile = profile as DiscordProfile;
