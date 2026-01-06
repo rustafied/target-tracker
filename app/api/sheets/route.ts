@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/db";
 import { TargetSheet } from "@/lib/models/TargetSheet";
 import { RangeSession } from "@/lib/models/RangeSession";
 import { BullRecord } from "@/lib/models/BullRecord";
+import { TargetTemplate } from "@/lib/models/TargetTemplate";
 import { Firearm } from "@/lib/models/Firearm";
 import { Caliber } from "@/lib/models/Caliber";
 import { Optic } from "@/lib/models/Optic";
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest) {
     void Firearm;
     void Caliber;
     void Optic;
+    void TargetTemplate;
     
     // If rangeSessionId looks like a slug (contains dashes and is not 24 hex chars), look it up
     let sessionId = validated.rangeSessionId;

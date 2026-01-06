@@ -34,6 +34,21 @@ interface Sheet {
   sheetLabel?: string;
   notes?: string;
   rangeSessionId: { _id: string; slug?: string; date: string };
+  targetTemplateId?: {
+    _id: string;
+    name: string;
+    aimPoints: AimPoint[];
+  };
+}
+
+interface AimPoint {
+  id: string;
+  name: string;
+  order: number;
+  centerX: number;
+  centerY: number;
+  interactiveRadius?: number;
+  tags?: string[];
 }
 
 interface ShotPosition {
@@ -44,7 +59,8 @@ interface ShotPosition {
 
 interface BullRecord {
   _id: string;
-  bullIndex: number;
+  bullIndex: number; // Legacy: 1-6
+  aimPointId?: string; // New: e.g., "bull-1"
   score5Count: number;
   score4Count: number;
   score3Count: number;
@@ -118,31 +134,47 @@ export default function SheetDetailPage() {
         const data = await res.json();
         setSheet(data.sheet);
         
-        // Always ensure we have 6 bulls for the UI, even if they don't exist in DB yet
+        // Get aim points from template (or fallback to hardcoded 6 bulls for old sheets)
+        const aimPoints = data.sheet.targetTemplateId?.aimPoints || 
+          // Fallback for sheets without templates
+          Array.from({ length: 6 }, (_, i) => ({
+            id: `bull-${i + 1}`,
+            name: `Bull ${i + 1}`,
+            order: i + 1,
+            centerX: 100,
+            centerY: 100,
+          }));
+        
+        // Map existing bulls
         const existingBulls = data.bulls || [];
         const bullsMap = new Map<number, BullRecord>(existingBulls.map((b: BullRecord) => [b.bullIndex, b]));
         
         const allBulls: BullRecord[] = [];
         const initialShotPositions: { [key: number]: ShotPosition[] } = {};
         
-        for (let i = 1; i <= 6; i++) {
-          if (bullsMap.has(i)) {
-            const bull = bullsMap.get(i)!;
+        // Create bulls based on template aim points
+        aimPoints.forEach((aimPoint: AimPoint, index: number) => {
+          const bullIndex = aimPoint.order || (index + 1);
+          
+          if (bullsMap.has(bullIndex)) {
+            const bull = bullsMap.get(bullIndex)!;
             
             // Initialize shot positions if available
             const positions = bull.shotPositions || [];
-            initialShotPositions[i] = positions;
+            initialShotPositions[bullIndex] = positions;
             
             // Add bull with shot positions
             allBulls.push({
               ...bull,
+              aimPointId: aimPoint.id,
               shotPositions: positions,
             });
           } else {
             // Create a temporary bull record for the UI
             allBulls.push({
-              _id: `temp-${i}`,
-              bullIndex: i,
+              _id: `temp-${bullIndex}`,
+              bullIndex,
+              aimPointId: aimPoint.id,
               score5Count: 0,
               score4Count: 0,
               score3Count: 0,
@@ -151,9 +183,9 @@ export default function SheetDetailPage() {
               score0Count: 0,
               shotPositions: [],
             });
-            initialShotPositions[i] = [];
+            initialShotPositions[bullIndex] = [];
           }
-        }
+        });
         
         setBulls(allBulls);
         setShotPositions(initialShotPositions);

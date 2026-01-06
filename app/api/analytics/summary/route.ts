@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { RangeSession } from "@/lib/models/RangeSession";
 import { TargetSheet } from "@/lib/models/TargetSheet";
+import { TargetTemplate } from "@/lib/models/TargetTemplate";
 import { BullRecord } from "@/lib/models/BullRecord";
+import { Firearm } from "@/lib/models/Firearm";
+import { Caliber } from "@/lib/models/Caliber";
+import { Optic } from "@/lib/models/Optic";
 import { calculateBullMetrics } from "@/lib/metrics";
 
 export async function GET(request: Request) {
@@ -16,6 +20,12 @@ export async function GET(request: Request) {
     const distanceMax = searchParams.get("distanceMax");
 
     await connectToDatabase();
+    
+    // Ensure models are registered
+    void Firearm;
+    void Caliber;
+    void Optic;
+    void TargetTemplate;
 
     // Build session query
     const sessionQuery: any = {};

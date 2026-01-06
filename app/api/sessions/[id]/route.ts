@@ -43,18 +43,18 @@ export async function GET(
         const bulls = await BullRecord.find({ targetSheetId: sheet._id }).sort({ bullIndex: 1 });
         const bullsWithMetrics = bulls.map((bull) => {
           const totalShots =
-            bull.score5Count +
-            bull.score4Count +
-            bull.score3Count +
-            bull.score2Count +
-            bull.score1Count +
-            bull.score0Count;
+            (bull.score5Count || 0) +
+            (bull.score4Count || 0) +
+            (bull.score3Count || 0) +
+            (bull.score2Count || 0) +
+            (bull.score1Count || 0) +
+            (bull.score0Count || 0);
           const totalScore =
-            bull.score5Count * 5 +
-            bull.score4Count * 4 +
-            bull.score3Count * 3 +
-            bull.score2Count * 2 +
-            bull.score1Count * 1;
+            (bull.score5Count || 0) * 5 +
+            (bull.score4Count || 0) * 4 +
+            (bull.score3Count || 0) * 3 +
+            (bull.score2Count || 0) * 2 +
+            (bull.score1Count || 0) * 1;
           return {
             ...bull.toObject(),
             totalShots,

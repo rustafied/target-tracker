@@ -1,5 +1,16 @@
 import { IBullRecord } from "./models/BullRecord";
 
+// Type for bull records that may have been migrated or not
+type BullRecordLike = {
+  score5Count?: number;
+  score4Count?: number;
+  score3Count?: number;
+  score2Count?: number;
+  score1Count?: number;
+  score0Count?: number;
+  [key: string]: any;
+};
+
 export interface BullMetrics {
   totalShots: number;
   totalScore: number;
@@ -7,25 +18,25 @@ export interface BullMetrics {
   bullHitRate: number;
 }
 
-export function calculateBullMetrics(bull: IBullRecord): BullMetrics {
+export function calculateBullMetrics(bull: BullRecordLike): BullMetrics {
   const totalShots =
-    bull.score5Count +
-    bull.score4Count +
-    bull.score3Count +
-    bull.score2Count +
-    bull.score1Count +
-    bull.score0Count;
+    (bull.score5Count || 0) +
+    (bull.score4Count || 0) +
+    (bull.score3Count || 0) +
+    (bull.score2Count || 0) +
+    (bull.score1Count || 0) +
+    (bull.score0Count || 0);
 
   const totalScore =
-    bull.score5Count * 5 +
-    bull.score4Count * 4 +
-    bull.score3Count * 3 +
-    bull.score2Count * 2 +
-    bull.score1Count * 1 +
-    bull.score0Count * 0;
+    (bull.score5Count || 0) * 5 +
+    (bull.score4Count || 0) * 4 +
+    (bull.score3Count || 0) * 3 +
+    (bull.score2Count || 0) * 2 +
+    (bull.score1Count || 0) * 1 +
+    (bull.score0Count || 0) * 0;
 
   const averagePerShot = totalShots > 0 ? totalScore / totalShots : 0;
-  const bullHitRate = totalShots > 0 ? bull.score5Count / totalShots : 0;
+  const bullHitRate = totalShots > 0 ? (bull.score5Count || 0) / totalShots : 0;
 
   return {
     totalShots,
@@ -41,7 +52,7 @@ export interface SheetMetrics {
   averagePerShot: number;
 }
 
-export function calculateSheetMetrics(bulls: IBullRecord[]): SheetMetrics {
+export function calculateSheetMetrics(bulls: BullRecordLike[]): SheetMetrics {
   let totalShots = 0;
   let totalScore = 0;
 

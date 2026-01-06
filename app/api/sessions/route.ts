@@ -2,7 +2,12 @@ import { NextResponse, NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { RangeSession } from "@/lib/models/RangeSession";
 import { TargetSheet } from "@/lib/models/TargetSheet";
-import { BullRecord } from "@/lib/models/BullRecord";
+import { TargetTemplate } from "@/lib/models/TargetTemplate";
+import { AimPointRecord } from "@/lib/models/AimPointRecord";
+import { BullRecord } from "@/lib/models/BullRecord"; // Alias
+import { Firearm } from "@/lib/models/Firearm";
+import { Caliber } from "@/lib/models/Caliber";
+import { Optic } from "@/lib/models/Optic";
 import { sessionSchema } from "@/lib/validators/session";
 import { requireUserId } from "@/lib/auth-helpers";
 
@@ -10,6 +15,13 @@ export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
     const userId = await requireUserId(request);
+    
+    // Ensure models are registered
+    void Firearm;
+    void Caliber;
+    void Optic;
+    void TargetTemplate;
+    void AimPointRecord; // Register the actual model
     
     // TODO: When multi-user is enabled, filter by userId
     // For now, return all sessions (only master admin can access)
@@ -22,16 +34,26 @@ export async function GET(request: NextRequest) {
         const sheetIds = sheets.map(s => s._id);
         const bulls = await BullRecord.find({ targetSheetId: { $in: sheetIds } });
         
-        const totalShots = bulls.reduce((sum, bull) => sum + (bull.totalShots || 0), 0);
+        // Calculate totalShots from score counts (more reliable than stored totalShots)
+        const totalShots = bulls.reduce((sum, bull) => {
+          const shots = 
+            (bull.score5Count || 0) +
+            (bull.score4Count || 0) +
+            (bull.score3Count || 0) +
+            (bull.score2Count || 0) +
+            (bull.score1Count || 0) +
+            (bull.score0Count || 0);
+          return sum + shots;
+        }, 0);
         
         // Calculate total score from score counts
         const totalScore = bulls.reduce((sum, bull) => {
           return sum + 
-            (bull.score5Count * 5) + 
-            (bull.score4Count * 4) + 
-            (bull.score3Count * 3) + 
-            (bull.score2Count * 2) + 
-            (bull.score1Count * 1);
+            ((bull.score5Count || 0) * 5) + 
+            ((bull.score4Count || 0) * 4) + 
+            ((bull.score3Count || 0) * 3) + 
+            ((bull.score2Count || 0) * 2) + 
+            ((bull.score1Count || 0) * 1);
         }, 0);
         
         const avgScore = totalShots > 0 ? totalScore / totalShots : 0;

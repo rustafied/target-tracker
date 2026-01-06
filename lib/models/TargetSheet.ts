@@ -18,6 +18,12 @@ export interface ITargetSheet {
   sheetLabel?: string;
   notes?: string;
   photoUrl?: string;
+  
+  // NEW: Target template fields
+  targetTemplateId?: mongoose.Types.ObjectId;
+  targetTemplateVersion?: number;
+  aimPointCountSnapshot?: number; // Quick stats without loading template
+  
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +40,11 @@ const TargetSheetSchema = new Schema<ITargetSheet>(
     sheetLabel: { type: String },
     notes: { type: String },
     photoUrl: { type: String },
+    
+    // NEW: Target template fields
+    targetTemplateId: { type: Schema.Types.ObjectId, ref: "TargetTemplate" },
+    targetTemplateVersion: { type: Number },
+    aimPointCountSnapshot: { type: Number },
   },
   { timestamps: true }
 );

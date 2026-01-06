@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { TargetSheet } from "@/lib/models/TargetSheet";
 import { BullRecord } from "@/lib/models/BullRecord";
+import { TargetTemplate } from "@/lib/models/TargetTemplate";
 import { RangeSession } from "@/lib/models/RangeSession";
 import { Firearm } from "@/lib/models/Firearm";
 import { Caliber } from "@/lib/models/Caliber";
@@ -16,19 +17,27 @@ export async function GET(
     const { id } = await params;
     await connectToDatabase();
     
+    // Ensure models are registered before any queries
+    void Firearm;
+    void Caliber;
+    void Optic;
+    void TargetTemplate;
+    
     // Try to find by slug first, fallback to _id
     let sheet = await TargetSheet.findOne({ slug: id })
       .populate("firearmId")
       .populate("caliberId")
       .populate("opticId")
-      .populate("rangeSessionId");
+      .populate("rangeSessionId")
+      .populate("targetTemplateId");
     
     if (!sheet) {
       sheet = await TargetSheet.findById(id)
         .populate("firearmId")
         .populate("caliberId")
         .populate("opticId")
-        .populate("rangeSessionId");
+        .populate("rangeSessionId")
+        .populate("targetTemplateId");
     }
 
     if (!sheet) {
@@ -66,11 +75,19 @@ export async function PUT(
     if (validated.sheetLabel !== undefined) updateData.sheetLabel = validated.sheetLabel;
     if (validated.notes !== undefined) updateData.notes = validated.notes;
     
-    const sheet = await TargetSheet.findByIdAndUpdate(id, updateData, { new: true });
-
+    // Try to find by slug first, fallback to _id
+    let sheet = await TargetSheet.findOne({ slug: id });
+    if (!sheet) {
+      sheet = await TargetSheet.findById(id);
+    }
+    
     if (!sheet) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
     }
+    
+    // Update the found sheet
+    Object.assign(sheet, updateData);
+    await sheet.save();
 
     return NextResponse.json(sheet);
   } catch (error: any) {

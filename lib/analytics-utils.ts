@@ -1,5 +1,19 @@
 import { IBullRecord, IShotPosition } from "./models/BullRecord";
 
+// Type for bull records that may have been migrated or not
+// All existing records will have legacy fields, new aim point records may not
+type BullRecordLike = {
+  score5Count?: number;
+  score4Count?: number;
+  score3Count?: number;
+  score2Count?: number;
+  score1Count?: number;
+  score0Count?: number;
+  shotPositions?: IShotPosition[];
+  totalShots?: number;
+  [key: string]: any;
+};
+
 // ============================================================================
 // COUNT-BASED METRICS (Always Available)
 // ============================================================================
@@ -21,26 +35,26 @@ export interface CountBasedMetrics {
   };
 }
 
-export function calculateCountMetrics(bull: IBullRecord): CountBasedMetrics {
+export function calculateCountMetrics(bull: BullRecordLike): CountBasedMetrics {
   const totalShots =
-    bull.score5Count +
-    bull.score4Count +
-    bull.score3Count +
-    bull.score2Count +
-    bull.score1Count +
-    bull.score0Count;
+    (bull.score5Count || 0) +
+    (bull.score4Count || 0) +
+    (bull.score3Count || 0) +
+    (bull.score2Count || 0) +
+    (bull.score1Count || 0) +
+    (bull.score0Count || 0);
 
   const totalScore =
-    bull.score5Count * 5 +
-    bull.score4Count * 4 +
-    bull.score3Count * 3 +
-    bull.score2Count * 2 +
-    bull.score1Count * 1;
+    (bull.score5Count || 0) * 5 +
+    (bull.score4Count || 0) * 4 +
+    (bull.score3Count || 0) * 3 +
+    (bull.score2Count || 0) * 2 +
+    (bull.score1Count || 0) * 1;
 
   const avgScorePerShot = totalShots > 0 ? totalScore / totalShots : 0;
-  const bullRate = totalShots > 0 ? bull.score5Count / totalShots : 0;
-  const missRate = totalShots > 0 ? bull.score0Count / totalShots : 0;
-  const goodHitRate = totalShots > 0 ? (bull.score5Count + bull.score4Count) / totalShots : 0;
+  const bullRate = totalShots > 0 ? (bull.score5Count || 0) / totalShots : 0;
+  const missRate = totalShots > 0 ? (bull.score0Count || 0) / totalShots : 0;
+  const goodHitRate = totalShots > 0 ? ((bull.score5Count || 0) + (bull.score4Count || 0)) / totalShots : 0;
 
   return {
     totalShots,
@@ -50,12 +64,12 @@ export function calculateCountMetrics(bull: IBullRecord): CountBasedMetrics {
     missRate,
     goodHitRate,
     ringDistribution: {
-      p5: totalShots > 0 ? bull.score5Count / totalShots : 0,
-      p4: totalShots > 0 ? bull.score4Count / totalShots : 0,
-      p3: totalShots > 0 ? bull.score3Count / totalShots : 0,
-      p2: totalShots > 0 ? bull.score2Count / totalShots : 0,
-      p1: totalShots > 0 ? bull.score1Count / totalShots : 0,
-      p0: totalShots > 0 ? bull.score0Count / totalShots : 0,
+      p5: totalShots > 0 ? (bull.score5Count || 0) / totalShots : 0,
+      p4: totalShots > 0 ? (bull.score4Count || 0) / totalShots : 0,
+      p3: totalShots > 0 ? (bull.score3Count || 0) / totalShots : 0,
+      p2: totalShots > 0 ? (bull.score2Count || 0) / totalShots : 0,
+      p1: totalShots > 0 ? (bull.score1Count || 0) / totalShots : 0,
+      p0: totalShots > 0 ? (bull.score0Count || 0) / totalShots : 0,
     },
   };
 }
@@ -256,7 +270,7 @@ export interface WeightedMetrics {
   shotCoverage: number; // % of shots with position data
 }
 
-export function aggregateBullMetrics(bulls: IBullRecord[]): WeightedMetrics {
+export function aggregateBullMetrics(bulls: BullRecordLike[]): WeightedMetrics {
   let totalShots = 0;
   let totalScore = 0;
   let totalBulls = 0;
@@ -355,7 +369,7 @@ export function binShotsToHeatmap(
 // SYNTHETIC SHOT GENERATION (Visualization Only)
 // ============================================================================
 
-export function generateSyntheticShots(bull: IBullRecord): IShotPosition[] {
+export function generateSyntheticShots(bull: BullRecordLike): IShotPosition[] {
   const synthetic: IShotPosition[] = [];
 
   const addShotsInRing = (count: number, score: number, rMin: number, rMax: number) => {
@@ -368,12 +382,12 @@ export function generateSyntheticShots(bull: IBullRecord): IShotPosition[] {
     }
   };
 
-  addShotsInRing(bull.score5Count, 5, 0, 15);
-  addShotsInRing(bull.score4Count, 4, 15, 30);
-  addShotsInRing(bull.score3Count, 3, 30, 50);
-  addShotsInRing(bull.score2Count, 2, 50, 70);
-  addShotsInRing(bull.score1Count, 1, 70, 85);
-  addShotsInRing(bull.score0Count, 0, 85, 100);
+  addShotsInRing(bull.score5Count || 0, 5, 0, 15);
+  addShotsInRing(bull.score4Count || 0, 4, 15, 30);
+  addShotsInRing(bull.score3Count || 0, 3, 30, 50);
+  addShotsInRing(bull.score2Count || 0, 2, 50, 70);
+  addShotsInRing(bull.score1Count || 0, 1, 70, 85);
+  addShotsInRing(bull.score0Count || 0, 0, 85, 100);
 
   return synthetic;
 }
@@ -489,7 +503,7 @@ export interface RingDistribution {
 }
 
 export function calculateRingDistributionForSession(
-  bulls: IBullRecord[],
+  bulls: BullRecordLike[],
   sessionId: string,
   sessionIndex: number
 ): RingDistribution {
@@ -509,12 +523,12 @@ export function calculateRingDistributionForSession(
     };
   }
 
-  const c5 = bulls.reduce((sum, b) => sum + b.score5Count, 0);
-  const c4 = bulls.reduce((sum, b) => sum + b.score4Count, 0);
-  const c3 = bulls.reduce((sum, b) => sum + b.score3Count, 0);
-  const c2 = bulls.reduce((sum, b) => sum + b.score2Count, 0);
-  const c1 = bulls.reduce((sum, b) => sum + b.score1Count, 0);
-  const c0 = bulls.reduce((sum, b) => sum + b.score0Count, 0);
+  const c5 = bulls.reduce((sum, b) => sum + (b.score5Count || 0), 0);
+  const c4 = bulls.reduce((sum, b) => sum + (b.score4Count || 0), 0);
+  const c3 = bulls.reduce((sum, b) => sum + (b.score3Count || 0), 0);
+  const c2 = bulls.reduce((sum, b) => sum + (b.score2Count || 0), 0);
+  const c1 = bulls.reduce((sum, b) => sum + (b.score1Count || 0), 0);
+  const c0 = bulls.reduce((sum, b) => sum + (b.score0Count || 0), 0);
 
   return {
     sessionIndex,
