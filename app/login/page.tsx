@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LoadingCard } from "@/components/ui/spinner";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -60,7 +61,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<LoadingCard />}>
         <LoginForm />
       </Suspense>
     </div>

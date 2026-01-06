@@ -13,6 +13,7 @@ import { TagSelector } from "@/components/TagSelector";
 import { InteractiveTargetInput } from "@/components/InteractiveTargetInput";
 import { TargetUploadModal } from "@/components/TargetUploadModal";
 import { ImageViewerModal } from "@/components/ImageViewerModal";
+import { LoadingScreen } from "@/components/ui/spinner";
 import {
   Dialog,
   DialogContent,
@@ -394,7 +395,7 @@ export default function SheetDetailPage() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingScreen />;
   }
 
   if (!sheet) {

@@ -19,6 +19,7 @@ import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
 import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadingCard } from "@/components/ui/spinner";
 import type { EChartsOption } from "echarts";
 
 interface CaliberMetrics {
@@ -138,11 +139,7 @@ export default function CalibersAnalyticsPage() {
           icon={Crosshair}
           description="Performance leaderboard and trends by caliber"
         />
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">Loading caliber analytics...</p>
-          </CardContent>
-        </Card>
+        <LoadingCard />
       </div>
     );
   }

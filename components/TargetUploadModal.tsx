@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Upload, X, Loader2, CheckCircle, AlertCircle, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Dialog,
   DialogContent,
@@ -259,7 +260,7 @@ export function TargetUploadModal({ open, onOpenChange, sheetId, onShotsDetected
                     )}
                     {img.status === "processing" && (
                       <span className="flex items-center gap-2 text-blue-600">
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Spinner size="sm" />
                         Processing...
                       </span>
                     )}

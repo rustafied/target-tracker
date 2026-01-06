@@ -55,8 +55,8 @@ function NavigationItems({ onItemClick, isDesktop = false }: { onItemClick?: () 
             onClick={onItemClick}
             className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
               isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                ? "bg-primary text-primary-foreground dark:bg-white dark:text-black"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dark:hover:bg-white/10"
             }`}
           >
             <item.icon className="h-5 w-5" />
@@ -71,8 +71,8 @@ function NavigationItems({ onItemClick, isDesktop = false }: { onItemClick?: () 
           onClick={() => setAnalyticsOpen(!analyticsOpen)}
           className={`flex w-full items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
             pathname.startsWith("/analytics")
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              ? "bg-primary text-primary-foreground dark:bg-white dark:text-black"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dark:hover:bg-white/10"
           }`}
         >
           <div className="flex items-center gap-3">
@@ -96,8 +96,8 @@ function NavigationItems({ onItemClick, isDesktop = false }: { onItemClick?: () 
                   onClick={onItemClick}
                   className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+                      ? "bg-accent text-accent-foreground dark:bg-white/15"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground dark:hover:bg-white/10"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
@@ -115,8 +115,8 @@ function NavigationItems({ onItemClick, isDesktop = false }: { onItemClick?: () 
           onClick={() => setSetupOpen(!setupOpen)}
           className={`flex w-full items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
             pathname.startsWith("/setup")
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              ? "bg-primary text-primary-foreground dark:bg-white dark:text-black"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dark:hover:bg-white/10"
           }`}
         >
           <div className="flex items-center gap-3">
@@ -140,8 +140,8 @@ function NavigationItems({ onItemClick, isDesktop = false }: { onItemClick?: () 
                   onClick={onItemClick}
                   className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+                      ? "bg-accent text-accent-foreground dark:bg-white/15"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground dark:hover:bg-white/10"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />

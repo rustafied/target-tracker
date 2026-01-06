@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TagSelector } from "@/components/TagSelector";
+import { LoadingScreen } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Minus, Ruler, Tag as TagIcon, FileText } from "lucide-react";
 
@@ -143,7 +144,7 @@ export default function NewSheetPage() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingScreen />;
   }
 
   if (firearms.length === 0 || allOptics.length === 0 || allCalibers.length === 0) {

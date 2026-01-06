@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { LoadingCard } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -240,7 +241,7 @@ export default function CalibersPage() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingCard />;
   }
 
   return (

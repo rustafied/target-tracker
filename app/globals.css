@@ -63,3 +63,29 @@ body {
   background-color: hsl(var(--color-background));
   color: hsl(var(--color-foreground));
 }
+
+@keyframes spin-smooth {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-smooth {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-spin {
+  animation: spin-smooth 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-pulse {
+  animation: pulse-smooth 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

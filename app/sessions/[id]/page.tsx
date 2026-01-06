@@ -22,6 +22,7 @@ import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { BullseyeVisualization } from "@/components/BullseyeVisualization";
 import { SingleBullVisualization } from "@/components/SingleBullVisualization";
 import { SessionHeatmap } from "@/components/SessionHeatmap";
+import { LoadingScreen } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -240,7 +241,7 @@ export default function SessionDetailPage() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingScreen />;
   }
 
   if (!session) {

@@ -19,6 +19,7 @@ import { EmptyState, WarningBadge } from "@/components/analytics/EmptyState";
 import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LoadingCard } from "@/components/ui/spinner";
 import type { EChartsOption } from "echarts";
 
 interface ShotsData {
@@ -158,11 +159,7 @@ export default function TargetsAnalyticsPage() {
           icon={Target}
           description="Heatmaps, shot plots, and precision analytics"
         />
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">Loading shot data...</p>
-          </CardContent>
-        </Card>
+        <LoadingCard />
       </div>
     );
   }

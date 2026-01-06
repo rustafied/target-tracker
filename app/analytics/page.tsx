@@ -29,6 +29,7 @@ import { EmptyState } from "@/components/analytics/EmptyState";
 import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LoadingCard } from "@/components/ui/spinner";
 import type { EChartsOption } from "echarts";
 
 interface OverviewData {
@@ -150,11 +151,7 @@ export default function AnalyticsPage() {
     return (
       <div>
         <AnalyticsHeader title="Analytics" icon={BarChart3} description="Track your shooting performance over time" />
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">Loading analytics...</p>
-          </CardContent>
-        </Card>
+        <LoadingCard />
       </div>
     );
   }
