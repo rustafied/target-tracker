@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Save, Target as TargetIcon, Calendar, Crosshair, Zap, Eye, Ruler, TrendingUp, Edit, Tag as TagIconLucide, FileText, Trash2, Maximize2, Upload, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Save, Target as TargetIcon, Calendar, Crosshair, Zap, Eye, Ruler, TrendingUp, Edit, Tag as TagIconLucide, FileText, Trash2, Maximize2, Upload, Image as ImageIcon, Undo2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { InteractiveTargetInput } from "@/components/InteractiveTargetInput";
 import { TargetUploadModal } from "@/components/TargetUploadModal";
 import { ImageViewerModal } from "@/components/ImageViewerModal";
 import { LoadingScreen } from "@/components/ui/spinner";
+import { EChart } from "@/components/analytics/EChart";
 import {
   Dialog,
   DialogContent,
@@ -93,6 +94,7 @@ export default function SheetDetailPage() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [selectedImageBull, setSelectedImageBull] = useState<BullRecord | null>(null);
+  const [progressionData, setProgressionData] = useState<any>(null);
   
   const [firearms, setFirearms] = useState<{ _id: string; name: string; caliberIds?: string[]; opticIds?: string[] }[]>([]);
   const [allOptics, setAllOptics] = useState<{ _id: string; name: string }[]>([]);
@@ -116,6 +118,12 @@ export default function SheetDetailPage() {
     }
   }, [sheetId]);
 
+  useEffect(() => {
+    if (sheet) {
+      fetchProgressionData();
+    }
+  }, [sheet]);
+
   const fetchReferenceData = async () => {
     try {
       const [firearmsRes, opticsRes, calibersRes] = await Promise.all([
@@ -127,6 +135,22 @@ export default function SheetDetailPage() {
       if (firearmsRes.ok) setFirearms(await firearmsRes.json());
       if (opticsRes.ok) setAllOptics(await opticsRes.json());
       if (calibersRes.ok) setAllCalibers(await calibersRes.json());
+    } catch (error) {
+      // Silent fail
+    }
+  };
+
+  const fetchProgressionData = async () => {
+    try {
+      // Wait for sheet to be loaded to get session ID
+      if (!sheet) return;
+      
+      const sessionId = sheet.rangeSessionId._id;
+      const res = await fetch(`/api/analytics/progression?sessionId=${sessionId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setProgressionData(data);
+      }
     } catch (error) {
       // Silent fail
     }
@@ -329,6 +353,16 @@ export default function SheetDetailPage() {
     setShotPositions((prev) => ({ ...prev, [bullIndex]: [] }));
   };
 
+  const undoLastShot = (bullIndex: number) => {
+    const positions = shotPositions[bullIndex] || [];
+    if (positions.length === 0) return;
+
+    // Remove the last shot
+    const newPositions = positions.slice(0, -1);
+    handleShotPositionsChange(bullIndex, newPositions);
+    toast.success("Last shot removed");
+  };
+
   const handleShotPositionsChange = (bullIndex: number, positions: ShotPosition[]) => {
     // Update shot positions
     setShotPositions(prev => ({ ...prev, [bullIndex]: positions }));
@@ -451,28 +485,124 @@ export default function SheetDetailPage() {
 
   const averageScore = totalShots > 0 ? (totalScore / totalShots).toFixed(2) : "0.00";
 
+  // Generate chart option for progression
+  const getProgressionChartOption = () => {
+    if (!progressionData?.firearms || progressionData.firearms.length === 0) {
+      return null;
+    }
+
+    const colors = [
+      "#3b82f6", // blue
+      "#22c55e", // green
+      "#f59e0b", // amber
+      "#ef4444", // red
+      "#8b5cf6", // violet
+      "#06b6d4", // cyan
+      "#ec4899", // pink
+      "#14b8a6", // teal
+    ];
+
+    const series = progressionData.firearms.map((firearm: any, index: number) => ({
+      name: firearm.firearmName,
+      type: "line" as const,
+      data: firearm.sheets.map((sheet: any) => sheet.averageScore.toFixed(2)),
+      smooth: true,
+      symbol: "circle" as const,
+      symbolSize: 8,
+      color: colors[index % colors.length],
+      lineStyle: {
+        width: 3,
+      },
+      emphasis: {
+        focus: "series" as const,
+      },
+    }));
+
+    // Create x-axis labels (sheet number per firearm)
+    const maxSheets = Math.max(...progressionData.firearms.map((f: any) => f.sheets.length));
+    const xAxisData = Array.from({ length: maxSheets }, (_, i) => `Sheet ${i + 1}`);
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+        axisPointer: {
+          type: "cross" as const,
+        },
+        formatter: (params: any) => {
+          let result = "";
+          params.forEach((param: any) => {
+            if (param.value) {
+              result += `${param.marker}${param.seriesName}: ${param.value}<br/>`;
+            }
+          });
+          return result;
+        },
+      },
+      legend: {
+        data: progressionData.firearms.map((f: any) => f.firearmName),
+        top: 10,
+      },
+      grid: {
+        left: 60,
+        right: 30,
+        top: 60,
+        bottom: 60,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: xAxisData,
+        name: "Sheet Number (per firearm)",
+        nameLocation: "middle" as const,
+        nameGap: 30,
+      },
+      yAxis: {
+        type: "value" as const,
+        name: "Average Score",
+        nameLocation: "middle" as const,
+        nameGap: 45,
+        min: 0,
+        max: 5,
+      },
+      series,
+    };
+  };
+
+  const progressionChartOption = getProgressionChartOption();
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <Button variant="ghost" onClick={() => sheet && router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Session
+          <ArrowLeft className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Back to Session</span>
         </Button>
         <div className="flex gap-2">
           <Button variant="outline" onClick={openEditDialog}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Sheet
+            <Edit className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Edit Sheet</span>
           </Button>
           <Button variant="outline" onClick={() => setUploadModalOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload
+            <Upload className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Upload</span>
           </Button>
           <Button onClick={handleSave} disabled={saving}>
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? "Saving..." : "Save Scores"}
+            <Save className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{saving ? "Saving..." : "Save Scores"}</span>
           </Button>
         </div>
       </div>
+
+      {/* Progression Chart */}
+      {progressionChartOption && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Performance Progression by Firearm</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EChart option={progressionChartOption} height={300} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="mb-6">
         <CardHeader>
@@ -565,14 +695,26 @@ export default function SheetDetailPage() {
                     <p className="text-sm text-muted-foreground mt-1">{metrics.totalShots} shots</p>
                   </div>
                   <div className="flex gap-2">
+                    {(shotPositions[bull.bullIndex]?.length || 0) > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => undoLastShot(bull.bullIndex)}
+                        className="sm:px-3"
+                      >
+                        <Undo2 className="h-4 w-4" />
+                        <span className="hidden sm:inline sm:ml-2">Undo</span>
+                      </Button>
+                    )}
                     {metrics.totalShots > 0 && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => clearBull(bull.bullIndex)}
+                        className="sm:px-3"
                       >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Clear
+                        <Trash2 className="h-4 w-4" />
+                        <span className="hidden sm:inline sm:ml-2">Clear</span>
                       </Button>
                     )}
                     {bull.imageUrl && (
@@ -580,18 +722,20 @@ export default function SheetDetailPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleViewImage(bull)}
+                        className="sm:px-3"
                       >
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        View
+                        <ImageIcon className="h-4 w-4" />
+                        <span className="hidden sm:inline sm:ml-2">View</span>
                       </Button>
                     )}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setExpandedBulls((prev) => ({ ...prev, [bull.bullIndex]: true }))}
+                      className="sm:px-3"
                     >
-                      <Maximize2 className="h-4 w-4 mr-2" />
-                      Expand
+                      <Maximize2 className="h-4 w-4" />
+                      <span className="hidden sm:inline sm:ml-2">Expand</span>
                     </Button>
                   </div>
                 </div>

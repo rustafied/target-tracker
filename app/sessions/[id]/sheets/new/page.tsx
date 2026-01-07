@@ -340,11 +340,12 @@ export default function NewSheetPage() {
                       key={template._id}
                       type="button"
                       onClick={() => setFormData({ ...formData, targetTemplateId: template._id })}
-                      className={`relative flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
-                        isSelected
-                          ? "border-primary bg-primary/5 dark:bg-primary/10"
-                          : "border-border hover:border-primary/50 hover:bg-accent"
-                      }`}
+                      style={{
+                        borderWidth: isSelected ? '3px' : '2px',
+                        borderColor: isSelected ? 'rgb(59, 130, 246)' : 'rgb(39, 39, 42)',
+                        backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.15)' : 'transparent'
+                      }}
+                      className="relative flex flex-col items-center p-3 rounded-lg transition-all hover:border-primary/50 hover:bg-accent"
                     >
                       {/* Template Preview */}
                       <div className="w-full aspect-square bg-white dark:bg-zinc-900 rounded border dark:border-white/10 p-2 mb-2">
@@ -362,22 +363,13 @@ export default function NewSheetPage() {
                       
                       {/* Template Info */}
                       <div className="text-center">
-                        <p className={`text-xs font-medium ${isSelected ? "text-primary" : ""}`}>
+                        <p className={`text-xs font-medium ${isSelected ? "text-primary font-bold" : ""}`}>
                           {template.name}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {template.aimPoints.length} aim point{template.aimPoints.length !== 1 ? "s" : ""}
                         </p>
                       </div>
-                      
-                      {/* Selected indicator */}
-                      {isSelected && (
-                        <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      )}
                     </button>
                   );
                   })}

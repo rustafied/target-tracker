@@ -23,6 +23,7 @@ import { BullseyeVisualization } from "@/components/BullseyeVisualization";
 import { SingleBullVisualization } from "@/components/SingleBullVisualization";
 import { SessionHeatmap } from "@/components/SessionHeatmap";
 import { LoadingScreen } from "@/components/ui/spinner";
+import { EChart } from "@/components/analytics/EChart";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -382,6 +383,107 @@ export default function SessionDetailPage() {
     });
   }
 
+  // Generate chart option for session progression - group by firearm
+  const getSessionProgressionChartOption = () => {
+    if (sheets.length === 0) return null;
+
+    const colors = [
+      "#3b82f6", // blue
+      "#22c55e", // green
+      "#f59e0b", // amber
+      "#ef4444", // red
+      "#8b5cf6", // violet
+      "#06b6d4", // cyan
+      "#ec4899", // pink
+      "#14b8a6", // teal
+    ];
+
+    // Group sheets by firearm in chronological order
+    const firearmSheets = new Map<string, { name: string; sheets: any[] }>();
+    
+    sheets.forEach(sheet => {
+      const firearmId = sheet.firearmId._id;
+      const firearmName = sheet.firearmId.name;
+      
+      if (!firearmSheets.has(firearmId)) {
+        firearmSheets.set(firearmId, { name: firearmName, sheets: [] });
+      }
+      
+      const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
+      const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
+      const avgScore = totalShots > 0 ? parseFloat((totalScore / totalShots).toFixed(2)) : 0;
+      
+      firearmSheets.get(firearmId)!.sheets.push(avgScore);
+    });
+
+    // Find max sheets for any firearm to set x-axis
+    const maxSheets = Math.max(...Array.from(firearmSheets.values()).map(f => f.sheets.length));
+    const xAxisLabels = Array.from({ length: maxSheets }, (_, i) => `Sheet ${i + 1}`);
+
+    // Create series for each firearm
+    const series = Array.from(firearmSheets.values()).map((firearmData, index) => ({
+      name: firearmData.name,
+      type: "line" as const,
+      data: firearmData.sheets,
+      smooth: true,
+      symbol: "circle" as const,
+      symbolSize: 8,
+      color: colors[index % colors.length],
+      lineStyle: {
+        width: 3,
+      },
+      emphasis: {
+        focus: "series" as const,
+      },
+    }));
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+        axisPointer: {
+          type: "cross" as const,
+        },
+        formatter: (params: any) => {
+          let result = "";
+          params.forEach((param: any) => {
+            if (param.value) {
+              result += `${param.marker}${param.seriesName}: ${param.value}<br/>`;
+            }
+          });
+          return result;
+        },
+      },
+      legend: {
+        data: Array.from(firearmSheets.values()).map(f => f.name),
+        top: 10,
+      },
+      grid: {
+        left: 60,
+        right: 30,
+        top: 60,
+        bottom: 60,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: xAxisLabels,
+        name: "Sheet Number (per firearm)",
+        nameLocation: "middle" as const,
+        nameGap: 30,
+      },
+      yAxis: {
+        type: "value" as const,
+        name: "Average Score",
+        nameLocation: "middle" as const,
+        nameGap: 45,
+        min: 0,
+        max: 5,
+      },
+      series,
+    };
+  };
+
+  const sessionProgressionChartOption = getSessionProgressionChartOption();
+
   return (
     <div>
       <div className="mb-6">
@@ -493,34 +595,9 @@ export default function SessionDetailPage() {
               {/* Line Chart - 2/3 width on large screens */}
               <div className="lg:col-span-2">
                 <h3 className="text-sm font-semibold mb-3">Average Score per Sheet by Firearm</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                    <XAxis dataKey="name" stroke="#888" />
-                    <YAxis domain={[0, 5]} stroke="#888" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1a1a1a",
-                        border: "1px solid #333",
-                        borderRadius: "6px",
-                      }}
-                      labelStyle={{ color: "#fff" }}
-                    />
-                    <Legend />
-                    {Array.from(sheetsByFirearm.entries()).map(([firearmId, firearmData], index) => (
-                      <Line
-                        key={firearmId}
-                        type="monotone"
-                        dataKey={firearmData.name}
-                        stroke={firearmColors[index % firearmColors.length]}
-                        strokeWidth={2}
-                        name={firearmData.name}
-                        dot={{ fill: firearmColors[index % firearmColors.length], r: 4 }}
-                        connectNulls={false}
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
+                {sessionProgressionChartOption && (
+                  <EChart option={sessionProgressionChartOption} height={300} />
+                )}
               </div>
 
               {/* Heatmap - 1/3 width on large screens */}
@@ -602,10 +679,29 @@ export default function SessionDetailPage() {
               <Card key={sheet._id}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4 mb-4">
-                    <CardTitle className="text-lg">{sheet.sheetLabel || `Sheet ${originalIndex + 1}`}</CardTitle>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground mb-1">Average Score</p>
-                      <p className="text-3xl font-bold">{avgScore}</p>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg mb-1">{sheet.sheetLabel || `Sheet ${originalIndex + 1}`}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Avg:</span>
+                        <span className="text-2xl font-bold text-primary">{avgScore}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/sheets/${sheet.slug || sheet._id}`)}
+                      >
+                        <TargetIcon className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">View</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openDeleteSheetDialog(sheet)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
@@ -636,13 +732,6 @@ export default function SessionDetailPage() {
                         <span>Distance</span>
                       </div>
                       <p className="font-medium">{sheet.distanceYards} yards</p>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                        <TargetIcon className="h-3 w-3" />
-                        <span>Target</span>
-                      </div>
-                      <p className="font-medium text-xs">{sheet.targetTemplateId?.name || "Six Bull"}</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -696,32 +785,13 @@ export default function SessionDetailPage() {
                               labelStyle={{ color: "#fff" }}
                               cursor={false}
                             />
-                            <Bar dataKey="avgScore" fill="#8b5cf6" name="Avg Score">
+                            <Bar dataKey="avgScore" fill="#3b82f6" name="Avg Score">
                               <LabelList dataKey="avgScore" position="inside" fill="#fff" fontSize={12} />
                             </Bar>
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
                     )}
-
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => router.push(`/sheets/${sheet.slug || sheet._id}`)}
-                      >
-                        <TargetIcon className="h-4 w-4 mr-2" />
-                        View Details
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openDeleteSheetDialog(sheet)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
