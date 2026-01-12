@@ -10,6 +10,8 @@ export async function GET(
   try {
     const { id } = await params;
     await connectToDatabase();
+    
+    // Get caliber by ID (backward compatible - works with or without userId)
     const caliber = await Caliber.findById(id);
 
     if (!caliber) {
@@ -33,6 +35,8 @@ export async function PUT(
     const validated = caliberSchema.parse(body);
 
     await connectToDatabase();
+    
+    // Update caliber (backward compatible)
     const caliber = await Caliber.findByIdAndUpdate(id, validated, { new: true });
 
     if (!caliber) {
@@ -56,6 +60,8 @@ export async function DELETE(
   try {
     const { id } = await params;
     await connectToDatabase();
+    
+    // Archive caliber (backward compatible)
     const caliber = await Caliber.findByIdAndUpdate(
       id,
       { isActive: false },

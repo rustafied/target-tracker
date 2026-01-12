@@ -4,6 +4,81 @@ All notable changes to Target Tracker will be documented in this file.
 
 ## [Unreleased]
 
+### Added - Ammo Tracking (January 2026)
+
+#### Overview
+Complete ammunition inventory management system with automatic deduction based on shots fired. Track ammo types, manage on-hand quantities, and view complete transaction history.
+
+#### Core Features
+- **Ammo Type Management**: Define ammunition by caliber, brand, load details, casing type, and reload status
+- **Inventory Tracking**: Real-time on-hand quantity tracking with manual adjustments
+- **Automatic Deductions**: Ammo automatically deducted when sheets are saved based on shots recorded
+- **Transaction Log**: Complete audit trail of all inventory changes with reasons and timestamps
+- **User Scoping**: All ammo data is user-specific (tied to Discord auth)
+
+#### Data Models
+- **AmmoType**: Stores ammo specifications (name, caliber, manufacturer, load, casing, reload flag)
+- **AmmoInventory**: Tracks current on-hand quantity per ammo type per user
+- **AmmoTransaction**: Append-only log of all inventory changes with reasons
+- **TargetSheet Update**: Added optional `ammoTypeId` field to link sheets to ammo
+
+#### User Interface
+- **`/ammo` Page**: 
+  - Inventory list with search and caliber filtering
+  - Cards showing on-hand quantity, caliber, and metadata
+  - Quick +/- buttons for fast adjustments
+  - Visual warnings for negative or low inventory
+  
+- **`/ammo/new` Page**: 
+  - Create new ammo type form
+  - Set initial on-hand quantity
+  - Auto-creates inventory record and transaction
+  
+- **`/ammo/[id]` Page**: 
+  - Detailed view with current inventory
+  - Complete transaction history
+  - Quick adjust dialog with presets and custom amounts
+  - Summary stats (total used, last updated)
+
+- **Sheet Create/Edit Integration**: 
+  - Ammo type selector on new sheet form
+  - Filtered by selected caliber
+  - Warning if no ammo types exist
+  - Optional field (backward compatible)
+
+#### Reconciliation Logic
+- **Create**: Deducts ammo when sheet is saved with shots recorded
+- **Edit**: Updates deduction based on shot count difference (not double subtract)
+- **Delete**: Reverses deduction with reversal transaction for audit
+- **Ammo Type Change**: Reverses old type, deducts from new type
+- **Shot Count Source**: Calculated from `AimPointRecord.totalShots` for accuracy
+
+#### API Endpoints
+- `GET/POST /api/ammo/types` - List and create ammo types
+- `GET/PUT/DELETE /api/ammo/types/[id]` - Manage individual ammo types
+- `GET /api/ammo/inventory` - Get inventory with ammo type details
+- `POST /api/ammo/inventory/adjust` - Manual inventory adjustments
+- `GET /api/ammo/transactions` - Transaction log with pagination
+
+#### Technical Implementation
+- **Reconciliation Module**: `lib/ammo-reconciliation.ts` handles all inventory logic
+- **Idempotent Operations**: Uses unique constraints to prevent duplicate transactions
+- **Atomic Updates**: MongoDB `$inc` for safe concurrent updates
+- **Difference-Based**: Only applies deltas, not full recalculations
+- **Reversal Pattern**: Creates reversal transactions instead of deleting for audit clarity
+
+#### Future Enhancements (Phase 3)
+- Ammo consumption charts in analytics
+- Inventory over time visualization
+- Projected sessions left calculator
+- Consumption by firearm/caliber/distance metrics
+
+#### Documentation
+- Feature specification: `readme/19-ammo-tracking.md`
+- Complete data model definitions
+- Reconciliation algorithm documentation
+- API endpoint reference
+
 ### Added - Custom Target Templates (January 2026)
 
 #### Phase 1: Template Infrastructure & Migration

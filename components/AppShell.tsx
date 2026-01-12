@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Target, LineChart, Settings, Menu, ChevronDown, ChevronRight, Crosshair, Eye, Zap, Radius, LogOut, User, LayoutGrid } from "lucide-react";
+import { Target, LineChart, Settings, Menu, ChevronDown, ChevronRight, Crosshair, Eye, Zap, Radius, LogOut, User, LayoutGrid, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -23,6 +23,7 @@ import { useSession, signOut } from "next-auth/react";
 
 const navigation = [
   { name: "Sessions", href: "/sessions", icon: Target },
+  { name: "Ammo", href: "/ammo", icon: Package },
 ];
 
 const analyticsItems = [

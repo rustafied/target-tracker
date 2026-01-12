@@ -9,6 +9,8 @@ import { Caliber } from "@/lib/models/Caliber";
 import { Optic } from "@/lib/models/Optic";
 import { sheetSchema } from "@/lib/validators/sheet";
 import { requireUserId } from "@/lib/auth-helpers";
+import { reconcileSheetAmmo } from "@/lib/ammo-reconciliation";
+import mongoose from "mongoose";
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,6 +63,14 @@ export async function POST(request: NextRequest) {
     };
     
     const sheet = await TargetSheet.create(sheetData);
+
+    // Reconcile ammo inventory (deduct from caliber)
+    await reconcileSheetAmmo({
+      userId: new mongoose.Types.ObjectId(userId),
+      sheetId: sheet._id,
+      sessionId: new mongoose.Types.ObjectId(sessionId),
+      caliberId: new mongoose.Types.ObjectId(validated.caliberId),
+    });
 
     // Don't create any bull records on sheet creation
     // Bulls will be created only when they have actual data

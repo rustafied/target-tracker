@@ -208,7 +208,7 @@ export default function SessionsPage() {
                 {/* Desktop: Horizontal Layout */}
                 <div className="hidden md:flex items-start justify-between gap-6">
                   {/* Left: Date & Location */}
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 w-64">
                     <div className="flex items-center gap-2 mb-1">
                       <Calendar className="h-5 w-5 text-muted-foreground" />
                       <h3 className="text-xl font-bold">{format(new Date(session.date), "MMM d, yyyy")}</h3>
@@ -226,51 +226,54 @@ export default function SessionsPage() {
 
                   {/* Right: Stats Grid */}
                   <div className="flex-1 grid grid-cols-4 gap-6 items-center">
-                    {session.sheetCount !== undefined && (
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <Target className="h-4 w-4 text-muted-foreground" />
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Sheets</p>
-                        </div>
-                        <p className="text-2xl font-bold">{session.sheetCount}</p>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <Target className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Sheets</p>
                       </div>
-                    )}
+                      <p className="text-2xl font-bold">{session.sheetCount ?? '-'}</p>
+                    </div>
                     
-                    {session.totalShots !== undefined && (
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <Crosshair className="h-4 w-4 text-muted-foreground" />
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Shots</p>
-                        </div>
-                        <p className="text-2xl font-bold">{session.totalShots}</p>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <Crosshair className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Shots</p>
                       </div>
-                    )}
+                      <p className="text-2xl font-bold">{session.totalShots ?? '-'}</p>
+                    </div>
                     
-                    {session.avgScore !== undefined && session.avgScore !== null && (
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Avg Score</p>
-                        </div>
-                        <p className="text-2xl font-bold">{session.avgScore.toFixed(2)}</p>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Avg Score</p>
                       </div>
-                    )}
+                      <p className="text-2xl font-bold">
+                        {session.avgScore !== undefined && session.avgScore !== null ? session.avgScore.toFixed(2) : '-'}
+                      </p>
+                    </div>
                     
-                    {session.improvement !== undefined && session.improvement !== null && (
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          {session.improvement >= 0 ? (
-                            <ArrowUp className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <ArrowDown className="h-4 w-4 text-red-500" />
-                          )}
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">vs Last</p>
-                        </div>
-                        <p className={`text-2xl font-bold ${session.improvement >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {session.improvement >= 0 ? '+' : ''}{session.improvement.toFixed(1)}%
-                        </p>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        {session.improvement !== undefined && session.improvement !== null && session.improvement >= 0 ? (
+                          <ArrowUp className="h-4 w-4 text-green-500" />
+                        ) : session.improvement !== undefined && session.improvement !== null ? (
+                          <ArrowDown className="h-4 w-4 text-red-500" />
+                        ) : (
+                          <div className="h-4 w-4" />
+                        )}
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">vs Last</p>
                       </div>
-                    )}
+                      <p className={`text-2xl font-bold ${
+                        session.improvement !== undefined && session.improvement !== null 
+                          ? session.improvement >= 0 ? 'text-green-500' : 'text-red-500'
+                          : ''
+                      }`}>
+                        {session.improvement !== undefined && session.improvement !== null 
+                          ? `${session.improvement >= 0 ? '+' : ''}${session.improvement.toFixed(1)}%`
+                          : '-'
+                        }
+                      </p>
+                    </div>
                   </div>
 
                   {/* Chevron */}
