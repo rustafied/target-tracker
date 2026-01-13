@@ -1,0 +1,13 @@
+<svg width="20" height="56" viewBox="0 0 20 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Small rimfire cartridge (.22 LR) -->
+  
+  <!-- Bullet (lead, rounder) -->
+  <path d="M 10 2 L 6 6 L 6 16 L 14 16 L 14 6 Z" fill="#8B7D6B" stroke="#6B5D4B" stroke-width="0.5"/>
+  
+  <!-- Case body (smaller, brass) -->
+  <rect x="6" y="16" width="8" height="32" fill="#D4AF37" stroke="#B8941F" stroke-width="0.5"/>
+  
+  <!-- Rim (distinctive wide rim) -->
+  <rect x="4" y="48" width="12" height="6" fill="#B8941F" stroke="#9A7A1A" stroke-width="0.5"/>
+  <circle cx="10" cy="51" r="1" fill="#8B7355"/>
+</svg>

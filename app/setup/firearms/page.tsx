@@ -5,6 +5,8 @@ import { Plus, Edit, Trash2, Target, Building2, Package, FileText, GripVertical,
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getFirearmIcon } from "@/lib/firearm-icons";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -105,6 +107,17 @@ function SortableFirearmCard({
       >
         <GripVertical className="h-5 w-5 text-muted-foreground" />
       </button>
+
+      {/* Firearm Icon */}
+      <div className="flex-shrink-0 flex items-center">
+        <Image
+          src={getFirearmIcon(firearm.name)}
+          alt={firearm.name}
+          width={72}
+          height={48}
+          className="opacity-90"
+        />
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 min-w-0">

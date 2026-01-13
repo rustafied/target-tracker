@@ -1,0 +1,21 @@
+<svg width="32" height="80" viewBox="0 0 32 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shotgun shell (12 Gauge) -->
+  
+  <!-- Flat top -->
+  <rect x="6" y="2" width="20" height="3" fill="#DC143C" stroke="#B22222" stroke-width="0.5" rx="0.5"/>
+  
+  <!-- Plastic hull (red, wider) -->
+  <rect x="6" y="5" width="20" height="47" fill="#DC143C" stroke="#B22222" stroke-width="0.5" rx="1"/>
+  
+  <!-- Brass base (wider) -->
+  <rect x="6" y="52" width="20" height="24" fill="#D4AF37" stroke="#B8941F" stroke-width="0.5"/>
+  
+  <!-- Base rim -->
+  <rect x="5" y="76" width="22" height="3" fill="#B8941F" stroke="#9A7A1A" stroke-width="0.5"/>
+  
+  <!-- Primer -->
+  <circle cx="16" cy="68" r="2" fill="#8B7355"/>
+  
+  <!-- Label area (white band) -->
+  <rect x="6" y="24" width="20" height="8" fill="#FFFFFF" opacity="0.3"/>
+</svg>

@@ -1,0 +1,14 @@
+<svg width="24" height="64" viewBox="0 0 24 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Straight-walled pistol cartridge (9mm, 38 Special, 357 Magnum) -->
+  
+  <!-- Bullet (copper/lead with round nose) -->
+  <ellipse cx="12" cy="6" rx="5" ry="4" fill="#C87533" stroke="#A05A2C" stroke-width="0.5"/>
+  <path d="M 7 6 L 7 22 L 17 22 L 17 6" fill="#C87533" stroke="#A05A2C" stroke-width="0.5"/>
+  
+  <!-- Case body (straight walled) -->
+  <rect x="7" y="22" width="10" height="34" fill="#D4AF37" stroke="#B8941F" stroke-width="0.5"/>
+  
+  <!-- Base/rim -->
+  <rect x="6" y="56" width="12" height="6" fill="#B8941F" stroke="#9A7A1A" stroke-width="0.5"/>
+  <circle cx="12" cy="59" r="1.5" fill="#8B7355"/>
+</svg>

@@ -57,7 +57,7 @@ export function ImageViewerModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Bull {bullIndex} - Target Image</DialogTitle>

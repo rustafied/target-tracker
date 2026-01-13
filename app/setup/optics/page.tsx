@@ -5,6 +5,8 @@ import { Plus, Edit, Trash2, Eye, Scan, Maximize2, FileText, GripVertical } from
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getOpticIcon } from "@/lib/optic-icons";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -81,6 +83,17 @@ function SortableOpticCard({
       >
         <GripVertical className="h-5 w-5 text-muted-foreground" />
       </button>
+
+      {/* Optic Icon */}
+      <div className="flex-shrink-0 flex items-center">
+        <Image
+          src={getOpticIcon(optic.name, optic.type)}
+          alt={optic.name}
+          width={64}
+          height={48}
+          className="opacity-90"
+        />
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 min-w-0">

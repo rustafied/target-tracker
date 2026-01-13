@@ -17,8 +17,11 @@ A Next.js application for logging and visualizing shooting range sessions with p
 - 📊 **Performance Tracking** - Session-over-session improvement percentages with color-coded indicators
 - 🏆 **Session Summaries** - View total shots, bullseye %, best weapon, and per-firearm averages
 - 📊 **Multi-Firearm Comparison** - Line charts comparing different firearms in the same session
+- 🎯 **Ammo Inventory Tracking** - Automatic deduction from inventory based on shots fired, transaction history, usage charts
+- 📦 **Bulk Order Management** - Tag-based multi-caliber order entry and non-session usage recording
+- 📈 **Usage Analytics** - Line charts for usage over time and pie charts for stock distribution
 - 🔗 **SEO-Friendly URLs** - Descriptive slugs for sessions and sheets (e.g., `2026-01-04-reloaderz`)
-- 📱 **Mobile-First Design** - Dark theme, optimized for quick data entry
+- 📱 **Mobile-First Design** - Dark theme, optimized for quick data entry with scrollable modals
 - ☁️ **Cloud Database** - MongoDB Atlas for reliable data storage
 - 🚀 **Production Deployment** - Deployed on Vercel with automatic GitHub integration
 
@@ -212,7 +215,7 @@ Comprehensive project documentation is available in the `/readme` folder:
 - **Computer Vision**: OpenCV + Python Flask (optional)
 - **Deployment**: Vercel (with automatic GitHub integration)
 - **Forms**: React Hook Form + Zod
-- **Charts**: Recharts
+- **Charts**: Recharts + ECharts (for advanced visualizations)
 - **Icons**: Lucide React
 - **Drag-Drop**: @dnd-kit
 - **Date Formatting**: date-fns
@@ -258,6 +261,14 @@ Comprehensive project documentation is available in the `/readme` folder:
   - Chronologically ordered sessions for accurate trend analysis
   - Session-over-session improvement tracking with percentages
   - Overall trend calculation comparing performance periods
+- **Ammo Inventory**:
+  - Automatic deduction from inventory when sheets are saved
+  - Single-column list view with bullet icons and rounds on hand
+  - Usage over time line chart and stock distribution pie chart
+  - Per-caliber detail pages with transaction history
+  - Bulk order entry with tag-based multi-caliber selection
+  - Non-session usage recording with notes
+  - Complete transaction audit trail with session/sheet links
 
 ### 🎨 Visual Features
 
@@ -287,7 +298,20 @@ All collections include:
 
 ### 🔄 Recent Updates
 
-#### Custom Target Templates (January 6, 2026) ✨ NEW!
+#### Ammo Inventory System (January 13, 2026) ✨ NEW!
+**Complete ammunition tracking with automatic deduction:**
+- **Automatic Inventory**: Ammo automatically deducted from inventory when target sheets are saved
+- **Usage Charts**: Line graphs showing usage over time per caliber with pie chart for stock distribution
+- **Transaction History**: Complete audit trail of all inventory changes linked to sessions and sheets
+- **Bulk Order Entry**: Tag-based multi-caliber selection for adding inventory from purchases
+- **Non-Session Usage**: Record ammo used outside of range sessions with notes
+- **Visual Indicators**: Custom bullet and optic SVG icons with detailed line art
+- **Mobile Optimization**: All modals fully scrollable on mobile devices
+- **Detail Pages**: Per-caliber pages with summary cards, usage charts, and transaction logs
+- **Smart Sorting**: Transaction history sorted newest first with session grouping
+- **Data Integrity**: Robust date validation and automatic reconciliation from historical sessions
+
+#### Custom Target Templates (January 6, 2026)
 **Multiple target types for different training purposes:**
 - **Built-In Templates**: 
   - **Six Bull (Default)**: Traditional 6-bull practice sheet with ring-based scoring (6 aim points)

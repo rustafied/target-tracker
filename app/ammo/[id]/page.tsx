@@ -17,7 +17,11 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Minus, Package, TrendingDown, Target, Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow, format, isValid } from "date-fns";
+import { getBulletIcon } from "@/lib/bullet-icons";
+import Image from "next/image";
+import { EChart } from "@/components/analytics/EChart";
+import type { EChartsOption } from "echarts";
 
 interface Caliber {
   _id: string;
@@ -43,6 +47,11 @@ interface Transaction {
   sheetId?: { _id: string; slug?: string; sheetLabel?: string };
 }
 
+interface UsageDataPoint {
+  date: string;
+  rounds: number;
+}
+
 export default function AmmoDetailPage({
   params,
 }: {
@@ -54,6 +63,7 @@ export default function AmmoDetailPage({
   const [caliber, setCaliber] = useState<Caliber | null>(null);
   const [inventory, setInventory] = useState<Inventory | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [usageData, setUsageData] = useState<UsageDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
   const [adjustAmount, setAdjustAmount] = useState("");
@@ -67,10 +77,11 @@ export default function AmmoDetailPage({
     try {
       setLoading(true);
 
-      const [caliberRes, inventoryRes, transactionsRes] = await Promise.all([
+      const [caliberRes, inventoryRes, transactionsRes, usageRes] = await Promise.all([
         fetch(`/api/calibers/${id}`),
         fetch(`/api/ammo/inventory`),
         fetch(`/api/ammo/transactions?caliberId=${id}&limit=50`),
+        fetch(`/api/ammo/usage-over-time`),
       ]);
 
       if (caliberRes.ok) {
@@ -104,6 +115,19 @@ export default function AmmoDetailPage({
         setTransactions(data.transactions);
       } else {
         setTransactions([]);
+      }
+
+      // Load usage data for this specific caliber
+      if (usageRes.ok) {
+        const data = await usageRes.json();
+        const caliberUsage = data.calibers.find((c: any) => c._id === id);
+        if (caliberUsage) {
+          setUsageData(caliberUsage.usage);
+        } else {
+          setUsageData([]);
+        }
+      } else {
+        setUsageData([]);
       }
     } catch (error) {
       toast.error("Failed to load ammo details");
@@ -154,6 +178,110 @@ export default function AmmoDetailPage({
     inventory_set: "Initial Inventory",
   };
 
+  // Group transactions by session
+  const groupedTransactions = transactions.reduce((acc, tx) => {
+    if (tx.sessionId) {
+      const sessionKey = tx.sessionId._id;
+      if (!acc[sessionKey]) {
+        acc[sessionKey] = {
+          sessionId: tx.sessionId,
+          transactions: [],
+          totalDelta: 0,
+          createdAt: tx.createdAt,
+          isSession: true,
+        };
+      }
+      acc[sessionKey].transactions.push(tx);
+      acc[sessionKey].totalDelta += tx.delta;
+      // Use the most recent createdAt from all transactions in this session
+      if (tx.createdAt && (!acc[sessionKey].createdAt || new Date(tx.createdAt) > new Date(acc[sessionKey].createdAt))) {
+        acc[sessionKey].createdAt = tx.createdAt;
+      }
+    } else {
+      // Non-session transactions get their own entry
+      acc[tx._id] = {
+        ...tx,
+        isSession: false,
+      };
+    }
+    return acc;
+  }, {} as Record<string, any>);
+
+  const displayTransactions = Object.values(groupedTransactions).sort(
+    (a: any, b: any) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA; // Newest first
+    }
+  );
+
+  // Generate chart for usage over time
+  const getUsageChartOption = (): EChartsOption | null => {
+    if (usageData.length === 0) return null;
+
+    const sortedData = [...usageData].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    const dates = sortedData.map((d) => format(new Date(d.date), "MMM d"));
+    const values = sortedData.map((d) => d.rounds);
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+        backgroundColor: "rgba(0, 0, 0, 0.9)",
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        textStyle: { color: "#fff" },
+        formatter: (params: any) => {
+          const date = sortedData[params[0].dataIndex].date;
+          const rounds = params[0].value;
+          return `<strong>${format(new Date(date), "MMM d, yyyy")}</strong><br/>${rounds} rounds used`;
+        },
+      },
+      grid: {
+        left: "3%",
+        right: "4%",
+        bottom: "3%",
+        top: 40,
+        containLabel: true,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: dates,
+        axisLine: { lineStyle: { color: "rgba(255, 255, 255, 0.1)" } },
+        axisLabel: { color: "rgba(255, 255, 255, 0.6)" },
+      },
+      yAxis: {
+        type: "value" as const,
+        name: "Rounds",
+        nameTextStyle: { color: "rgba(255, 255, 255, 0.6)" },
+        axisLine: { lineStyle: { color: "rgba(255, 255, 255, 0.1)" } },
+        axisLabel: { color: "rgba(255, 255, 255, 0.6)" },
+        splitLine: { lineStyle: { color: "rgba(255, 255, 255, 0.05)" } },
+      },
+      series: [
+        {
+          name: caliber?.name || "Usage",
+          type: "line" as const,
+          data: values,
+          smooth: true,
+          symbol: "circle" as const,
+          symbolSize: 6,
+          color: "#3b82f6",
+          lineStyle: {
+            width: 3,
+          },
+          areaStyle: {
+            opacity: 0.2,
+            color: "#3b82f6",
+          },
+        },
+      ],
+    };
+  };
+
+  const usageChartOption = getUsageChartOption();
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -184,15 +312,24 @@ export default function AmmoDetailPage({
         </Button>
 
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{caliber.name}</h1>
-            <div className="flex flex-wrap gap-2 text-sm text-white/60">
-              {caliber.shortCode && <span>{caliber.shortCode}</span>}
-              {caliber.category && (
-                <Badge variant="outline" className="capitalize border-white/10">
-                  {caliber.category}
-                </Badge>
-              )}
+          <div className="flex items-start gap-4">
+            <Image
+              src={getBulletIcon(caliber.name, caliber.category)}
+              alt={caliber.name}
+              width={32}
+              height={85}
+              className="opacity-70 mt-1"
+            />
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{caliber.name}</h1>
+              <div className="flex flex-wrap gap-2 text-sm text-white/60">
+                {caliber.shortCode && <span>{caliber.shortCode}</span>}
+                {caliber.category && (
+                  <Badge variant="outline" className="capitalize border-white/10">
+                    {caliber.category}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
@@ -244,12 +381,32 @@ export default function AmmoDetailPage({
             <span className="text-sm text-white/60">Last Updated</span>
           </div>
           <div className="text-lg">
-            {formatDistanceToNow(new Date(inventory.updatedAt), {
-              addSuffix: true,
-            })}
+            {(() => {
+              // Try inventory.updatedAt first
+              if (inventory.updatedAt && isValid(new Date(inventory.updatedAt))) {
+                return formatDistanceToNow(new Date(inventory.updatedAt), {
+                  addSuffix: true,
+                });
+              }
+              // Fall back to most recent transaction
+              if (transactions.length > 0 && transactions[0].createdAt && isValid(new Date(transactions[0].createdAt))) {
+                return formatDistanceToNow(new Date(transactions[0].createdAt), {
+                  addSuffix: true,
+                });
+              }
+              return "No activity yet";
+            })()}
           </div>
         </Card>
       </div>
+
+      {/* Usage Chart */}
+      {usageChartOption && (
+        <Card className="p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Usage Over Time</h2>
+          <EChart option={usageChartOption} height={300} />
+        </Card>
+      )}
 
       {/* Notes */}
       {caliber.notes && (
@@ -263,92 +420,111 @@ export default function AmmoDetailPage({
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
 
-        {transactions.length === 0 ? (
+        {displayTransactions.length === 0 ? (
           <p className="text-white/60 text-center py-8">
             No transactions yet
           </p>
         ) : (
           <div className="space-y-2">
-            {transactions.map((tx) => (
-              <div
-                key={tx._id}
-                className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
-                  tx.delta > 0 
-                    ? "border-green-500/20 bg-green-500/5 hover:bg-green-500/10" 
-                    : "border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
-                }`}
-              >
-                {/* Icon */}
-                <div className={`flex-shrink-0 mt-1 ${
-                  tx.delta > 0 ? "text-green-400" : "text-red-400"
-                }`}>
-                  {tx.sessionId ? (
-                    <Target className="w-5 h-5" />
-                  ) : (
-                    <Package className="w-5 h-5" />
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold">
-                      {reasonLabels[tx.reason] || tx.reason}
-                    </span>
-                    {tx.sessionId && (
-                      <Badge variant="secondary" className="text-xs">
-                        Session
-                      </Badge>
+            {displayTransactions.map((item: any) => {
+              const isGrouped = item.isSession;
+              const displayDelta = isGrouped ? item.totalDelta : item.delta;
+              const displayDate = item.createdAt || new Date().toISOString();
+              const hasValidDate = item.createdAt && !isNaN(new Date(item.createdAt).getTime());
+              
+              return (
+                <div
+                  key={isGrouped ? item.sessionId._id : item._id}
+                  className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
+                    displayDelta > 0 
+                      ? "border-green-500/20 bg-green-500/5 hover:bg-green-500/10" 
+                      : "border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
+                  }`}
+                >
+                  {/* Icon */}
+                  <div className={`flex-shrink-0 mt-1 ${
+                    displayDelta > 0 ? "text-green-400" : "text-red-400"
+                  }`}>
+                    {isGrouped ? (
+                      <Target className="w-5 h-5" />
+                    ) : item.sessionId ? (
+                      <Target className="w-5 h-5" />
+                    ) : (
+                      <Package className="w-5 h-5" />
                     )}
                   </div>
 
-                  {/* Session Details */}
-                  {tx.sessionId && (
-                    <button
-                      onClick={() => router.push(`/sessions/${tx.sessionId!.slug || tx.sessionId!._id}`)}
-                      className="text-sm text-white/80 hover:text-white hover:underline flex items-center gap-2 mb-1"
-                    >
-                      <Calendar className="w-3.5 h-3.5" />
-                      {format(new Date(tx.sessionId.date), "MMM d, yyyy")}
-                      {tx.sessionId.location && (
-                        <span className="text-white/60">@ {tx.sessionId.location}</span>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold">
+                        {isGrouped ? "Session Used" : (reasonLabels[item.reason] || item.reason)}
+                      </span>
+                      {(isGrouped || item.sessionId) && (
+                        <Badge variant="secondary" className="text-xs">
+                          Session
+                        </Badge>
                       )}
-                    </button>
-                  )}
+                    </div>
 
-                  {/* Sheet Details */}
-                  {tx.sheetId && (
-                    <p className="text-xs text-white/60 mb-1">
-                      Sheet: {tx.sheetId.sheetLabel || tx.sheetId._id}
-                    </p>
-                  )}
+                    {/* Session Details */}
+                    {(isGrouped || item.sessionId) && (() => {
+                      const session = isGrouped ? item.sessionId : item.sessionId;
+                      const sessionDate = session?.date;
+                      const hasValidSessionDate = sessionDate && !isNaN(new Date(sessionDate).getTime());
+                      
+                      return (
+                        <button
+                          onClick={() => {
+                            router.push(`/sessions/${session.slug || session._id}`);
+                          }}
+                          className="text-sm text-white/80 hover:text-white hover:underline flex items-center gap-2 mb-1"
+                        >
+                          <Calendar className="w-3.5 h-3.5" />
+                          {hasValidSessionDate ? format(new Date(sessionDate), "MMM d, yyyy") : "Session"}
+                          {session.location && (
+                            <span className="text-white/60">@ {session.location}</span>
+                          )}
+                        </button>
+                      );
+                    })()}
 
-                  {/* Note */}
-                  {tx.note && (
-                    <p className="text-sm text-white/70 italic">{tx.note}</p>
-                  )}
+                    {/* Show sheet count for grouped sessions */}
+                    {isGrouped && item.transactions.length > 1 && (
+                      <p className="text-xs text-white/60 mb-1">
+                        {item.transactions.length} sheets
+                      </p>
+                    )}
 
-                  {/* Timestamp */}
-                  <p className="text-xs text-white/40 mt-2">
-                    {format(new Date(tx.createdAt), "MMM d, yyyy 'at' h:mm a")} 
-                    <span className="text-white/30"> • </span>
-                    {formatDistanceToNow(new Date(tx.createdAt), { addSuffix: true })}
-                  </p>
-                </div>
+                    {/* Note for non-grouped items */}
+                    {!isGrouped && item.note && (
+                      <p className="text-sm text-white/70 italic">{item.note}</p>
+                    )}
 
-                {/* Delta */}
-                <div className="flex-shrink-0">
-                  <div
-                    className={`text-2xl font-bold ${
-                      tx.delta > 0 ? "text-green-400" : "text-red-400"
-                    }`}
-                  >
-                    {tx.delta > 0 ? "+" : ""}
-                    {tx.delta.toLocaleString()}
+                    {/* Timestamp */}
+                    {hasValidDate && (
+                      <p className="text-xs text-white/40 mt-2">
+                        {format(new Date(displayDate), "MMM d, yyyy 'at' h:mm a")} 
+                        <span className="text-white/30"> • </span>
+                        {formatDistanceToNow(new Date(displayDate), { addSuffix: true })}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Delta */}
+                  <div className="flex-shrink-0">
+                    <div
+                      className={`text-2xl font-bold ${
+                        displayDelta > 0 ? "text-green-400" : "text-red-400"
+                      }`}
+                    >
+                      {displayDelta > 0 ? "+" : ""}
+                      {displayDelta.toLocaleString()}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
@@ -365,27 +541,11 @@ export default function AmmoDetailPage({
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
-                onClick={() => handleAdjust(50, "Quick add 50")}
-                className="dark:bg-white/5 dark:border-white/20"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add 50
-              </Button>
-              <Button
-                variant="outline"
                 onClick={() => handleAdjust(100, "Quick add 100")}
                 className="dark:bg-white/5 dark:border-white/20"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add 100
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleAdjust(-50, "Quick subtract 50")}
-                className="dark:bg-white/5 dark:border-white/20"
-              >
-                <Minus className="w-4 h-4 mr-2" />
-                Remove 50
               </Button>
               <Button
                 variant="outline"

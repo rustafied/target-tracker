@@ -180,7 +180,7 @@ export function TargetUploadModal({ open, onOpenChange, sheetId, onShotsDetected
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>Upload Target Images</DialogTitle>
           <DialogDescription>

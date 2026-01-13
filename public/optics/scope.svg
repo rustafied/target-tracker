@@ -1,0 +1,22 @@
+<svg width="64" height="24" viewBox="0 0 64 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- LPVO scope - line art -->
+  <!-- Objective bell -->
+  <ellipse cx="8" cy="12" rx="6" ry="8" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+  <circle cx="8" cy="12" r="4" stroke="#ffffff" stroke-width="1" fill="none" opacity="0.5"/>
+  <!-- Main tube -->
+  <line x1="14" y1="8" x2="48" y2="8" stroke="#ffffff" stroke-width="1.5"/>
+  <line x1="14" y1="16" x2="48" y2="16" stroke="#ffffff" stroke-width="1.5"/>
+  <!-- Ocular bell -->
+  <ellipse cx="56" cy="12" rx="5" ry="6" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+  <circle cx="56" cy="12" r="3" stroke="#ffffff" stroke-width="1" fill="none" opacity="0.5"/>
+  <!-- Turret housing -->
+  <rect x="28" y="2" width="10" height="6" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+  <line x1="33" y1="2" x2="33" y2="0" stroke="#ffffff" stroke-width="1"/>
+  <!-- Mount rings -->
+  <ellipse cx="18" cy="16" rx="3" ry="4" stroke="#ffffff" stroke-width="1" fill="none" opacity="0.7"/>
+  <ellipse cx="40" cy="16" rx="3" ry="4" stroke="#ffffff" stroke-width="1" fill="none" opacity="0.7"/>
+  <!-- Magnification ring detail -->
+  <line x1="50" y1="8" x2="50" y2="16" stroke="#ffffff" stroke-width="1.5"/>
+  <line x1="52" y1="10" x2="52" y2="14" stroke="#ffffff" stroke-width="0.8" opacity="0.6"/>
+  <line x1="54" y1="10" x2="54" y2="14" stroke="#ffffff" stroke-width="0.8" opacity="0.6"/>
+</svg>

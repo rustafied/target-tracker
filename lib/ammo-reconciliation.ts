@@ -15,18 +15,17 @@ export interface ReconcileAmmoParams {
  * Calculate total shots fired for a sheet from bull records
  */
 export async function calculateSheetShots(sheetId: mongoose.Types.ObjectId): Promise<number> {
-  // Get all bull records for this sheet
-  const bulls = await BullRecord.find({ sheetId }).lean();
+  // Get all bull records for this sheet (using targetSheetId, not sheetId)
+  const bulls = await BullRecord.find({ targetSheetId: sheetId }).lean();
   
-  let totalShots = 0;
+  // Sum up totalShots from all bulls
+  const totalShots = bulls.reduce((sum, bull) => sum + (bull.totalShots || 0), 0);
   
-  for (const bull of bulls) {
-    // Sum totalShots from aim point records for this bull
-    const aimPoints = await AimPointRecord.find({ bullId: bull._id }).lean();
-    for (const ap of aimPoints) {
-      totalShots += ap.totalShots || 0;
-    }
-  }
+  console.log('[Ammo Reconciliation] calculateSheetShots:', { 
+    sheetId: sheetId.toString(), 
+    bullsFound: bulls.length, 
+    totalShots 
+  });
   
   return totalShots;
 }
@@ -38,34 +37,48 @@ export async function calculateSheetShots(sheetId: mongoose.Types.ObjectId): Pro
 export async function reconcileSheetAmmo(params: ReconcileAmmoParams): Promise<void> {
   const { userId, sheetId, sessionId, caliberId } = params;
 
+  console.log('[Ammo Reconciliation] Starting reconciliation:', {
+    userId: userId.toString(),
+    sheetId: sheetId.toString(),
+    sessionId: sessionId?.toString(),
+    caliberId: caliberId.toString(),
+  });
+
   // Calculate current shots used
   const shotsUsed = await calculateSheetShots(sheetId);
 
-  // Find existing transaction for this sheet
+  // Find existing transaction for this sheet (convert ObjectIds to strings for query)
   const existingTx = await AmmoTransaction.findOne({
-    sheetId,
-    caliberId,
+    sheetId: sheetId.toString(),
+    caliberId: caliberId.toString(),
     reason: "session_deduct",
   });
+  
+  console.log('[Ammo Reconciliation] Existing transaction:', existingTx ? `Found (${existingTx._id})` : 'Not found');
 
   if (existingTx) {
     // Update existing transaction
     const oldShots = Math.abs(existingTx.delta);
     const deltaChange = -(shotsUsed - oldShots);
 
+    console.log('[Ammo Reconciliation] Updating transaction:', { oldShots, newShots: shotsUsed, deltaChange });
+
     existingTx.delta = -shotsUsed;
     await existingTx.save();
 
-    // Update inventory
+    // Update inventory (convert caliberId to string)
     await AmmoInventory.updateOne(
-      { userId: userId.toString(), caliberId },
+      { userId: userId.toString(), caliberId: caliberId.toString() },
       { $inc: { onHand: deltaChange } },
       { upsert: true }
     );
   } else {
     // Create new transaction
+    console.log('[Ammo Reconciliation] Creating new transaction for', shotsUsed, 'shots');
     await createSheetAmmoTransaction(userId, sheetId, sessionId, caliberId, shotsUsed);
   }
+  
+  console.log('[Ammo Reconciliation] Completed successfully');
 }
 
 /**
@@ -78,22 +91,28 @@ async function createSheetAmmoTransaction(
   caliberId: mongoose.Types.ObjectId,
   shotsUsed: number
 ): Promise<void> {
-  if (shotsUsed === 0) return;
+  if (shotsUsed === 0) {
+    console.log('[Ammo Reconciliation] No shots to record, skipping transaction creation');
+    return;
+  }
 
+  // Convert ObjectIds to strings for storage
   await AmmoTransaction.create({
     userId: userId.toString(),
-    caliberId,
-    sheetId,
-    sessionId,
+    caliberId: caliberId.toString(),
+    sheetId: sheetId.toString(),
+    sessionId: sessionId?.toString(),
     delta: -shotsUsed,
     reason: "session_deduct",
   });
 
   await AmmoInventory.updateOne(
-    { userId: userId.toString(), caliberId },
+    { userId: userId.toString(), caliberId: caliberId.toString() },
     { $inc: { onHand: -shotsUsed } },
     { upsert: true }
   );
+  
+  console.log('[Ammo Reconciliation] Created transaction and updated inventory:', { shotsUsed, caliberId: caliberId.toString() });
 }
 
 /**
@@ -104,29 +123,29 @@ export async function reverseSheetAmmo(
   sheetId: mongoose.Types.ObjectId,
   caliberId: mongoose.Types.ObjectId
 ): Promise<void> {
-  // Find the existing deduction transaction
+  // Find the existing deduction transaction (convert to strings for query)
   const existingTx = await AmmoTransaction.findOne({
-    sheetId,
-    caliberId,
+    sheetId: sheetId.toString(),
+    caliberId: caliberId.toString(),
     reason: "session_deduct",
   });
 
   if (existingTx) {
     const shotsToReverse = Math.abs(existingTx.delta);
 
-    // Create reversal transaction
+    // Create reversal transaction (convert to strings)
     await AmmoTransaction.create({
       userId: userId.toString(),
-      caliberId,
-      sheetId,
+      caliberId: caliberId.toString(),
+      sheetId: sheetId.toString(),
       delta: shotsToReverse,
       reason: "session_reversal",
       note: "Sheet deleted",
     });
 
-    // Update inventory
+    // Update inventory (convert to string)
     await AmmoInventory.updateOne(
-      { userId: userId.toString(), caliberId },
+      { userId: userId.toString(), caliberId: caliberId.toString() },
       { $inc: { onHand: shotsToReverse } }
     );
 

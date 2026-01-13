@@ -4,80 +4,104 @@ All notable changes to Target Tracker will be documented in this file.
 
 ## [Unreleased]
 
-### Added - Ammo Tracking (January 2026)
+## [1.5.0] - January 13, 2026
+
+### Added - Ammo Inventory System
 
 #### Overview
-Complete ammunition inventory management system with automatic deduction based on shots fired. Track ammo types, manage on-hand quantities, and view complete transaction history.
+Complete ammunition inventory management system with automatic deduction based on shots fired in range sessions. Track caliber inventory, manage on-hand quantities, visualize usage trends, and maintain complete transaction history.
 
 #### Core Features
-- **Ammo Type Management**: Define ammunition by caliber, brand, load details, casing type, and reload status
-- **Inventory Tracking**: Real-time on-hand quantity tracking with manual adjustments
-- **Automatic Deductions**: Ammo automatically deducted when sheets are saved based on shots recorded
-- **Transaction Log**: Complete audit trail of all inventory changes with reasons and timestamps
-- **User Scoping**: All ammo data is user-specific (tied to Discord auth)
+- **Caliber-Based Inventory**: Track ammunition inventory per caliber with automatic linking to existing calibers
+- **Real-Time Tracking**: Live on-hand quantity tracking with manual adjustments and bulk order entry
+- **Automatic Deductions**: Ammo automatically deducted from inventory when target sheets are created or updated
+- **Transaction History**: Complete audit trail of all inventory changes with timestamps and session links
+- **Usage Analytics**: Line charts showing usage over time and pie charts for stock distribution
+- **Non-Session Usage**: Record ammo usage outside of range sessions with multi-caliber selection
+- **User Scoping**: All inventory data is user-specific (tied to Discord authentication)
 
 #### Data Models
-- **AmmoType**: Stores ammo specifications (name, caliber, manufacturer, load, casing, reload flag)
-- **AmmoInventory**: Tracks current on-hand quantity per ammo type per user
-- **AmmoTransaction**: Append-only log of all inventory changes with reasons
-- **TargetSheet Update**: Added optional `ammoTypeId` field to link sheets to ammo
+- **AmmoInventory**: Tracks current on-hand quantity per caliber per user with timestamps
+- **AmmoTransaction**: Append-only log of all inventory changes with reasons, deltas, and session/sheet links
+- **TargetSheet Update**: Sheets automatically link to caliber for ammo reconciliation
+- **BullRecord Integration**: Total shots calculated from aim point records for accuracy
 
 #### User Interface
-- **`/ammo` Page**: 
-  - Inventory list with search and caliber filtering
-  - Cards showing on-hand quantity, caliber, and metadata
-  - Quick +/- buttons for fast adjustments
-  - Visual warnings for negative or low inventory
-  
-- **`/ammo/new` Page**: 
-  - Create new ammo type form
-  - Set initial on-hand quantity
-  - Auto-creates inventory record and transaction
-  
-- **`/ammo/[id]` Page**: 
-  - Detailed view with current inventory
-  - Complete transaction history
-  - Quick adjust dialog with presets and custom amounts
-  - Summary stats (total used, last updated)
 
-- **Sheet Create/Edit Integration**: 
-  - Ammo type selector on new sheet form
-  - Filtered by selected caliber
-  - Warning if no ammo types exist
-  - Optional field (backward compatible)
+##### `/ammo` Page
+- **Single-Column List Layout**: Compact horizontal cards with bullet icon, caliber name, category badge, rounds on hand, and edit button
+- **Search & Filtering**: Real-time search across caliber names and categories
+- **Zero Inventory Hiding**: Automatically hides calibers with zero inventory for cleaner display
+- **Usage Over Time Chart**: Line graph showing ammo consumption per caliber over time (75% width)
+- **Stock Distribution Pie Chart**: Donut chart showing current inventory proportions (25% width)
+- **Bulk Order Entry**: Tag-based multi-caliber selection for adding inventory from orders
+- **Non-Session Usage Tracking**: Record ammo used outside of range sessions with notes
+- **Visual Indicators**: Bullet SVG icons and negative inventory warnings
+
+##### `/ammo/[id]` Detail Page
+- **Summary Cards**: On-hand quantity, total used, and last updated timestamp
+- **Usage Chart**: Single-line graph showing usage history for that specific caliber
+- **Transaction History**: 
+  - Chronologically sorted (newest first) with grouped session transactions
+  - Session links with date, location, and sheet count
+  - Manual adjustments with notes and timestamps
+  - Relative timestamps (e.g., "about 4 hours ago")
+- **Quick Adjust Dialog**: Manual inventory adjustments with preset amounts (+50, +100, -50, -100) or custom values
+
+##### Mobile Optimizations
+- **Scrollable Modals**: All dialog windows (firearm edit, optic edit, caliber edit, order entry) are fully scrollable on mobile
+- **Touch-Friendly Controls**: Large touch targets for all interactive elements
 
 #### Reconciliation Logic
-- **Create**: Deducts ammo when sheet is saved with shots recorded
-- **Edit**: Updates deduction based on shot count difference (not double subtract)
-- **Delete**: Reverses deduction with reversal transaction for audit
-- **Ammo Type Change**: Reverses old type, deducts from new type
-- **Shot Count Source**: Calculated from `AimPointRecord.totalShots` for accuracy
+- **Automatic Deduction**: Ammo deducted when bull records are created or updated on target sheets
+- **Shot Calculation**: Total shots calculated from `BullRecord.totalShots` (sum of all score counts)
+- **Real-Time Updates**: Inventory updates immediately when sheets are saved
+- **Transaction Creation**: Creates `session_deduct` transactions linked to sessions and sheets
+- **Idempotent Operations**: Prevents duplicate deductions using transaction uniqueness checks
+- **Historical Data Migration**: Scripts to backfill inventory from existing session data
 
 #### API Endpoints
-- `GET/POST /api/ammo/types` - List and create ammo types
-- `GET/PUT/DELETE /api/ammo/types/[id]` - Manage individual ammo types
-- `GET /api/ammo/inventory` - Get inventory with ammo type details
-- `POST /api/ammo/inventory/adjust` - Manual inventory adjustments
-- `GET /api/ammo/transactions` - Transaction log with pagination
+- `GET /api/ammo/inventory` - Get inventory for all calibers with on-hand quantities
+- `POST /api/ammo/inventory/adjust` - Manual inventory adjustments (add/subtract with notes)
+- `GET /api/ammo/transactions` - Transaction log with pagination, session/sheet population, and sorting
+- `GET /api/ammo/usage-over-time` - Historical usage data for chart visualization
 
 #### Technical Implementation
-- **Reconciliation Module**: `lib/ammo-reconciliation.ts` handles all inventory logic
-- **Idempotent Operations**: Uses unique constraints to prevent duplicate transactions
-- **Atomic Updates**: MongoDB `$inc` for safe concurrent updates
-- **Difference-Based**: Only applies deltas, not full recalculations
-- **Reversal Pattern**: Creates reversal transactions instead of deleting for audit clarity
+- **Reconciliation Module**: `lib/ammo-reconciliation.ts` handles all inventory logic with automatic triggering on bull record updates
+- **Atomic Updates**: MongoDB `$inc` and `upsert` for safe concurrent inventory updates
+- **Date Validation**: Robust handling of invalid/missing timestamps with fallbacks to most recent transaction
+- **Transaction Sorting**: Multi-level sorting with session grouping and chronological ordering
+- **Data Integrity**: Migration scripts to fix historical data inconsistencies (missing timestamps, incorrect ObjectIds)
+- **Duplicate Prevention**: Cleanup of duplicate inventory records with transaction-based recalculation
 
-#### Future Enhancements (Phase 3)
-- Ammo consumption charts in analytics
-- Inventory over time visualization
-- Projected sessions left calculator
+#### Bug Fixes & Improvements (January 13, 2026)
+- **Fixed Reconciliation Triggering**: Changed `BullRecord` query from `sheetId` to `targetSheetId` to properly calculate shots
+- **Fixed Transaction Timestamps**: Backfilled missing `createdAt` values for historical transactions using sheet creation dates
+- **Fixed Transaction Sorting**: Ensured newest transactions always appear first with proper date validation
+- **Fixed Inventory Duplicates**: Removed duplicate inventory records and recalculated from transaction history
+- **Fixed ObjectId Handling**: Proper conversion between `ObjectId` and string types in queries and transactions
+- **Fixed Invalid Dates**: Added date validation before formatting to prevent "Invalid time value" errors
+- **Fixed Shot Calculation**: Simplified to directly sum `totalShots` from `BullRecord` instead of iterating aim points
+- **Mobile Modal Scrolling**: Fixed dialog overflow issues on mobile devices
+
+#### Visual Design Improvements
+- **Custom Bullet Icons**: Redesigned SVG icons for different caliber categories with detailed line art
+  - Rifle: AR-15 style with stock, receivers, barrel, handguard
+  - Pistol: Semi-auto with slide serrations, sights, grip texture
+  - Shotgun: Pump-action with stock, receiver, fore-end
+- **Custom Optic Icons**: Line-based SVG silhouettes for different optic types
+  - Red Dot: Rectangular body with lens window
+  - LPVO/Scope: Objective and ocular bells with turret housing
+  - ACOG: Trapezoidal body with fiber optic tube
+  - Holographic: EOTech-style window with protective wings
+  - Iron Sights: Front post and rear sight with picatinny rail
+
+#### Future Enhancements
+- Advanced ammo consumption analytics dashboard
+- Cost tracking per round and total expenditure
+- Projected sessions remaining calculator
 - Consumption by firearm/caliber/distance metrics
-
-#### Documentation
-- Feature specification: `readme/19-ammo-tracking.md`
-- Complete data model definitions
-- Reconciliation algorithm documentation
-- API endpoint reference
+- Ammo purchase recommendations based on usage patterns
 
 ### Added - Custom Target Templates (January 2026)
 
