@@ -15,9 +15,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Minus, Package, TrendingDown } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Package, TrendingDown, Target, Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 
 interface Caliber {
   _id: string;
@@ -39,8 +39,8 @@ interface Transaction {
   reason: string;
   note?: string;
   createdAt: string;
-  sessionId?: { _id: string; date: string; location?: string };
-  sheetId?: { _id: string; sheetLabel?: string };
+  sessionId?: { _id: string; slug?: string; date: string; location?: string };
+  sheetId?: { _id: string; slug?: string; sheetLabel?: string };
 }
 
 export default function AmmoDetailPage({
@@ -268,44 +268,84 @@ export default function AmmoDetailPage({
             No transactions yet
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {transactions.map((tx) => (
               <div
                 key={tx._id}
-                className="flex items-center justify-between py-3 border-b border-white/5 last:border-0"
+                className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
+                  tx.delta > 0 
+                    ? "border-green-500/20 bg-green-500/5 hover:bg-green-500/10" 
+                    : "border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
+                }`}
               >
-                <div className="flex-1">
+                {/* Icon */}
+                <div className={`flex-shrink-0 mt-1 ${
+                  tx.delta > 0 ? "text-green-400" : "text-red-400"
+                }`}>
+                  {tx.sessionId ? (
+                    <Target className="w-5 h-5" />
+                  ) : (
+                    <Package className="w-5 h-5" />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium">
+                    <span className="font-semibold">
                       {reasonLabels[tx.reason] || tx.reason}
                     </span>
                     {tx.sessionId && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="secondary" className="text-xs">
                         Session
                       </Badge>
                     )}
                   </div>
-                  {tx.note && (
-                    <p className="text-sm text-white/60">{tx.note}</p>
+
+                  {/* Session Details */}
+                  {tx.sessionId && (
+                    <button
+                      onClick={() => router.push(`/sessions/${tx.sessionId!.slug || tx.sessionId!._id}`)}
+                      className="text-sm text-white/80 hover:text-white hover:underline flex items-center gap-2 mb-1"
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      {format(new Date(tx.sessionId.date), "MMM d, yyyy")}
+                      {tx.sessionId.location && (
+                        <span className="text-white/60">@ {tx.sessionId.location}</span>
+                      )}
+                    </button>
                   )}
-                  {tx.sessionId && tx.sessionId.location && (
-                    <p className="text-sm text-white/60">
-                      {tx.sessionId.location}
+
+                  {/* Sheet Details */}
+                  {tx.sheetId && (
+                    <p className="text-xs text-white/60 mb-1">
+                      Sheet: {tx.sheetId.sheetLabel || tx.sheetId._id}
                     </p>
                   )}
-                  <p className="text-xs text-white/40 mt-1">
-                    {formatDistanceToNow(new Date(tx.createdAt), {
-                      addSuffix: true,
-                    })}
+
+                  {/* Note */}
+                  {tx.note && (
+                    <p className="text-sm text-white/70 italic">{tx.note}</p>
+                  )}
+
+                  {/* Timestamp */}
+                  <p className="text-xs text-white/40 mt-2">
+                    {format(new Date(tx.createdAt), "MMM d, yyyy 'at' h:mm a")} 
+                    <span className="text-white/30"> • </span>
+                    {formatDistanceToNow(new Date(tx.createdAt), { addSuffix: true })}
                   </p>
                 </div>
-                <div
-                  className={`text-lg font-semibold ${
-                    tx.delta > 0 ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  {tx.delta > 0 ? "+" : ""}
-                  {tx.delta.toLocaleString()}
+
+                {/* Delta */}
+                <div className="flex-shrink-0">
+                  <div
+                    className={`text-2xl font-bold ${
+                      tx.delta > 0 ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    {tx.delta > 0 ? "+" : ""}
+                    {tx.delta.toLocaleString()}
+                  </div>
                 </div>
               </div>
             ))}

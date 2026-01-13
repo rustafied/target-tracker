@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Target, Hash, Layers, FileText, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -65,53 +66,65 @@ function SortableCaliberCard({
   };
 
   return (
-    <Card ref={setNodeRef} style={style} className={isDragging ? "z-50" : ""}>
-      <CardHeader>
-        <CardTitle className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing touch-none"
-            >
-              <GripVertical className="h-5 w-5 text-muted-foreground" />
-            </button>
-            <span className="text-lg">{caliber.name}</span>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onEdit(caliber)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onDelete(caliber._id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {caliber.shortCode && (
-          <p className="text-sm text-muted-foreground">
-            <strong>Short Code:</strong> {caliber.shortCode}
-          </p>
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`flex items-center gap-4 p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors ${
+        isDragging ? "z-50 shadow-lg" : ""
+      }`}
+    >
+      {/* Drag Handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
+      </button>
+
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
+        <h3 className="font-semibold text-lg">{caliber.name}</h3>
+        
+        {/* Tags Section */}
+        <div className="flex flex-wrap gap-2 mt-2">
+          {caliber.shortCode && (
+            <Badge variant="secondary" className="text-xs">
+              {caliber.shortCode}
+            </Badge>
+          )}
+          {caliber.category && (
+            <Badge variant="outline" className="text-xs">
+              {caliber.category}
+            </Badge>
+          )}
+        </div>
+
+        {caliber.notes && (
+          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{caliber.notes}</p>
         )}
-        {caliber.category && (
-          <p className="text-sm text-muted-foreground">
-            <strong>Category:</strong> {caliber.category}
-          </p>
-        )}
-        {caliber.notes && <p className="text-sm text-muted-foreground mt-2">{caliber.notes}</p>}
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 flex-shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onEdit(caliber)}
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onDelete(caliber._id)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -273,7 +286,7 @@ export default function CalibersPage() {
             items={calibers.map((c) => c._id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-2">
               {calibers.map((caliber) => (
                 <SortableCaliberCard
                   key={caliber._id}

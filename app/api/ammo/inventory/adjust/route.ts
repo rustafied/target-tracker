@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import { AmmoInventory } from "@/lib/models/AmmoInventory";
 import { AmmoTransaction } from "@/lib/models/AmmoTransaction";
+import { requireUserId } from "@/lib/auth-helpers";
 import mongoose from "mongoose";
 import { z } from "zod";
 
@@ -18,14 +17,8 @@ const adjustInventorySchema = z.object({
 // POST /api/ammo/inventory/adjust - Manual inventory adjustment
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = (session?.user as any)?.id || (session?.user as any)?.discordId;
-    
-    if (!session?.user || !userId) {
-      return NextResponse.json({ error: "Unauthorized - No session" }, { status: 401 });
-    }
-
     await connectToDatabase();
+    const userId = await requireUserId(req);
 
     const body = await req.json();
     const validation = adjustInventorySchema.safeParse(body);
@@ -38,8 +31,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { caliberId, delta, note } = validation.data;
-    // Ensure userId is a string (Discord ID)
-    const userIdString = String(userId);
+    // Ensure userId is a string
+    const userIdString = userId.toString();
     const caliberObjectId = new mongoose.Types.ObjectId(caliberId);
 
     // Create transaction

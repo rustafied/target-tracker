@@ -2,6 +2,6 @@
   <!-- White circle outline (thin stroke) -->
   <circle cx="32" cy="32" r="24" fill="none" stroke="#ffffff" stroke-width="3"/>
   
-  <!-- White center dot -->
-  <circle cx="32" cy="32" r="5" fill="#ffffff"/>
+  <!-- Red center bullseye (bigger) -->
+  <circle cx="32" cy="32" r="10" fill="#ef4444"/>
 </svg>

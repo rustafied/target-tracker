@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { BullRecord } from "@/lib/models/BullRecord";
+import { TargetSheet } from "@/lib/models/TargetSheet";
 import { bullSchema } from "@/lib/validators/bull";
 import { calculateBullMetrics } from "@/lib/metrics";
+import { reconcileSheetAmmo } from "@/lib/ammo-reconciliation";
+import { requireUserId } from "@/lib/auth-helpers";
+import mongoose from "mongoose";
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -14,6 +18,7 @@ export async function PUT(
     const validated = bullSchema.parse(body);
 
     await connectToDatabase();
+    const userId = await requireUserId(request);
     
     const metrics = calculateBullMetrics(validated as any);
     const bull = await BullRecord.findByIdAndUpdate(
@@ -24,6 +29,17 @@ export async function PUT(
 
     if (!bull) {
       return NextResponse.json({ error: "Bull record not found" }, { status: 404 });
+    }
+
+    // Reconcile ammo after bull update
+    const sheet = await TargetSheet.findById(bull.targetSheetId);
+    if (sheet && sheet.caliberId) {
+      await reconcileSheetAmmo({
+        userId: new mongoose.Types.ObjectId(userId),
+        sheetId: new mongoose.Types.ObjectId(bull.targetSheetId.toString()),
+        sessionId: sheet.rangeSessionId ? new mongoose.Types.ObjectId(sheet.rangeSessionId) : undefined,
+        caliberId: new mongoose.Types.ObjectId(sheet.caliberId),
+      });
     }
 
     return NextResponse.json(bull);
@@ -37,13 +53,32 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     await connectToDatabase();
+    const userId = await requireUserId(request);
+    
+    const bull = await BullRecord.findById(id);
+    if (!bull) {
+      return NextResponse.json({ error: "Bull record not found" }, { status: 404 });
+    }
+
+    const sheetId = bull.targetSheetId;
     await BullRecord.findByIdAndDelete(id);
+
+    // Reconcile ammo after bull deletion
+    const sheet = await TargetSheet.findById(sheetId);
+    if (sheet && sheet.caliberId) {
+      await reconcileSheetAmmo({
+        userId: new mongoose.Types.ObjectId(userId),
+        sheetId: new mongoose.Types.ObjectId(sheetId.toString()),
+        sessionId: sheet.rangeSessionId ? new mongoose.Types.ObjectId(sheet.rangeSessionId) : undefined,
+        caliberId: new mongoose.Types.ObjectId(sheet.caliberId),
+      });
+    }
 
     return NextResponse.json({ message: "Bull record deleted successfully" });
   } catch (error) {

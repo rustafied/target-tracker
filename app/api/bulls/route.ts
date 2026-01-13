@@ -5,6 +5,8 @@ import { TargetSheet } from "@/lib/models/TargetSheet";
 import { bullSchema } from "@/lib/validators/bull";
 import { calculateBullMetrics } from "@/lib/metrics";
 import { requireUserId } from "@/lib/auth-helpers";
+import { reconcileSheetAmmo } from "@/lib/ammo-reconciliation";
+import mongoose from "mongoose";
 
 export async function POST(request: NextRequest) {
   try {
@@ -86,6 +88,17 @@ export async function POST(request: NextRequest) {
         })
       );
 
+      // Reconcile ammo after bull updates
+      const sheet = await TargetSheet.findById(sheetId);
+      if (sheet && sheet.caliberId) {
+        await reconcileSheetAmmo({
+          userId: new mongoose.Types.ObjectId(userId),
+          sheetId: new mongoose.Types.ObjectId(sheetId),
+          sessionId: sheet.rangeSessionId ? new mongoose.Types.ObjectId(sheet.rangeSessionId) : undefined,
+          caliberId: new mongoose.Types.ObjectId(sheet.caliberId),
+        });
+      }
+
       return NextResponse.json(results, { status: 201 });
     }
 
@@ -109,6 +122,17 @@ export async function POST(request: NextRequest) {
       targetSheetId: sheetId,
       totalShots: metrics.totalShots 
     });
+
+    // Reconcile ammo after bull creation
+    const sheet = await TargetSheet.findById(sheetId);
+    if (sheet && sheet.caliberId) {
+      await reconcileSheetAmmo({
+        userId: new mongoose.Types.ObjectId(userId),
+        sheetId: new mongoose.Types.ObjectId(sheetId),
+        sessionId: sheet.rangeSessionId ? new mongoose.Types.ObjectId(sheet.rangeSessionId) : undefined,
+        caliberId: new mongoose.Types.ObjectId(sheet.caliberId),
+      });
+    }
 
     return NextResponse.json(bull, { status: 201 });
   } catch (error: any) {

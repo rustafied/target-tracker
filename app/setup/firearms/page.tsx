@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Target, Building2, Package, FileText, GripVertical, Ruler } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -60,10 +61,14 @@ interface Optic {
 
 function SortableFirearmCard({
   firearm,
+  calibers,
+  optics,
   onEdit,
   onDelete,
 }: {
   firearm: Firearm;
+  calibers: Caliber[];
+  optics: Optic[];
   onEdit: (firearm: Firearm) => void;
   onDelete: (id: string) => void;
 }) {
@@ -77,54 +82,87 @@ function SortableFirearmCard({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const firearmCalibers = calibers.filter((c) => 
+    firearm.caliberIds?.map(String).includes(String(c._id))
+  );
+  const firearmOptics = optics.filter((o) => 
+    firearm.opticIds?.map(String).includes(String(o._id))
+  );
+
   return (
-    <Card ref={setNodeRef} style={style} className={isDragging ? "z-50" : ""}>
-      <CardHeader>
-        <CardTitle className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing touch-none"
-            >
-              <GripVertical className="h-5 w-5 text-muted-foreground" />
-            </button>
-            <span className="text-lg">{firearm.name}</span>
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`flex items-center gap-4 p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors ${
+        isDragging ? "z-50 shadow-lg" : ""
+      }`}
+    >
+      {/* Drag Handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
+      </button>
+
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <div>
+            <h3 className="font-semibold text-lg">{firearm.name}</h3>
+            {(firearm.manufacturer || firearm.model) && (
+              <p className="text-sm text-muted-foreground">
+                {[firearm.manufacturer, firearm.model].filter(Boolean).join(" • ")}
+              </p>
+            )}
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onEdit(firearm)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onDelete(firearm._id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {firearm.manufacturer && (
-          <p className="text-sm text-muted-foreground">
-            <strong>Manufacturer:</strong> {firearm.manufacturer}
-          </p>
+        </div>
+
+        {/* Tags Section */}
+        <div className="flex flex-wrap gap-2 mt-2">
+          {firearmCalibers.map((caliber) => (
+            <Badge key={caliber._id} variant="secondary" className="text-xs">
+              {caliber.name}
+            </Badge>
+          ))}
+          {firearmOptics.map((optic) => (
+            <Badge key={optic._id} variant="outline" className="text-xs">
+              {optic.name}
+            </Badge>
+          ))}
+          {firearm.defaultDistanceYards && (
+            <Badge variant="outline" className="text-xs">
+              {firearm.defaultDistanceYards}yd
+            </Badge>
+          )}
+        </div>
+
+        {firearm.notes && (
+          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{firearm.notes}</p>
         )}
-        {firearm.model && (
-          <p className="text-sm text-muted-foreground">
-            <strong>Model:</strong> {firearm.model}
-          </p>
-        )}
-        {firearm.notes && <p className="text-sm text-muted-foreground mt-2">{firearm.notes}</p>}
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 flex-shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onEdit(firearm)}
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onDelete(firearm._id)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -327,11 +365,13 @@ export default function FirearmsPage() {
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={firearms.map((f) => f._id)} strategy={verticalListSortingStrategy}>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-2">
               {firearms.map((firearm) => (
                 <SortableFirearmCard
                   key={firearm._id}
                   firearm={firearm}
+                  calibers={calibers}
+                  optics={optics}
                   onEdit={openEditDialog}
                   onDelete={handleDelete}
                 />

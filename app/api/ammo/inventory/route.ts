@@ -1,25 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import { AmmoInventory } from "@/lib/models/AmmoInventory";
 import { Caliber } from "@/lib/models/Caliber";
+import { requireUserId } from "@/lib/auth-helpers";
 import mongoose from "mongoose";
 
 // GET /api/ammo/inventory - Get all inventory with caliber details
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = (session?.user as any)?.id || (session?.user as any)?.discordId;
-    
-    if (!session?.user || !userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     await connectToDatabase();
+    const userId = await requireUserId(req);
 
-    // Ensure userId is a string (Discord ID)
-    const userIdString = String(userId);
+    // Ensure userId is a string
+    const userIdString = userId.toString();
     
     // Build aggregation pipeline
     const pipeline: any[] = [
