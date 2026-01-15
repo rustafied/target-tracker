@@ -15,7 +15,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Minus, Package, TrendingDown, Target, Calendar } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ArrowLeft, Plus, Minus, Package, TrendingDown, Target, Calendar, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format, isValid } from "date-fns";
 import { getBulletIcon } from "@/lib/bullet-icons";
@@ -179,41 +185,43 @@ export default function AmmoDetailPage({
   };
 
   // Group transactions by session
-  const groupedTransactions = transactions.reduce((acc, tx) => {
-    if (tx.sessionId) {
-      const sessionKey = tx.sessionId._id;
-      if (!acc[sessionKey]) {
-        acc[sessionKey] = {
-          sessionId: tx.sessionId,
-          transactions: [],
-          totalDelta: 0,
-          createdAt: tx.createdAt,
-          isSession: true,
-        };
-      }
-      acc[sessionKey].transactions.push(tx);
-      acc[sessionKey].totalDelta += tx.delta;
-      // Use the most recent createdAt from all transactions in this session
-      if (tx.createdAt && (!acc[sessionKey].createdAt || new Date(tx.createdAt) > new Date(acc[sessionKey].createdAt))) {
-        acc[sessionKey].createdAt = tx.createdAt;
-      }
-    } else {
-      // Non-session transactions get their own entry
-      acc[tx._id] = {
-        ...tx,
-        isSession: false,
-      };
-    }
-    return acc;
-  }, {} as Record<string, any>);
+  const groupedTransactions: Array<{ session: any; transactions: Transaction[]; displayDate: Date }> = [];
+  const sessionMap = new Map<string, Transaction[]>();
+  const standaloneTransactions: Transaction[] = [];
 
-  const displayTransactions = Object.values(groupedTransactions).sort(
-    (a: any, b: any) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateB - dateA; // Newest first
+  transactions.forEach((tx) => {
+    if (tx.sessionId) {
+      const sessionKey = typeof tx.sessionId === 'object' ? tx.sessionId._id : tx.sessionId;
+      if (!sessionMap.has(sessionKey)) {
+        sessionMap.set(sessionKey, []);
+      }
+      sessionMap.get(sessionKey)!.push(tx);
+    } else {
+      standaloneTransactions.push(tx);
     }
-  );
+  });
+
+  // Convert session groups to display format
+  sessionMap.forEach((txs) => {
+    const sessionDate = txs[0].sessionId?.date ? new Date(txs[0].sessionId.date) : new Date(txs[0].createdAt);
+    groupedTransactions.push({
+      session: txs[0].sessionId,
+      transactions: txs,
+      displayDate: sessionDate,
+    });
+  });
+
+  // Add standalone transactions as individual groups
+  standaloneTransactions.forEach((tx) => {
+    groupedTransactions.push({
+      session: null,
+      transactions: [tx],
+      displayDate: new Date(tx.createdAt),
+    });
+  });
+
+  // Sort all groups by date (newest first)
+  groupedTransactions.sort((a, b) => b.displayDate.getTime() - a.displayDate.getTime());
 
   // Generate chart for usage over time
   const getUsageChartOption = (): EChartsOption | null => {
@@ -420,109 +428,193 @@ export default function AmmoDetailPage({
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
 
-        {displayTransactions.length === 0 ? (
+        {groupedTransactions.length === 0 ? (
           <p className="text-white/60 text-center py-8">
             No transactions yet
           </p>
         ) : (
           <div className="space-y-2">
-            {displayTransactions.map((item: any) => {
-              const isGrouped = item.isSession;
-              const displayDelta = isGrouped ? item.totalDelta : item.delta;
-              const displayDate = item.createdAt || new Date().toISOString();
-              const hasValidDate = item.createdAt && !isNaN(new Date(item.createdAt).getTime());
-              
-              return (
-                <div
-                  key={isGrouped ? item.sessionId._id : item._id}
-                  className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
-                    displayDelta > 0 
-                      ? "border-green-500/20 bg-green-500/5 hover:bg-green-500/10" 
-                      : "border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
-                  }`}
-                >
-                  {/* Icon */}
-                  <div className={`flex-shrink-0 mt-1 ${
-                    displayDelta > 0 ? "text-green-400" : "text-red-400"
-                  }`}>
-                    {isGrouped ? (
-                      <Target className="w-5 h-5" />
-                    ) : item.sessionId ? (
-                      <Target className="w-5 h-5" />
-                    ) : (
-                      <Package className="w-5 h-5" />
-                    )}
-                  </div>
+            {groupedTransactions.map((group, groupIdx) => {
+              const { session, transactions: groupTxs, displayDate } = group;
+              const totalDelta = groupTxs.reduce((sum, tx) => sum + tx.delta, 0);
+              const hasMultiple = groupTxs.length > 1;
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold">
-                        {isGrouped ? "Session Used" : (reasonLabels[item.reason] || item.reason)}
-                      </span>
-                      {(isGrouped || item.sessionId) && (
-                        <Badge variant="secondary" className="text-xs">
-                          Session
-                        </Badge>
+              // If single transaction or no session, render normally
+              if (!hasMultiple) {
+                const item = groupTxs[0];
+                const displayDelta = item.delta;
+                const hasValidDate = displayDate && !isNaN(displayDate.getTime());
+                
+                return (
+                  <div
+                    key={item._id}
+                    className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
+                      displayDelta > 0 
+                        ? "border-green-500/20 bg-green-500/5 hover:bg-green-500/10" 
+                        : "border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
+                    }`}
+                  >
+                    <div className={`flex-shrink-0 mt-1 ${
+                      displayDelta > 0 ? "text-green-400" : "text-red-400"
+                    }`}>
+                      {item.sessionId ? <Target className="w-5 h-5" /> : <Package className="w-5 h-5" />}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold">
+                          {reasonLabels[item.reason] || item.reason}
+                        </span>
+                        {item.sessionId && (
+                          <Badge variant="secondary" className="text-xs">Session</Badge>
+                        )}
+                      </div>
+
+                      {item.sessionId && (() => {
+                        const sessionDate = item.sessionId?.date;
+                        const hasValidSessionDate = sessionDate && !isNaN(new Date(sessionDate).getTime());
+                        
+                        return (
+                          <button
+                            onClick={() => router.push(`/sessions/${item.sessionId?.slug || item.sessionId?._id}`)}
+                            className="text-sm text-white/80 hover:text-white hover:underline flex items-center gap-2 mb-1"
+                          >
+                            <Calendar className="w-3.5 h-3.5" />
+                            {hasValidSessionDate ? format(new Date(sessionDate), "MMM d, yyyy") : "Session"}
+                            {item.sessionId?.location && (
+                              <span className="text-white/60">@ {item.sessionId.location}</span>
+                            )}
+                          </button>
+                        );
+                      })()}
+
+                      {item.sheetId && (
+                        <button
+                          onClick={() => router.push(`/sheets/${item.sheetId?.slug || item.sheetId?._id}`)}
+                          className="text-xs text-white/70 hover:text-white hover:underline flex items-center gap-1.5 mb-1"
+                        >
+                          <Target className="w-3 h-3" />
+                          {item.sheetId.sheetLabel || "Sheet"}
+                        </button>
+                      )}
+
+                      {item.note && <p className="text-sm text-white/70 italic">{item.note}</p>}
+
+                      {hasValidDate && (
+                        <p className="text-xs text-white/40 mt-2">
+                          {format(displayDate, "MMM d, yyyy 'at' h:mm a")} 
+                          <span className="text-white/30"> • </span>
+                          {formatDistanceToNow(displayDate, { addSuffix: true })}
+                        </p>
                       )}
                     </div>
 
-                    {/* Session Details */}
-                    {(isGrouped || item.sessionId) && (() => {
-                      const session = isGrouped ? item.sessionId : item.sessionId;
-                      const sessionDate = session?.date;
-                      const hasValidSessionDate = sessionDate && !isNaN(new Date(sessionDate).getTime());
-                      
-                      return (
-                        <button
-                          onClick={() => {
-                            router.push(`/sessions/${session.slug || session._id}`);
-                          }}
-                          className="text-sm text-white/80 hover:text-white hover:underline flex items-center gap-2 mb-1"
-                        >
-                          <Calendar className="w-3.5 h-3.5" />
-                          {hasValidSessionDate ? format(new Date(sessionDate), "MMM d, yyyy") : "Session"}
-                          {session.location && (
-                            <span className="text-white/60">@ {session.location}</span>
-                          )}
-                        </button>
-                      );
-                    })()}
-
-                    {/* Show sheet count for grouped sessions */}
-                    {isGrouped && item.transactions.length > 1 && (
-                      <p className="text-xs text-white/60 mb-1">
-                        {item.transactions.length} sheets
-                      </p>
-                    )}
-
-                    {/* Note for non-grouped items */}
-                    {!isGrouped && item.note && (
-                      <p className="text-sm text-white/70 italic">{item.note}</p>
-                    )}
-
-                    {/* Timestamp */}
-                    {hasValidDate && (
-                      <p className="text-xs text-white/40 mt-2">
-                        {format(new Date(displayDate), "MMM d, yyyy 'at' h:mm a")} 
-                        <span className="text-white/30"> • </span>
-                        {formatDistanceToNow(new Date(displayDate), { addSuffix: true })}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Delta */}
-                  <div className="flex-shrink-0">
-                    <div
-                      className={`text-2xl font-bold ${
+                    <div className="flex-shrink-0">
+                      <div className={`text-2xl font-bold ${
                         displayDelta > 0 ? "text-green-400" : "text-red-400"
-                      }`}
-                    >
-                      {displayDelta > 0 ? "+" : ""}
-                      {displayDelta.toLocaleString()}
+                      }`}>
+                        {displayDelta > 0 ? "+" : ""}
+                        {displayDelta.toLocaleString()}
+                      </div>
                     </div>
                   </div>
-                </div>
+                );
+              }
+
+              // Multiple transactions from same session - render as accordion
+              const sessionDate = session?.date;
+              const hasValidSessionDate = sessionDate && !isNaN(new Date(sessionDate).getTime());
+              
+              return (
+                <Accordion key={`session-${groupIdx}`} type="single" collapsible>
+                  <AccordionItem value={`session-${groupIdx}`} className={`group border rounded-lg ${
+                    totalDelta > 0 
+                      ? "border-green-500/20 bg-green-500/5" 
+                      : "border-red-500/20 bg-red-500/5"
+                  }`}>
+                    <AccordionTrigger className="px-4 py-3 pb-0 hover:no-underline w-full [&>svg]:hidden flex-col items-stretch">
+                      <div className="flex items-start gap-4 w-full pb-3">
+                        <div className={`flex-shrink-0 mt-1 ${
+                          totalDelta > 0 ? "text-green-400" : "text-red-400"
+                        }`}>
+                          <Target className="w-5 h-5" />
+                        </div>
+
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold">Session Used</span>
+                            <Badge variant="secondary" className="text-xs">
+                              {groupTxs.length} sheets
+                            </Badge>
+                          </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/sessions/${session.slug || session._id}`);
+                            }}
+                            className="text-sm text-white/80 hover:text-white hover:underline flex items-center gap-2 mb-1"
+                          >
+                            <Calendar className="w-3.5 h-3.5" />
+                            {hasValidSessionDate ? format(new Date(sessionDate), "MMM d, yyyy") : "Session"}
+                            {session?.location && (
+                              <span className="text-white/60">@ {session.location}</span>
+                            )}
+                          </button>
+
+                          <p className="text-xs text-white/40 mt-1">
+                            {hasValidSessionDate && format(new Date(sessionDate), "MMM d, yyyy")}
+                            <span className="text-white/30"> • </span>
+                            {hasValidSessionDate && formatDistanceToNow(new Date(sessionDate), { addSuffix: true })}
+                          </p>
+                        </div>
+
+                        <div className="flex-shrink-0">
+                          <div className={`text-2xl font-bold ${
+                            totalDelta > 0 ? "text-green-400" : "text-red-400"
+                          }`}>
+                            {totalDelta > 0 ? "+" : ""}
+                            {totalDelta.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-center py-2 border-t border-white/10">
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180 ${
+                          totalDelta > 0 ? "text-green-400" : "text-red-400"
+                        }`} />
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4">
+                      <div className="space-y-2 mt-2 border-t border-white/10 pt-3">
+                        {groupTxs.map((item, sheetIdx) => (
+                          <button
+                            key={item._id}
+                            onClick={() => {
+                              if (item.sheetId) {
+                                router.push(`/sheets/${item.sheetId.slug || item.sheetId._id}`);
+                              }
+                            }}
+                            className="w-full flex items-start gap-3 py-2 px-3 rounded bg-black/20 hover:bg-black/30 transition-colors text-left"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm text-white/80 flex items-center gap-1.5">
+                                <Target className="w-3.5 h-3.5" />
+                                {item.sheetId?.sheetLabel || `Sheet ${sheetIdx + 1}`}
+                              </div>
+                            </div>
+                            <div className={`text-lg font-semibold ${
+                              item.delta > 0 ? "text-green-400" : "text-red-400"
+                            }`}>
+                              {item.delta > 0 ? "+" : ""}
+                              {item.delta.toLocaleString()}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               );
             })}
           </div>

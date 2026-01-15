@@ -44,6 +44,7 @@ interface Firearm {
   manufacturer?: string;
   model?: string;
   defaultDistanceYards?: number;
+  color?: string;
   notes?: string;
   isActive: boolean;
   sortOrder: number;
@@ -191,6 +192,7 @@ export default function FirearmsPage() {
     manufacturer: "",
     model: "",
     defaultDistanceYards: "",
+    color: "#3b82f6",
     notes: "",
     caliberIds: [] as string[],
     opticIds: [] as string[],
@@ -328,6 +330,7 @@ export default function FirearmsPage() {
       manufacturer: firearm.manufacturer || "",
       model: firearm.model || "",
       defaultDistanceYards: firearm.defaultDistanceYards?.toString() || "",
+      color: firearm.color || "#3b82f6",
       notes: firearm.notes || "",
       caliberIds,
       opticIds,
@@ -342,6 +345,7 @@ export default function FirearmsPage() {
       manufacturer: "", 
       model: "",
       defaultDistanceYards: "",
+      color: "#3b82f6",
       notes: "",
       caliberIds: [],
       opticIds: [],
@@ -454,6 +458,46 @@ export default function FirearmsPage() {
                   onChange={(e) => setFormData({ ...formData, defaultDistanceYards: e.target.value })}
                   placeholder="e.g., 25"
                 />
+              </div>
+              <div>
+                <Label>Chart Color</Label>
+                <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-md">
+                  {[
+                    { name: "Blue", value: "#3b82f6" },
+                    { name: "Green", value: "#22c55e" },
+                    { name: "Amber", value: "#f59e0b" },
+                    { name: "Red", value: "#ef4444" },
+                    { name: "Violet", value: "#8b5cf6" },
+                    { name: "Cyan", value: "#06b6d4" },
+                    { name: "Pink", value: "#ec4899" },
+                    { name: "Teal", value: "#14b8a6" },
+                  ].map((color) => {
+                    const isSelected = formData.color === color.value;
+                    return (
+                      <button
+                        key={color.value}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setFormData({ ...formData, color: color.value });
+                        }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                          isSelected
+                            ? "ring-2 ring-white/50 bg-white/10"
+                            : "hover:bg-white/5"
+                        }`}
+                        title={color.name}
+                      >
+                        <div 
+                          className="w-6 h-6 rounded-full border-2 border-white/20" 
+                          style={{ backgroundColor: color.value }}
+                        />
+                        <span className="font-medium">{color.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
               <div>
                 <Label>Compatible Calibers</Label>

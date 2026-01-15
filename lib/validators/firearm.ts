@@ -8,6 +8,7 @@ export const firearmSchema = z.object({
   defaultDistanceYards: z.number().positive().optional().or(z.undefined()),
   caliberIds: z.array(z.string()).optional().default([]),
   opticIds: z.array(z.string()).optional().default([]),
+  color: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean().default(true),
 });

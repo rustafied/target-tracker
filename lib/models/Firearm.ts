@@ -10,6 +10,7 @@ export interface IFirearm {
   defaultDistanceYards?: number;
   caliberIds: mongoose.Types.ObjectId[]; // Multiple calibers
   opticIds: mongoose.Types.ObjectId[]; // Multiple optics
+  color?: string; // Hex color for charts
   notes?: string;
   isActive: boolean;
   sortOrder: number;
@@ -27,6 +28,7 @@ const FirearmSchema = new Schema<IFirearm>(
     defaultDistanceYards: { type: Number },
     caliberIds: [{ type: Schema.Types.ObjectId, ref: "Caliber" }],
     opticIds: [{ type: Schema.Types.ObjectId, ref: "Optic" }],
+    color: { type: String },
     notes: { type: String },
     isActive: { type: Boolean, default: true },
     sortOrder: { type: Number, default: 0 },

@@ -97,15 +97,41 @@ export default function TargetsAnalyticsPage() {
 
   const fetchReferenceData = async () => {
     try {
-      const [firearmsRes, calibersRes, opticsRes] = await Promise.all([
+      const [firearmsRes, calibersRes, opticsRes, sheetsRes] = await Promise.all([
         fetch("/api/firearms"),
         fetch("/api/calibers"),
         fetch("/api/optics"),
+        fetch("/api/sheets"),
       ]);
 
-      if (firearmsRes.ok) setFirearms(await firearmsRes.json());
-      if (calibersRes.ok) setCalibers(await calibersRes.json());
-      if (opticsRes.ok) setOptics(await opticsRes.json());
+      if (sheetsRes.ok) {
+        const sheets = await sheetsRes.json();
+        
+        // Extract unique IDs from sheets and convert to strings
+        const usedFirearmIds = new Set(
+          sheets.map((s: any) => typeof s.firearmId === 'string' ? s.firearmId : s.firearmId?._id || s.firearmId?.toString()).filter(Boolean)
+        );
+        const usedCaliberIds = new Set(
+          sheets.map((s: any) => typeof s.caliberId === 'string' ? s.caliberId : s.caliberId?._id || s.caliberId?.toString()).filter(Boolean)
+        );
+        const usedOpticIds = new Set(
+          sheets.map((s: any) => typeof s.opticId === 'string' ? s.opticId : s.opticId?._id || s.opticId?.toString()).filter(Boolean)
+        );
+
+        // Filter to only show items that have been used
+        if (firearmsRes.ok) {
+          const allFirearms = await firearmsRes.json();
+          setFirearms(allFirearms.filter((f: any) => usedFirearmIds.has(f._id)));
+        }
+        if (calibersRes.ok) {
+          const allCalibers = await calibersRes.json();
+          setCalibers(allCalibers.filter((c: any) => usedCaliberIds.has(c._id)));
+        }
+        if (opticsRes.ok) {
+          const allOptics = await opticsRes.json();
+          setOptics(allOptics.filter((o: any) => usedOpticIds.has(o._id)));
+        }
+      }
     } catch (error) {
       toast.error("Failed to load reference data");
     }

@@ -80,6 +80,7 @@ export async function GET(request: Request) {
         return {
           firearmId: firearm._id.toString(),
           firearmName: firearm.name,
+          firearmColor: firearm.color,
           ...metrics,
         };
       })

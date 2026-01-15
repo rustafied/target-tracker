@@ -108,12 +108,12 @@ export default function SessionsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Range Sessions</h1>
-          <p className="text-muted-foreground mt-1">Track your range visits and performance</p>
+          <h1 className="text-3xl font-bold">Sessions</h1>
+          <p className="text-muted-foreground mt-1">Track your range visits</p>
         </div>
         <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Session
+          <Plus className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">New Session</span>
         </Button>
       </div>
 

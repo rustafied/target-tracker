@@ -495,41 +495,23 @@ export default function AmmoPage() {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-8">
+    <div>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/5 rounded-lg">
-            <Package className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">Ammo Inventory</h1>
-            <p className="text-white/60 text-sm">
-              Linked to your calibers from Setup
-            </p>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Ammo</h1>
+          <p className="text-muted-foreground mt-1">Track inventory and usage</p>
         </div>
         <div className="flex gap-2">
           <Button
             onClick={openUsageDialog}
             variant="outline"
-            className="dark:bg-white/5 dark:border-white/20 dark:hover:bg-white/10"
           >
             Record Usage
           </Button>
-          <Button
-            onClick={openOrderDialog}
-            className="dark:bg-white dark:text-black dark:hover:bg-white/90"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Order
-          </Button>
-          <Button
-            onClick={() => router.push("/setup/calibers")}
-            variant="outline"
-            className="dark:bg-white/5 dark:border-white/20 dark:hover:bg-white/10"
-          >
-            Manage Calibers
+          <Button onClick={openOrderDialog}>
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Add Order</span>
           </Button>
         </div>
       </div>
@@ -537,7 +519,7 @@ export default function AmmoPage() {
       {/* Search */}
       <div className="mb-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search calibers..."
             value={searchTerm}
@@ -571,17 +553,14 @@ export default function AmmoPage() {
       {/* Inventory Grid */}
       {filteredInventory.length === 0 ? (
         <Card className="p-12 text-center">
-          <Package className="w-12 h-12 mx-auto mb-4 text-white/20" />
+          <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground/20" />
           <h3 className="text-lg font-semibold mb-2">No calibers found</h3>
-          <p className="text-white/60 mb-6">
+          <p className="text-muted-foreground mb-6">
             {searchTerm
               ? "No calibers match your search"
               : "Add calibers in Setup to start tracking ammo"}
           </p>
-          <Button
-            onClick={() => router.push("/setup/calibers")}
-            className="dark:bg-white dark:text-black dark:hover:bg-white/90"
-          >
+          <Button onClick={() => router.push("/setup/calibers")}>
             Go to Setup → Calibers
           </Button>
         </Card>
@@ -590,7 +569,7 @@ export default function AmmoPage() {
           {filteredInventory.map((item) => (
             <Card
               key={item._id}
-              className="p-5 hover:bg-white/[0.02] transition-colors relative cursor-pointer"
+              className="p-5 hover:bg-accent transition-colors relative cursor-pointer"
               onClick={() => router.push(`/ammo/${item.caliber._id}`)}
             >
               <div className="flex items-center justify-between gap-4">
@@ -608,7 +587,7 @@ export default function AmmoPage() {
                       {item.caliber.name}
                     </h3>
                     {item.caliber.shortCode && (
-                      <p className="text-sm text-white/60">{item.caliber.shortCode}</p>
+                      <p className="text-sm text-muted-foreground">{item.caliber.shortCode}</p>
                     )}
                   </div>
                 </div>
@@ -632,12 +611,12 @@ export default function AmmoPage() {
                     <div className="text-2xl font-bold">
                       {item.onHand.toLocaleString()}
                     </div>
-                    <div className="text-xs text-white/60">rounds on hand</div>
+                    <div className="text-xs text-muted-foreground">rounds on hand</div>
                   </div>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 dark:hover:bg-white/10 flex-shrink-0"
+                    className="h-8 w-8 flex-shrink-0"
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditDialog(item);
@@ -660,7 +639,7 @@ export default function AmmoPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-muted-foreground">
               Select which calibers you ordered and enter quantities for each.
             </p>
 
@@ -713,11 +692,11 @@ export default function AmmoPage() {
                         >
                           <div className="font-semibold">{item.caliber.name}</div>
                           {item.caliber.shortCode && (
-                            <div className="text-xs text-white/50">
+                            <div className="text-xs text-muted-foreground">
                               {item.caliber.shortCode}
                             </div>
                           )}
-                          <div className="text-xs text-white/40">
+                          <div className="text-xs text-muted-foreground/60">
                             Current: {item.onHand} rounds
                           </div>
                         </Label>
@@ -750,7 +729,6 @@ export default function AmmoPage() {
               variant="outline"
               onClick={() => setOrderDialogOpen(false)}
               disabled={submittingOrder}
-              className="dark:bg-white/5 dark:border-white/20"
             >
               Cancel
             </Button>
@@ -758,7 +736,6 @@ export default function AmmoPage() {
               type="button"
               onClick={handleSubmitOrder}
               disabled={submittingOrder}
-              className="dark:bg-white dark:text-black dark:hover:bg-white/90"
             >
               {submittingOrder ? "Adding..." : "Add to Inventory"}
             </Button>
@@ -774,7 +751,7 @@ export default function AmmoPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-muted-foreground">
               Select calibers and enter rounds used for shooting that wasn't recorded in a session.
             </p>
 
@@ -836,7 +813,7 @@ export default function AmmoPage() {
                           className="flex-1 font-normal"
                         >
                           <div className="font-semibold">{item.caliber.name}</div>
-                          <div className="text-xs text-white/40">
+                          <div className="text-xs text-muted-foreground/60">
                             Available: {item.onHand} rounds
                           </div>
                         </Label>
@@ -870,7 +847,6 @@ export default function AmmoPage() {
               variant="outline"
               onClick={() => setUsageDialogOpen(false)}
               disabled={submittingUsage}
-              className="dark:bg-white/5 dark:border-white/20"
             >
               Cancel
             </Button>
@@ -878,7 +854,6 @@ export default function AmmoPage() {
               type="button"
               onClick={handleSubmitUsage}
               disabled={submittingUsage}
-              className="dark:bg-white dark:text-black dark:hover:bg-white/90"
             >
               {submittingUsage ? "Recording..." : "Record Usage"}
             </Button>
@@ -896,7 +871,7 @@ export default function AmmoPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="text-sm text-white/60">
+            <div className="text-sm text-muted-foreground">
               Current: {editingCaliber?.onHand.toLocaleString()} rounds
             </div>
 
@@ -905,7 +880,6 @@ export default function AmmoPage() {
               <Button
                 variant="outline"
                 onClick={() => setEditAmount("50")}
-                className="dark:bg-white/5 dark:border-white/20"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add 50
@@ -913,7 +887,6 @@ export default function AmmoPage() {
               <Button
                 variant="outline"
                 onClick={() => setEditAmount("100")}
-                className="dark:bg-white/5 dark:border-white/20"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add 100
@@ -921,7 +894,6 @@ export default function AmmoPage() {
               <Button
                 variant="outline"
                 onClick={() => setEditAmount("-50")}
-                className="dark:bg-white/5 dark:border-white/20"
               >
                 <Plus className="w-4 h-4 mr-2 rotate-45" />
                 Remove 50
@@ -929,7 +901,6 @@ export default function AmmoPage() {
               <Button
                 variant="outline"
                 onClick={() => setEditAmount("-100")}
-                className="dark:bg-white/5 dark:border-white/20"
               >
                 <Plus className="w-4 h-4 mr-2 rotate-45" />
                 Remove 100
@@ -938,10 +909,10 @@ export default function AmmoPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-white/10" />
+                <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[#0a0a0a] px-2 text-white/60">
+                <span className="bg-background px-2 text-muted-foreground">
                   Or custom amount
                 </span>
               </div>
@@ -975,14 +946,10 @@ export default function AmmoPage() {
             <Button
               variant="outline"
               onClick={() => setEditDialogOpen(false)}
-              className="dark:bg-white/5 dark:border-white/20"
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleEditSubmit}
-              className="dark:bg-white dark:text-black dark:hover:bg-white/90"
-            >
+            <Button onClick={handleEditSubmit}>
               Apply
             </Button>
           </DialogFooter>

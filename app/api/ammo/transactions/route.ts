@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { AmmoTransaction } from "@/lib/models/AmmoTransaction";
+import { RangeSession } from "@/lib/models/RangeSession";
+import { TargetSheet } from "@/lib/models/TargetSheet";
+import { Caliber } from "@/lib/models/Caliber";
 import { requireUserId } from "@/lib/auth-helpers";
 import mongoose from "mongoose";
 
@@ -9,6 +12,11 @@ export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
     const userId = await requireUserId(req);
+    
+    // Ensure models are registered
+    void RangeSession;
+    void TargetSheet;
+    void Caliber;
 
     const { searchParams } = new URL(req.url);
     const caliberId = searchParams.get("caliberId");
@@ -19,6 +27,7 @@ export async function GET(req: NextRequest) {
     const userIdString = userId.toString();
     const filter: any = { userId: userIdString };
     if (caliberId) {
+      // Convert to ObjectId for Mongoose query
       filter.caliberId = new mongoose.Types.ObjectId(caliberId);
     }
 
@@ -39,6 +48,12 @@ export async function GET(req: NextRequest) {
       total,
       limit,
       offset,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
     });
   } catch (error) {
     console.error("Error fetching transactions:", error);

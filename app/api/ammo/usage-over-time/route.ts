@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { AmmoTransaction } from "@/lib/models/AmmoTransaction";
+import { RangeSession } from "@/lib/models/RangeSession";
+import { Caliber } from "@/lib/models/Caliber";
 import { requireUserId } from "@/lib/auth-helpers";
 import mongoose from "mongoose";
 
@@ -10,6 +12,10 @@ export async function GET(req: NextRequest) {
     await connectToDatabase();
     const userId = await requireUserId(req);
     const userIdString = userId.toString();
+    
+    // Ensure models are registered
+    void RangeSession;
+    void Caliber;
 
     // Get all session deduction transactions, grouped by date and caliber
     const usageData = await AmmoTransaction.aggregate([

@@ -11,6 +11,9 @@ export async function GET(req: NextRequest) {
     await connectToDatabase();
     const userId = await requireUserId(req);
 
+    // Ensure models are registered
+    void Caliber;
+
     // Ensure userId is a string
     const userIdString = userId.toString();
     
@@ -46,7 +49,13 @@ export async function GET(req: NextRequest) {
 
     const inventory = await AmmoInventory.aggregate(pipeline);
 
-    return NextResponse.json(inventory);
+    return NextResponse.json(inventory, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
+    });
   } catch (error) {
     console.error("Error fetching inventory:", error);
     return NextResponse.json(

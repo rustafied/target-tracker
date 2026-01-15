@@ -4,6 +4,109 @@ All notable changes to Target Tracker will be documented in this file.
 
 ## [Unreleased]
 
+## [1.6.1] - January 15, 2026
+
+### Features
+- **Firearm Colors**: Added customizable colors for each firearm
+  - Color swatch selector with 8 preset colors (Blue, Green, Amber, Red, Violet, Cyan, Pink, Teal)
+  - Colors are applied to all charts on session and analytics pages
+  - Filter badges use firearm colors when selected
+  - Firearm validator updated to persist color field
+
+### Changes
+- **Transaction History Display**: Removed transaction grouping by session
+  - Each sheet now displays as a separate line item in transaction history
+  - Provides more detailed visibility into per-sheet ammo usage
+  - Easier to track and audit individual shooting sessions
+
+### Fixes
+- **Ammo Transaction Calculation**: Fixed critical bug where ammo transactions were using wrong shot count
+  - Updated `calculateSheetShots()` to sum score counts instead of using `totalShots` field
+  - `totalShots` field on bull records was not always updated, causing incorrect ammo calculations
+  - Now uses same calculation method as session API (sum of score5Count through score0Count)
+  - Reconciled all historical sheets with correct shot counts
+  - This fixes discrepancies where frontend showed different shot totals than ammo transactions
+- **Ammo Reconciliation**: Fixed issue where ammo transactions weren't being created for sheets
+  - Ran reconciliation script to create missing transactions for all historical sheets
+  - Added cleanup endpoint to remove orphaned transactions (sheets deleted but transactions remain)
+- **Session API**: Fixed firearm data population to include all fields including color
+  - Changed from Mongoose populate to manual fetching to ensure field inclusion
+- **Session Heatmap**: Increased size from 300px to 350px and renamed "Session Heatmap" to just "Heatmap"
+- **Session View**: Increased total shots text size from xs to sm for better readability
+
+## [1.6.0] - January 14, 2026
+
+### UI/UX Improvements
+
+#### Mobile View Enhancements
+- **Sessions Page**: New Session button now shows only "+" icon on mobile (text hidden)
+- **Session Detail**: "View" button now displays text on mobile instead of icon-only
+- **Session Detail**: "Add Sheet" button optimized for mobile (icon only on small screens)
+- **Session Detail**: Notes card now has proper "Notes" header with reduced spacing and gray styling
+- **Sessions Page**: Updated title from "Range Sessions" to just "Sessions"
+- **Sessions Page**: Simplified subtitle from "Track your range visits and performance" to "Track your range visits"
+
+#### Session Analytics
+- **Ammo Usage Chart**: Added new chart showing ammunition used by caliber on session detail page
+  - Chart positioned below session heatmap in right column
+  - Shows total rounds used per caliber in the session
+  - Calculates directly from actual shots recorded (not just transactions)
+  - 200px height with proper margins
+  - Blue color scheme matching app theme
+- **Average Score Chart**: Increased height to 590px for better readability
+- **Layout**: Reorganized session overview with 2/3 width chart and 1/3 width sidebar (heatmap + ammo)
+
+#### Navigation
+- **Sidebar**: Setup and Analytics sections now expanded by default on all screen sizes
+
+#### Ammo Page Redesign
+- Updated header styling to match Sessions page consistency
+- Changed title from "Ammo Inventory" to just "Ammo"
+- Updated subtitle to "Track inventory and usage"
+- Removed "Manage Calibers" button from top right
+- Hide "Add Order" button text on mobile (icon only)
+- Simplified styling to use theme defaults throughout
+- Removed custom dark mode classes in favor of theme variables
+- Updated all text colors to use `text-muted-foreground` for consistency
+- Updated button hover states to use `hover:bg-accent`
+
+#### Firearms Analytics Page Redesign
+- **New Layout**: Chart and leaderboard side-by-side view
+  - Left column (2/3 width): Multi-firearm performance line chart showing average scores over time
+  - Right column (1/3 width): Scrollable leaderboard with rankings
+- **Chart Features**: 
+  - Shows all firearms' performance trends on one chart
+  - Color-coded lines for each firearm (up to 8 distinct colors)
+  - 590px height matching session page design
+  - Smooth lines with 3px width
+  - Displays average score per sheet chronologically
+- **Leaderboard**:
+  - Compact cards showing rank, firearm name, avg score, bull rate, and total shots
+  - Scrollable with max-height of 590px
+  - No selection state (removed interactive selection)
+- **Removed**:
+  - All filters (page now shows all data)
+  - Detailed analysis section for individual firearms
+  - KPI cards
+  - Position metrics
+  - Individual firearm trend charts
+
+#### Analytics Filters
+- **Smart Filtering**: Filter options now only show firearms, calibers, and optics that have been used in sessions
+- **Improved Performance**: Filters load data from actual sheets to display only relevant items
+- **Applied to**: Overview, Targets, Calibers, and Optics analytics pages
+
+#### Session Filters
+- **Firearm Filter**: Added "All" badge that's selected by default
+- **Smart Display**: Only shows filter section when 3+ firearms are used in session
+- **Visual Feedback**: Selected filter uses blue background with white text
+- **Better UX**: Clicking "All" shows all sheets, clicking specific firearm filters to that firearm
+
+### Bug Fixes
+- Fixed ammo usage chart to accurately calculate rounds from all sheets in a session
+- Fixed variable name collision in firearms analytics chart causing runtime error
+- Fixed filter options not appearing due to ID type mismatch (handles string, ObjectId, and populated objects)
+
 ## [1.5.0] - January 13, 2026
 
 ### Added - Ammo Inventory System

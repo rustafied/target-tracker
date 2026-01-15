@@ -43,8 +43,8 @@ const setupItems = [
 
 function NavigationItems({ onItemClick, isDesktop = false }: { onItemClick?: () => void; isDesktop?: boolean }) {
   const pathname = usePathname();
-  const [analyticsOpen, setAnalyticsOpen] = useState(isDesktop || pathname.startsWith("/analytics"));
-  const [setupOpen, setSetupOpen] = useState(isDesktop || pathname.startsWith("/setup"));
+  const [analyticsOpen, setAnalyticsOpen] = useState(true);
+  const [setupOpen, setSetupOpen] = useState(true);
 
   return (
     <>

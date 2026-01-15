@@ -18,8 +18,18 @@ export async function calculateSheetShots(sheetId: mongoose.Types.ObjectId): Pro
   // Get all bull records for this sheet (using targetSheetId, not sheetId)
   const bulls = await BullRecord.find({ targetSheetId: sheetId }).lean();
   
-  // Sum up totalShots from all bulls
-  const totalShots = bulls.reduce((sum, bull) => sum + (bull.totalShots || 0), 0);
+  // Sum up shots from score counts (same logic as session API)
+  // The totalShots field on bull records is not always updated, so we calculate from score counts
+  const totalShots = bulls.reduce((sum, bull) => {
+    const bullShots =
+      (bull.score5Count || 0) +
+      (bull.score4Count || 0) +
+      (bull.score3Count || 0) +
+      (bull.score2Count || 0) +
+      (bull.score1Count || 0) +
+      (bull.score0Count || 0);
+    return sum + bullShots;
+  }, 0);
   
   console.log('[Ammo Reconciliation] calculateSheetShots:', { 
     sheetId: sheetId.toString(), 
@@ -47,10 +57,9 @@ export async function reconcileSheetAmmo(params: ReconcileAmmoParams): Promise<v
   // Calculate current shots used
   const shotsUsed = await calculateSheetShots(sheetId);
 
-  // Find existing transaction for this sheet (convert ObjectIds to strings for query)
+  // Find existing transaction for this sheet (query by sheetId only to avoid duplicates)
   const existingTx = await AmmoTransaction.findOne({
     sheetId: sheetId.toString(),
-    caliberId: caliberId.toString(),
     reason: "session_deduct",
   });
   
@@ -59,19 +68,50 @@ export async function reconcileSheetAmmo(params: ReconcileAmmoParams): Promise<v
   if (existingTx) {
     // Update existing transaction
     const oldShots = Math.abs(existingTx.delta);
-    const deltaChange = -(shotsUsed - oldShots);
+    const oldCaliberId = existingTx.caliberId.toString();
+    const newCaliberId = caliberId.toString();
+    
+    console.log('[Ammo Reconciliation] Updating transaction:', { 
+      oldShots, 
+      newShots: shotsUsed, 
+      oldCaliberId,
+      newCaliberId
+    });
 
-    console.log('[Ammo Reconciliation] Updating transaction:', { oldShots, newShots: shotsUsed, deltaChange });
+    // If caliber changed, reverse the old inventory and apply to new
+    if (oldCaliberId !== newCaliberId) {
+      // Reverse old caliber inventory
+      await AmmoInventory.updateOne(
+        { userId: userId.toString(), caliberId: oldCaliberId },
+        { $inc: { onHand: oldShots } },
+        { upsert: true }
+      );
+      
+      // Apply to new caliber inventory
+      await AmmoInventory.updateOne(
+        { userId: userId.toString(), caliberId: newCaliberId },
+        { $inc: { onHand: -shotsUsed } },
+        { upsert: true }
+      );
+      
+      console.log('[Ammo Reconciliation] Caliber changed, moved inventory from', oldCaliberId, 'to', newCaliberId);
+    } else {
+      // Same caliber, just adjust the difference
+      const deltaChange = -(shotsUsed - oldShots);
+      await AmmoInventory.updateOne(
+        { userId: userId.toString(), caliberId: newCaliberId },
+        { $inc: { onHand: deltaChange } },
+        { upsert: true }
+      );
+    }
 
+    // Update transaction with new values (keep as ObjectId)
     existingTx.delta = -shotsUsed;
+    existingTx.caliberId = caliberId;
+    if (sessionId) {
+      existingTx.sessionId = sessionId;
+    }
     await existingTx.save();
-
-    // Update inventory (convert caliberId to string)
-    await AmmoInventory.updateOne(
-      { userId: userId.toString(), caliberId: caliberId.toString() },
-      { $inc: { onHand: deltaChange } },
-      { upsert: true }
-    );
   } else {
     // Create new transaction
     console.log('[Ammo Reconciliation] Creating new transaction for', shotsUsed, 'shots');
@@ -96,12 +136,12 @@ async function createSheetAmmoTransaction(
     return;
   }
 
-  // Convert ObjectIds to strings for storage
+  // Store IDs as ObjectId for Mongoose compatibility
   await AmmoTransaction.create({
     userId: userId.toString(),
-    caliberId: caliberId.toString(),
-    sheetId: sheetId.toString(),
-    sessionId: sessionId?.toString(),
+    caliberId: caliberId,  // Keep as ObjectId
+    sheetId: sheetId,      // Keep as ObjectId
+    sessionId: sessionId,  // Keep as ObjectId
     delta: -shotsUsed,
     reason: "session_deduct",
   });
@@ -113,6 +153,34 @@ async function createSheetAmmoTransaction(
   );
   
   console.log('[Ammo Reconciliation] Created transaction and updated inventory:', { shotsUsed, caliberId: caliberId.toString() });
+}
+
+/**
+ * Clean up duplicate transactions for a sheet (keep only one)
+ */
+export async function cleanupDuplicateTransactions(sheetId: mongoose.Types.ObjectId): Promise<void> {
+  const transactions = await AmmoTransaction.find({
+    sheetId: sheetId.toString(),
+    reason: "session_deduct",
+  }).sort({ createdAt: 1 }); // Oldest first
+
+  if (transactions.length > 1) {
+    console.log(`[Ammo Reconciliation] Found ${transactions.length} duplicate transactions for sheet ${sheetId}, keeping oldest`);
+    
+    // Keep the first (oldest) transaction, delete the rest
+    for (let i = 1; i < transactions.length; i++) {
+      const tx = transactions[i];
+      
+      // Reverse the inventory for duplicates
+      await AmmoInventory.updateOne(
+        { caliberId: tx.caliberId.toString() },
+        { $inc: { onHand: -tx.delta } }
+      );
+      
+      await AmmoTransaction.deleteOne({ _id: tx._id });
+      console.log(`[Ammo Reconciliation] Deleted duplicate transaction ${tx._id}`);
+    }
+  }
 }
 
 /**
@@ -133,17 +201,17 @@ export async function reverseSheetAmmo(
   if (existingTx) {
     const shotsToReverse = Math.abs(existingTx.delta);
 
-    // Create reversal transaction (convert to strings)
+    // Create reversal transaction (use ObjectId)
     await AmmoTransaction.create({
       userId: userId.toString(),
-      caliberId: caliberId.toString(),
-      sheetId: sheetId.toString(),
+      caliberId: caliberId,  // Keep as ObjectId
+      sheetId: sheetId,      // Keep as ObjectId
       delta: shotsToReverse,
       reason: "session_reversal",
       note: "Sheet deleted",
     });
 
-    // Update inventory (convert to string)
+    // Update inventory
     await AmmoInventory.updateOne(
       { userId: userId.toString(), caliberId: caliberId.toString() },
       { $inc: { onHand: shotsToReverse } }

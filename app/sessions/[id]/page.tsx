@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp, Crosshair, Eye, Ruler, FileText, Zap, Award, BarChart3, Clock } from "lucide-react";
+import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp, Crosshair, Eye, Ruler, FileText, Zap, Award, BarChart3, Clock, Package } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,6 +53,14 @@ interface BullRecord {
   totalScore: number;
 }
 
+interface AmmoTransaction {
+  _id: string;
+  caliberId: { _id: string; name: string; shortCode?: string };
+  delta: number;
+  reason: string;
+  createdAt: string;
+}
+
 interface RangeSession {
   _id: string;
   slug: string;
@@ -66,7 +74,7 @@ interface RangeSession {
 interface Sheet {
   _id: string;
   slug?: string;
-  firearmId: { _id: string; name: string };
+  firearmId: { _id: string; name: string; color?: string };
   caliberId: { _id: string; name: string };
   opticId: { _id: string; name: string };
   distanceYards: number;
@@ -95,6 +103,7 @@ export default function SessionDetailPage() {
 
   const [session, setSession] = useState<RangeSession | null>(null);
   const [sheets, setSheets] = useState<Sheet[]>([]);
+  const [ammoTransactions, setAmmoTransactions] = useState<AmmoTransaction[]>([]);
   const [allSessions, setAllSessions] = useState<any[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,13 +159,14 @@ export default function SessionDetailPage() {
         const data = await res.json();
         setSession(data.session);
         setSheets(data.sheets);
+        setAmmoTransactions(data.ammoTransactions || []);
       } else {
         toast.error("Session not found");
         router.push("/sessions");
       }
     } catch (error) {
       toast.error("Failed to load session");
-    } finally {
+    } finally{
       setLoading(false);
     }
   };
@@ -387,7 +397,7 @@ export default function SessionDetailPage() {
   const getSessionProgressionChartOption = () => {
     if (sheets.length === 0) return null;
 
-    const colors = [
+    const defaultColors = [
       "#3b82f6", // blue
       "#22c55e", // green
       "#f59e0b", // amber
@@ -398,15 +408,21 @@ export default function SessionDetailPage() {
       "#14b8a6", // teal
     ];
 
-    // Group sheets by firearm in chronological order
-    const firearmSheets = new Map<string, { name: string; sheets: any[] }>();
+    // Group sheets by firearm in chronological order, capture colors
+    const firearmSheets = new Map<string, { name: string; color: string; sheets: any[] }>();
     
     sheets.forEach(sheet => {
       const firearmId = sheet.firearmId._id;
       const firearmName = sheet.firearmId.name;
+      const firearmColor = sheet.firearmId.color;
       
       if (!firearmSheets.has(firearmId)) {
-        firearmSheets.set(firearmId, { name: firearmName, sheets: [] });
+        const assignedColor = firearmColor || defaultColors[firearmSheets.size % defaultColors.length];
+        firearmSheets.set(firearmId, { 
+          name: firearmName, 
+          color: assignedColor,
+          sheets: [] 
+        });
       }
       
       const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
@@ -421,14 +437,14 @@ export default function SessionDetailPage() {
     const xAxisLabels = Array.from({ length: maxSheets }, (_, i) => `Sheet ${i + 1}`);
 
     // Create series for each firearm
-    const series = Array.from(firearmSheets.values()).map((firearmData, index) => ({
+    const series = Array.from(firearmSheets.values()).map((firearmData) => ({
       name: firearmData.name,
       type: "line" as const,
       data: firearmData.sheets,
       smooth: true,
       symbol: "circle" as const,
       symbolSize: 8,
-      color: colors[index % colors.length],
+      color: firearmData.color,
       lineStyle: {
         width: 3,
       },
@@ -462,6 +478,7 @@ export default function SessionDetailPage() {
         right: 30,
         top: 60,
         bottom: 60,
+        containLabel: true,
       },
       xAxis: {
         type: "category" as const,
@@ -502,7 +519,7 @@ export default function SessionDetailPage() {
           </div>
           <div className="flex gap-2">
             <Button onClick={() => router.push(`/sessions/${sessionId}/sheets/new`)}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Add Sheet</span>
             </Button>
             <Button variant="outline" size="icon" onClick={openEditDialog}>
@@ -515,7 +532,10 @@ export default function SessionDetailPage() {
         </div>
         {session.notes && (
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Notes</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 pb-6">
               <p className="text-sm">{session.notes}</p>
             </CardContent>
           </Card>
@@ -596,13 +616,71 @@ export default function SessionDetailPage() {
               <div className="lg:col-span-2">
                 <h3 className="text-sm font-semibold mb-3">Average Score per Sheet by Firearm</h3>
                 {sessionProgressionChartOption && (
-                  <EChart option={sessionProgressionChartOption} height={300} />
+                  <div style={{ width: "100%", height: "590px" }}>
+                    <EChart option={sessionProgressionChartOption} height="100%" />
+                  </div>
                 )}
               </div>
 
-              {/* Heatmap - 1/3 width on large screens */}
-              <div className="flex items-center justify-center">
-                <SessionHeatmap sheets={sheets} />
+              {/* Right column - Heatmap and Ammo */}
+              <div className="space-y-6">
+                {/* Heatmap */}
+                <div className="flex items-center justify-center">
+                  <SessionHeatmap sheets={sheets} />
+                </div>
+
+                {/* Ammo Usage */}
+                {(() => {
+                  // Calculate ammo usage from actual sheets instead of transactions
+                  const caliberUsage: Record<string, number> = {};
+                  
+                  sheets.forEach(sheet => {
+                    const caliberName = sheet.caliberId.name;
+                    const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
+                    
+                    if (!caliberUsage[caliberName]) {
+                      caliberUsage[caliberName] = 0;
+                    }
+                    caliberUsage[caliberName] += totalShots;
+                  });
+
+                  const chartData = Object.entries(caliberUsage)
+                    .filter(([_, rounds]) => rounds > 0)
+                    .map(([name, rounds]) => ({
+                      name,
+                      rounds,
+                    }));
+
+                  if (chartData.length === 0) return null;
+
+                  return (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        Ammo Used
+                      </h3>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                          <XAxis dataKey="name" stroke="#888" />
+                          <YAxis stroke="#888" />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "rgba(0, 0, 0, 0.8)",
+                              border: "1px solid rgba(255, 255, 255, 0.1)",
+                              borderRadius: "6px",
+                            }}
+                            labelStyle={{ color: "#fff" }}
+                            cursor={false}
+                          />
+                          <Bar dataKey="rounds" fill="#3b82f6" name="Rounds Used">
+                            <LabelList dataKey="rounds" position="top" fill="#fff" fontSize={12} />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </CardContent>
@@ -614,22 +692,45 @@ export default function SessionDetailPage() {
       {/* Firearm Filter */}
       {(() => {
         const uniqueFirearms = Array.from(
-          new Map(sheets.map(s => [s.firearmId._id, { id: s.firearmId._id, name: s.firearmId.name }])).values()
+          new Map(sheets.map(s => [s.firearmId._id, { id: s.firearmId._id, name: s.firearmId.name, color: s.firearmId.color }])).values()
         );
         
-        if (uniqueFirearms.length > 1) {
+        if (uniqueFirearms.length > 2) {
           return (
             <div className="flex flex-wrap gap-2 mb-4">
-              {uniqueFirearms.map((firearm) => (
-                <Badge
-                  key={firearm.id}
-                  variant={selectedFirearmId === firearm.id ? "default" : "outline"}
-                  className="cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setSelectedFirearmId(selectedFirearmId === firearm.id ? null : firearm.id)}
-                >
-                  {firearm.name}
-                </Badge>
-              ))}
+              <Badge
+                variant={selectedFirearmId === null ? "default" : "outline"}
+                className={`cursor-pointer transition-all ${
+                  selectedFirearmId === null 
+                    ? "bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700" 
+                    : "hover:bg-accent"
+                }`}
+                onClick={() => setSelectedFirearmId(null)}
+              >
+                All
+              </Badge>
+              {uniqueFirearms.map((firearm) => {
+                const isSelected = selectedFirearmId === firearm.id;
+                const firearmColor = firearm.color || "#3b82f6";
+                return (
+                  <Badge
+                    key={firearm.id}
+                    variant={isSelected ? "default" : "outline"}
+                    className={`cursor-pointer transition-all ${
+                      isSelected 
+                        ? "text-white" 
+                        : "hover:bg-accent"
+                    }`}
+                    style={isSelected ? { 
+                      backgroundColor: firearmColor,
+                      borderColor: firearmColor,
+                    } : {}}
+                    onClick={() => setSelectedFirearmId(firearm.id)}
+                  >
+                    {firearm.name}
+                  </Badge>
+                );
+              })}
             </div>
           );
         }
@@ -692,8 +793,8 @@ export default function SessionDetailPage() {
                         size="sm"
                         onClick={() => router.push(`/sheets/${sheet.slug || sheet._id}`)}
                       >
-                        <TargetIcon className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">View</span>
+                        <TargetIcon className="h-4 w-4 mr-2" />
+                        <span>View</span>
                       </Button>
                       <Button
                         variant="outline"

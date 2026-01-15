@@ -122,7 +122,7 @@ export function SessionHeatmap({ sheets }: SessionHeatmapProps) {
   return (
     <>
       <div className="text-center cursor-pointer group" onClick={() => setModalOpen(true)}>
-        <div className="relative w-full max-w-[300px] mx-auto aspect-square transition-all duration-300 group-hover:scale-105">
+        <div className="relative w-full max-w-[350px] mx-auto aspect-square transition-all duration-300 group-hover:scale-105">
           <svg viewBox="0 0 200 200" className="w-full h-full">
             {/* Target rings (from outside to inside) */}
             <circle cx="100" cy="100" r="100" fill="white" stroke="#333" strokeWidth="2" />
@@ -150,8 +150,8 @@ export function SessionHeatmap({ sheets }: SessionHeatmapProps) {
             <Maximize2 className="h-8 w-8 text-white" />
           </div>
         </div>
-        <p className="text-sm font-medium mt-2">Session Heatmap</p>
-        <p className="text-xs text-muted-foreground">{totalShots} total shots</p>
+        <p className="text-sm font-medium mt-2">Heatmap</p>
+        <p className="text-sm text-muted-foreground">{totalShots} total shots</p>
       </div>
 
       {/* Modal */}
@@ -163,7 +163,7 @@ export function SessionHeatmap({ sheets }: SessionHeatmapProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
-              Session Heatmap
+              Heatmap
             </DialogTitle>
           </DialogHeader>
           
