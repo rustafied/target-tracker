@@ -200,7 +200,7 @@ export async function generateSessionInsights(
   const fullConfig = { ...DEFAULT_CONFIG, ...config };
   const insights: Insight[] = [];
   
-  const session = await RangeSession.findById(sessionId).populate('sheets');
+  const session = await RangeSession.findById(sessionId);
   if (!session) {
     console.log('[generateSessionInsights] Session not found');
     return [];
