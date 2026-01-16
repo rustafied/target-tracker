@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -214,27 +214,30 @@ export function InsightSettingsModal({ open, onOpenChange }: InsightSettingsModa
             {/* Insight Types */}
             <div className="space-y-4 p-4 rounded-lg border border-white/10 bg-white/5">
               <Label className="text-base font-semibold text-white">Enabled Insight Types</Label>
+              <p className="text-xs text-white/60 mt-1">Click tags to toggle on/off</p>
               {Object.entries(groupedTypes).map(([category, types]) => (
                 <div key={category} className="space-y-3 mt-4">
-                  <h4 className="text-sm font-semibold text-white/80 uppercase tracking-wide">
+                  <h4 className="text-sm font-semibold text-white uppercase tracking-wide">
                     {category} Insights
                   </h4>
-                  <div className="space-y-3 pl-2 border-l-2 border-white/20">
-                    {types.map(({ type, label }) => (
-                      <div key={type} className="flex items-center justify-between gap-4 py-1.5 pl-3">
-                        <label
-                          htmlFor={type}
-                          className="text-sm cursor-pointer flex-1 text-white/90 hover:text-white transition-colors"
+                  <div className="flex flex-wrap gap-2 pl-2">
+                    {types.map(({ type, label }) => {
+                      const isEnabled = preferences.enabledTypes.includes(type);
+                      return (
+                        <Badge
+                          key={type}
+                          onClick={() => toggleInsightType(type)}
+                          className={`cursor-pointer px-3 py-1.5 transition-all ${
+                            isEnabled
+                              ? 'bg-green-600 hover:bg-green-700 text-white border-green-500'
+                              : 'bg-white/5 hover:bg-white/10 text-white/50 border-white/20'
+                          }`}
+                          variant="outline"
                         >
-                          {label}
-                        </label>
-                        <Switch
-                          id={type}
-                          checked={preferences.enabledTypes.includes(type)}
-                          onCheckedChange={() => toggleInsightType(type)}
-                        />
-                      </div>
-                    ))}
+                          {label} {isEnabled ? '✓' : '✕'}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
