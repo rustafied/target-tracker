@@ -64,7 +64,7 @@ export async function GET(
         sessionId: rangeSession._id,
         sessionUserId: rangeSession.userId,
         requestUserId: userId,
-        userIdMatch: rangeSession.userId?.toString() === userId,
+        userIdMatch: rangeSession.userId?.toString() === userId.toString(),
         sheetCount: sheets.length,
         bullCount: bulls.length,
         avgScore,
