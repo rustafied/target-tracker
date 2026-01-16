@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Activity, TrendingDown, TrendingUp, Minus, Lightbulb } from "lucide-react";
+import { Activity, TrendingDown, TrendingUp, Minus, Lightbulb, Target, Crosshair, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -127,8 +127,13 @@ export function SequenceAnalysisCard({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            {data?.insights[0] || "No sequence data available. Need sessions with at least 20 shots."}
+            {data?.insights && data.insights.length > 0 ? data.insights[0] : "No sequence data available."}
           </p>
+          {data && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Overall: {data.overall?.totalShots || 0} shots
+            </p>
+          )}
         </CardContent>
       </Card>
     );
@@ -342,19 +347,31 @@ export function SequenceAnalysisCard({
         {/* Overall Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t">
           <div>
-            <div className="text-xs text-muted-foreground">Overall Avg Score</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <TrendingUp className="h-3.5 w-3.5" />
+              Overall Avg Score
+            </div>
             <div className="text-lg font-semibold">{overall.avgScore.toFixed(2)}</div>
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">Bull Rate</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Target className="h-3.5 w-3.5" />
+              Bull Rate
+            </div>
             <div className="text-lg font-semibold">{(overall.bullRate * 100).toFixed(1)}%</div>
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">Miss Rate</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Crosshair className="h-3.5 w-3.5" />
+              Miss Rate
+            </div>
             <div className="text-lg font-semibold">{(overall.missRate * 100).toFixed(1)}%</div>
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">Total Shots</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Total Shots
+            </div>
             <div className="text-lg font-semibold">{overall.totalShots}</div>
           </div>
         </div>

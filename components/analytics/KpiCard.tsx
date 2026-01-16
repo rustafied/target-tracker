@@ -109,9 +109,6 @@ export function KpiCard({
           )}
         </div>
         {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
-        {deltaDisplay && (
-          <p className="text-xs text-muted-foreground mt-1">Last 3 vs prev 3 sessions</p>
-        )}
       </CardContent>
     </Card>
   );

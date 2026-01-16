@@ -30,6 +30,7 @@ import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
 import { DistanceAnalysisCard } from "@/components/analytics/DistanceAnalysisCard";
 import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCard";
 import { EfficiencySummary } from "@/components/analytics/EfficiencySummary";
+import { AnomalySummaryWidget } from "@/components/analytics/AnomalySummaryWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingCard } from "@/components/ui/spinner";
@@ -107,15 +108,30 @@ export default function AnalyticsPage() {
       if (sheetsRes.ok) {
         const sheets = await sheetsRes.json();
         
-        // Extract unique IDs from sheets and convert to strings
+        // Extract unique IDs from sheets - convert everything to string for comparison
         const usedFirearmIds = new Set(
-          sheets.map((s: any) => typeof s.firearmId === 'string' ? s.firearmId : s.firearmId?._id || s.firearmId?.toString()).filter(Boolean)
+          sheets
+            .map((s: any) => {
+              if (!s.firearmId) return null;
+              return typeof s.firearmId === 'string' ? s.firearmId : String(s.firearmId);
+            })
+            .filter(Boolean)
         );
         const usedCaliberIds = new Set(
-          sheets.map((s: any) => typeof s.caliberId === 'string' ? s.caliberId : s.caliberId?._id || s.caliberId?.toString()).filter(Boolean)
+          sheets
+            .map((s: any) => {
+              if (!s.caliberId) return null;
+              return typeof s.caliberId === 'string' ? s.caliberId : String(s.caliberId);
+            })
+            .filter(Boolean)
         );
         const usedOpticIds = new Set(
-          sheets.map((s: any) => typeof s.opticId === 'string' ? s.opticId : s.opticId?._id || s.opticId?.toString()).filter(Boolean)
+          sheets
+            .map((s: any) => {
+              if (!s.opticId) return null;
+              return typeof s.opticId === 'string' ? s.opticId : String(s.opticId);
+            })
+            .filter(Boolean)
         );
 
         // Filter to only show items that have been used
@@ -430,7 +446,7 @@ export default function AnalyticsPage() {
       <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Avg Score/Shot"
           value={kpis.avgScore.toFixed(2)}
@@ -468,51 +484,55 @@ export default function AnalyticsPage() {
           subtitle={`${kpis.sessionsCount} sessions`}
         />
       </div>
+      <p className="text-xs text-muted-foreground mt-2 mb-6">Last 3 vs prev 3 sessions</p>
 
       {/* Position-based KPIs (if available) */}
       {kpis.shotCoverage > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          {kpis.meanRadius !== null && (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {kpis.meanRadius !== null && (
+              <KpiCard
+                title="Mean Radius"
+                value={kpis.meanRadius.toFixed(2)}
+                icon={Radius}
+                delta={deltas.last3VsPrev3?.meanRadius?.delta}
+                higherIsBetter={false}
+                subtitle="Target units"
+                trend={trends?.meanRadius?.direction}
+                trendConfidence={trends?.meanRadius?.confidence}
+              />
+            )}
+            {kpis.centroidDistance !== null && (
+              <KpiCard
+                title="Centroid Distance"
+                value={kpis.centroidDistance.toFixed(2)}
+                icon={Focus}
+                delta={deltas.last3VsPrev3?.centroidDistance?.delta}
+                higherIsBetter={false}
+                subtitle="Bias from center"
+                trend={trends?.centroidDistance?.direction}
+                trendConfidence={trends?.centroidDistance?.confidence}
+              />
+            )}
             <KpiCard
-              title="Mean Radius"
-              value={kpis.meanRadius.toFixed(2)}
-              icon={Radius}
-              delta={deltas.last3VsPrev3?.meanRadius?.delta}
-              higherIsBetter={false}
-              subtitle="Target units"
-              trend={trends?.meanRadius?.direction}
-              trendConfidence={trends?.meanRadius?.confidence}
+              title="Tightness Score"
+              value={kpis.tightnessScore}
+              icon={Sparkles}
+              delta={deltas.last3VsPrev3?.tightnessScore?.delta}
+              higherIsBetter={true}
+              subtitle="0-100 scale"
+              trend={trends?.tightnessScore.direction}
+              trendConfidence={trends?.tightnessScore.confidence}
             />
-          )}
-          {kpis.centroidDistance !== null && (
             <KpiCard
-              title="Centroid Distance"
-              value={kpis.centroidDistance.toFixed(2)}
-              icon={Focus}
-              delta={deltas.last3VsPrev3?.centroidDistance?.delta}
-              higherIsBetter={false}
-              subtitle="Bias from center"
-              trend={trends?.centroidDistance?.direction}
-              trendConfidence={trends?.centroidDistance?.confidence}
+              title="Shot Coverage"
+              value={`${(kpis.shotCoverage * 100).toFixed(1)}%`}
+              icon={PieChart}
+              subtitle="With position data"
             />
-          )}
-          <KpiCard
-            title="Tightness Score"
-            value={kpis.tightnessScore}
-            icon={Sparkles}
-            delta={deltas.last3VsPrev3?.tightnessScore?.delta}
-            higherIsBetter={true}
-            subtitle="0-100 scale"
-            trend={trends?.tightnessScore.direction}
-            trendConfidence={trends?.tightnessScore.confidence}
-          />
-          <KpiCard
-            title="Shot Coverage"
-            value={`${(kpis.shotCoverage * 100).toFixed(1)}%`}
-            icon={PieChart}
-            subtitle="With position data"
-          />
-        </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2 mb-6">Last 3 vs prev 3 sessions</p>
+        </>
       )}
 
       {/* Charts */}
@@ -579,6 +599,11 @@ export default function AnalyticsPage() {
             opticIds: filters.opticIds,
           }}
         />
+      </div>
+
+      {/* Anomaly Detection Summary */}
+      <div className="mb-6">
+        <AnomalySummaryWidget threshold={20} minSessions={5} maxDisplay={5} />
       </div>
 
       {/* Drilldown Links */}

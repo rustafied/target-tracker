@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp, Crosshair, Eye, Ruler, FileText, Zap, Award, BarChart3, Clock, Package } from "lucide-react";
+import { Calendar, MapPin, Plus, Edit, Trash2, Target as TargetIcon, TrendingUp, Crosshair, Eye, Ruler, FileText, Zap, Award, BarChart3, Clock, Package, StickyNote } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -34,7 +35,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   Legend,
   ResponsiveContainer,
   LabelList,
@@ -506,45 +507,48 @@ export default function SessionDetailPage() {
   const sessionProgressionChartOption = getSessionProgressionChartOption();
 
   return (
-    <div>
-      <div className="mb-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Calendar className="h-8 w-8" />
-              {format(new Date(session.date), "MMMM d, yyyy")}
-            </h1>
-            {session.location && (
-              <p className="text-muted-foreground mt-2 flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                {session.location}
-              </p>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={() => router.push(`/sessions/${sessionId}/sheets/new`)}>
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Add Sheet</span>
-            </Button>
-            <Button variant="outline" size="icon" onClick={openEditDialog}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleDeleteSession}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
+    <TooltipProvider>
+      <div>
+        <div className="mb-6">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-3">
+                <Calendar className="h-8 w-8" />
+                {format(new Date(session.date), "MMMM d, yyyy")}
+                {session.notes && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="text-muted-foreground hover:text-foreground transition-colors">
+                        <StickyNote className="h-6 w-6" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-sm">
+                      <p className="text-sm">{session.notes}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </h1>
+              {session.location && (
+                <p className="text-muted-foreground mt-2 flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  {session.location}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => router.push(`/sessions/${sessionId}/sheets/new`)}>
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Add Sheet</span>
+              </Button>
+              <Button variant="outline" size="icon" onClick={openEditDialog}>
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={handleDeleteSession}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
-        {session.notes && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Notes</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 pb-6">
-              <p className="text-sm">{session.notes}</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
 
       {/* Session Summary Stats */}
       {sheets.length > 0 && totalBulletsFired > 0 && (
@@ -686,7 +690,7 @@ export default function SessionDetailPage() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                           <XAxis dataKey="name" stroke="#888" />
                           <YAxis stroke="#888" />
-                          <Tooltip
+                          <RechartsTooltip
                             contentStyle={{
                               backgroundColor: "rgba(0, 0, 0, 0.8)",
                               border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -788,6 +792,7 @@ export default function SessionDetailPage() {
             const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
             const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
             const avgScore = totalShots > 0 ? (totalScore / totalShots).toFixed(2) : "0.00";
+            const firearmColor = sheet.firearmId?.color || "#3b82f6";
 
             // Data for per-sheet bull scores graph (filter out empty bulls)
             const bullChartData =
@@ -802,14 +807,22 @@ export default function SessionDetailPage() {
                 })) || [];
 
             return (
-              <Card key={sheet._id}>
+              <Card 
+                key={sheet._id}
+                style={{ borderLeftColor: firearmColor, borderLeftWidth: '4px' }}
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <div className="flex-1">
                       <CardTitle className="text-lg mb-1">{sheet.sheetLabel || `Sheet ${originalIndex + 1}`}</CardTitle>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">Avg:</span>
-                        <span className="text-2xl font-bold text-primary">{avgScore}</span>
+                        <span 
+                          className="text-2xl font-bold"
+                          style={{ color: firearmColor }}
+                        >
+                          {avgScore}
+                        </span>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -836,7 +849,9 @@ export default function SessionDetailPage() {
                         <TargetIcon className="h-3 w-3" />
                         <span>Firearm</span>
                       </div>
-                      <p className="font-medium">{sheet.firearmId?.name || "Unknown"}</p>
+                      <p className="font-medium" style={{ color: firearmColor }}>
+                        {sheet.firearmId?.name || "Unknown"}
+                      </p>
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
@@ -902,7 +917,7 @@ export default function SessionDetailPage() {
                             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                             <XAxis dataKey="name" stroke="#888" />
                             <YAxis domain={[0, 5]} stroke="#888" />
-                            <Tooltip
+                            <RechartsTooltip
                               contentStyle={{
                                 backgroundColor: "rgba(0, 0, 0, 0.8)",
                                 border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -1047,6 +1062,7 @@ export default function SessionDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

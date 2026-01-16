@@ -12,6 +12,36 @@ import { requireUserId } from "@/lib/auth-helpers";
 import { reconcileSheetAmmo } from "@/lib/ammo-reconciliation";
 import mongoose from "mongoose";
 
+export async function GET(request: NextRequest) {
+  try {
+    await connectToDatabase();
+    const userId = await requireUserId(request);
+    
+    // Ensure models are registered
+    void Firearm;
+    void Caliber;
+    void Optic;
+    void TargetTemplate;
+    void RangeSession;
+    
+    // Get all sheets for this user
+    const sheets = await TargetSheet.find({ userId })
+      .select('firearmId caliberId opticId rangeSessionId')
+      .lean();
+    
+    return NextResponse.json(sheets);
+  } catch (error: any) {
+    console.error("Error fetching sheets:", error);
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.json({ 
+      error: "Failed to fetch sheets",
+      details: error.message 
+    }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

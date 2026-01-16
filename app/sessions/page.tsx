@@ -128,14 +128,14 @@ export default function SessionsPage() {
       ) : (
         <div className="space-y-3">
           {sessions.map((session) => (
-            <Card
-              key={session._id}
-              className="cursor-pointer hover:bg-accent transition-colors group"
-              onClick={() => router.push(`/sessions/${session.slug || session._id}`)}
-            >
-              <CardContent className="p-4 md:p-6">
-                {/* Mobile: Vertical Card Layout */}
-                <div className="md:hidden">
+              <Card
+                key={session._id}
+                className="cursor-pointer hover:bg-accent transition-colors group"
+                onClick={() => router.push(`/sessions/${session.slug || session._id}`)}
+              >
+                <CardContent className="p-4 md:p-6">
+                  {/* Mobile: Vertical Card Layout */}
+                  <div className="md:hidden">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-1.5 mb-0.5">

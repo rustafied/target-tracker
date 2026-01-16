@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/db";
 import { TargetSheet } from "@/lib/models/TargetSheet";
 import { BullRecord } from "@/lib/models/AimPointRecord";
 import { RangeSession } from "@/lib/models/RangeSession";
+import { requireUserId } from "@/lib/auth-helpers";
 
 interface SequenceBucket {
   bucket: number;
@@ -26,6 +27,7 @@ interface TrendAnalysis {
 export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
+    const userId = await requireUserId(request);
     
     const { searchParams } = new URL(request.url);
     
@@ -53,20 +55,45 @@ export async function GET(request: NextRequest) {
       sheetFilter.distanceYards.$lte = parseFloat(distanceMax);
     }
     
-    // Build session filter
-    const sessionFilter: any = {};
+    // Build session filter - handle slugs and ObjectIds
+    let sessionIdsFiltered: any[] = [];
+    
     if (sessionIds.length > 0) {
-      sessionFilter._id = { $in: sessionIds };
+      // Check if we have slugs (contains dashes) or ObjectIds (24 hex chars)
+      const slugs = sessionIds.filter(id => id.includes('-') || id.length !== 24);
+      const objectIds = sessionIds.filter(id => !id.includes('-') && id.length === 24);
+      
+      console.log('[Sequence] Input sessionIds:', sessionIds);
+      console.log('[Sequence] Detected slugs:', slugs);
+      console.log('[Sequence] Detected objectIds:', objectIds);
+      
+      // Look up sessions by slug
+      if (slugs.length > 0) {
+        const sessionsBySlug = await RangeSession.find({ slug: { $in: slugs }, userId }).select('_id slug').lean();
+        console.log('[Sequence] Sessions found by slug:', sessionsBySlug);
+        sessionIdsFiltered.push(...sessionsBySlug.map(s => s._id));
+      }
+      
+      // Add ObjectIds directly (still filter by userId)
+      if (objectIds.length > 0) {
+        const sessionsByObjectId = await RangeSession.find({ _id: { $in: objectIds }, userId }).select('_id').lean();
+        sessionIdsFiltered.push(...sessionsByObjectId.map(s => s._id));
+      }
+    } else {
+      // No specific sessions requested, get all recent sessions for this user
+      const allSessions = await RangeSession.find({ userId }).sort({ date: -1 }).limit(50).lean();
+      sessionIdsFiltered = allSessions.map(s => s._id);
     }
     
-    // Get matching sessions
-    const sessions = await RangeSession.find(sessionFilter).sort({ date: -1 }).limit(50).lean();
-    const sessionIdsFiltered = sessions.map(s => s._id);
+    console.log('[Sequence] Filtered session IDs:', sessionIdsFiltered);
     
     // Get sheets for these sessions
     sheetFilter.rangeSessionId = { $in: sessionIdsFiltered };
+    sheetFilter.userId = userId;
     const sheets = await TargetSheet.find(sheetFilter).lean();
     const sheetIdsFiltered = sheets.map(s => s._id);
+    
+    console.log('[Sequence] Found sheets:', sheets.length);
     
     if (sheetIdsFiltered.length === 0) {
       return NextResponse.json({
@@ -80,6 +107,8 @@ export async function GET(request: NextRequest) {
     // Get all bull records for these sheets
     const bullFilter: any = { targetSheetId: { $in: sheetIdsFiltered } };
     const bulls = await BullRecord.find(bullFilter).lean();
+    
+    console.log('[Sequence] Found bulls:', bulls.length);
     
     // Extract all shots with sequence information
     interface ShotWithMeta {
@@ -132,12 +161,15 @@ export async function GET(request: NextRequest) {
       }
     }
     
+    console.log('[Sequence] Total shots extracted:', allShots.length);
+    console.log('[Sequence] minShots threshold:', minShots);
+    
     if (allShots.length < minShots) {
       return NextResponse.json({
         buckets: [],
         overall: { avgScore: 0, bullRate: 0, missRate: 0, totalShots: 0 },
         trend: null,
-        insights: ["Not enough shots for analysis. Minimum: " + minShots]
+        insights: [`Not enough shots for analysis. Found ${allShots.length}, need at least ${minShots}`]
       });
     }
     
@@ -389,10 +421,13 @@ export async function GET(request: NextRequest) {
       insights
     });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in sequence analysis:", error);
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.json(
-      { error: "Failed to analyze sequence data" },
+      { error: "Failed to analyze sequence data", details: error.message },
       { status: 500 }
     );
   }

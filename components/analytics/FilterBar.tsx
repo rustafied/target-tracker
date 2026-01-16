@@ -141,7 +141,7 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
                         className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
                           isActive
                             ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
-                            : "bg-secondary text-secondary-foreground hover:bg-accent hover:ring-1 hover:ring-border"
+                            : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
                         }`}
                         onClick={() => toggleFirearm(firearm._id)}
                       >
@@ -170,7 +170,7 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
                         className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
                           isActive
                             ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
-                            : "bg-secondary text-secondary-foreground hover:bg-accent hover:ring-1 hover:ring-border"
+                            : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
                         }`}
                         onClick={() => toggleCaliber(caliber._id)}
                       >
@@ -199,7 +199,7 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
                         className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
                           isActive
                             ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
-                            : "bg-secondary text-secondary-foreground hover:bg-accent hover:ring-1 hover:ring-border"
+                            : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
                         }`}
                         onClick={() => toggleOptic(optic._id)}
                       >
