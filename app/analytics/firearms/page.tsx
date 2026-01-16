@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { LoadingCard } from "@/components/ui/spinner";
 import { TableSkeleton, ChartCardSkeleton } from "@/components/analytics/SkeletonLoader";
 import { PageLoadingSpinner } from "@/components/ui/loading-spinner";
+import { FadeIn } from "@/components/ui/fade-in";
 import type { EChartsOption } from "echarts";
 import { meanRadiusToMOA } from "@/lib/utils";
 
@@ -284,34 +285,41 @@ export default function FirearmsAnalyticsPage() {
 
   return (
     <div>
-      <AnalyticsHeader
-        title="Firearms Analytics"
-        icon={Target}
-        description="Performance leaderboard and trends by firearm"
-      >
-        <Link href="/analytics/compare?type=firearm">
-          <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Compare Firearms
-          </Button>
-        </Link>
-      </AnalyticsHeader>
+      <FadeIn duration={200}>
+        <AnalyticsHeader
+          title="Firearms Analytics"
+          icon={Target}
+          description="Performance leaderboard and trends by firearm"
+        >
+          <Link href="/analytics/compare?type=firearm">
+            <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Compare Firearms
+            </Button>
+          </Link>
+        </AnalyticsHeader>
+      </FadeIn>
 
       {performanceChartOption && (
-        <ChartCard title="Firearm Performance Over Time" icon={TrendingUp}>
-          <EChart option={performanceChartOption} height={500} />
-        </ChartCard>
+        <FadeIn delay={100} duration={300}>
+          <ChartCard title="Firearm Performance Over Time" icon={TrendingUp}>
+            <EChart option={performanceChartOption} height={500} />
+          </ChartCard>
+        </FadeIn>
       )}
 
       {distancePerformanceOption && (
-        <div className="mt-6">
-          <ChartCard title="Performance by Distance" icon={Ruler}>
-            <EChart option={distancePerformanceOption} height={400} />
-          </ChartCard>
-        </div>
+        <FadeIn delay={200} duration={300}>
+          <div className="mt-6">
+            <ChartCard title="Performance by Distance" icon={Ruler}>
+              <EChart option={distancePerformanceOption} height={400} />
+            </ChartCard>
+          </div>
+        </FadeIn>
       )}
 
-      <Card className="mt-6">
+      <FadeIn delay={300} duration={300}>
+        <Card className="mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5" />
@@ -404,13 +412,16 @@ export default function FirearmsAnalyticsPage() {
           </div>
         </CardContent>
       </Card>
+      </FadeIn>
 
       {/* Sequence Analysis by Firearm */}
-      <SequenceAnalysisCard
+      <FadeIn delay={400} duration={300}>
+        <SequenceAnalysisCard
         filters={{ minShots: 20 }}
         title="Fatigue Analysis by Firearm"
         description="How performance changes throughout sessions for different firearms"
       />
+      </FadeIn>
     </div>
   );
 }

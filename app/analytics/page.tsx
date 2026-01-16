@@ -37,6 +37,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingCard } from "@/components/ui/spinner";
 import { AnalyticsLoadingSkeleton, KpiCardSkeleton, ChartCardSkeleton } from "@/components/analytics/SkeletonLoader";
+import { FadeIn } from "@/components/ui/fade-in";
 import type { EChartsOption } from "echarts";
 
 interface OverviewData {
@@ -463,168 +464,162 @@ export default function AnalyticsPage() {
 
   return (
     <div>
-      <AnalyticsHeader
-        title="Analytics"
-        icon={BarChart3}
-        description="Track your shooting performance over time"
-      >
-        <Link href="/analytics/compare?type=firearm">
-          <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Compare Items
-          </Button>
-        </Link>
-      </AnalyticsHeader>
+      <FadeIn duration={200}>
+        <AnalyticsHeader
+          title="Analytics"
+          icon={BarChart3}
+          description="Track your shooting performance over time"
+        >
+          <Link href="/analytics/compare?type=firearm">
+            <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Compare Items
+            </Button>
+          </Link>
+        </AnalyticsHeader>
+      </FadeIn>
 
-      <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+      <FadeIn delay={50} duration={200}>
+        <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+      </FadeIn>
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          title="Avg Score/Shot"
-          value={kpis.avgScore.toFixed(2)}
-          icon={TrendingUp}
-          delta={deltas.last3VsPrev3?.avgScore.delta}
-          higherIsBetter={true}
-          subtitle="Overall average"
-          trend={trends?.avgScore.direction}
-          trendConfidence={trends?.avgScore.confidence}
-        />
-        <KpiCard
-          title="Bull Rate"
-          value={`${(kpis.bullRate * 100).toFixed(1)}%`}
-          icon={Target}
-          delta={deltas.last3VsPrev3?.bullRate.delta}
-          higherIsBetter={true}
-          subtitle="Overall average"
-          trend={trends?.bullRate.direction}
-          trendConfidence={trends?.bullRate.confidence}
-        />
-        <KpiCard
-          title="Miss Rate"
-          value={`${(kpis.missRate * 100).toFixed(1)}%`}
-          icon={Crosshair}
-          delta={deltas.last3VsPrev3?.missRate.delta}
-          higherIsBetter={false}
-          subtitle="Overall average"
-          trend={trends?.missRate.direction}
-          trendConfidence={trends?.missRate.confidence}
-        />
-        <KpiCard
-          title="Total Shots"
-          value={kpis.totalShots}
-          icon={Activity}
-          subtitle={`${kpis.sessionsCount} sessions`}
-        />
+        <FadeIn delay={100} duration={250}>
+          <KpiCard
+            title="Avg Score/Shot"
+            value={kpis.avgScore.toFixed(2)}
+            icon={TrendingUp}
+            delta={deltas.last3VsPrev3?.avgScore.delta}
+            higherIsBetter={true}
+            subtitle="Overall average"
+            trend={trends?.avgScore.direction}
+            trendConfidence={trends?.avgScore.confidence}
+          />
+        </FadeIn>
+        <FadeIn delay={150} duration={250}>
+          <KpiCard
+            title="Bull Rate"
+            value={`${(kpis.bullRate * 100).toFixed(1)}%`}
+            icon={Target}
+            delta={deltas.last3VsPrev3?.bullRate.delta}
+            higherIsBetter={true}
+            subtitle="Overall average"
+            trend={trends?.bullRate.direction}
+            trendConfidence={trends?.bullRate.confidence}
+          />
+        </FadeIn>
+        <FadeIn delay={200} duration={250}>
+          <KpiCard
+            title="Miss Rate"
+            value={`${(kpis.missRate * 100).toFixed(1)}%`}
+            icon={Crosshair}
+            delta={deltas.last3VsPrev3?.missRate.delta}
+            higherIsBetter={false}
+            subtitle="Overall average"
+            trend={trends?.missRate.direction}
+            trendConfidence={trends?.missRate.confidence}
+          />
+        </FadeIn>
+        <FadeIn delay={250} duration={250}>
+          <KpiCard
+            title="Total Shots"
+            value={kpis.totalShots}
+            icon={Activity}
+            subtitle={`${kpis.sessionsCount} sessions`}
+          />
+        </FadeIn>
       </div>
-      <p className="text-xs text-muted-foreground mt-2 mb-6">Last 3 vs prev 3 sessions</p>
+      <FadeIn delay={300}>
+        <p className="text-xs text-muted-foreground mt-2 mb-6">Last 3 vs prev 3 sessions</p>
+      </FadeIn>
 
       {/* Position-based KPIs (if available) */}
       {kpis.shotCoverage > 0 && (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {kpis.meanRadius !== null && (
-              <KpiCard
-                title="Mean Radius"
-                value={kpis.meanRadius.toFixed(2)}
-                icon={Radius}
-                delta={deltas.last3VsPrev3?.meanRadius?.delta}
-                higherIsBetter={false}
-                subtitle="Target units"
-                trend={trends?.meanRadius?.direction}
-                trendConfidence={trends?.meanRadius?.confidence}
-              />
+              <FadeIn delay={350} duration={250}>
+                <KpiCard
+                  title="Mean Radius"
+                  value={kpis.meanRadius.toFixed(2)}
+                  icon={Radius}
+                  delta={deltas.last3VsPrev3?.meanRadius?.delta}
+                  higherIsBetter={false}
+                  subtitle="Target units"
+                  trend={trends?.meanRadius?.direction}
+                  trendConfidence={trends?.meanRadius?.confidence}
+                />
+              </FadeIn>
             )}
             {kpis.centroidDistance !== null && (
-              <KpiCard
-                title="Centroid Distance"
-                value={kpis.centroidDistance.toFixed(2)}
-                icon={Focus}
-                delta={deltas.last3VsPrev3?.centroidDistance?.delta}
-                higherIsBetter={false}
-                subtitle="Bias from center"
-                trend={trends?.centroidDistance?.direction}
-                trendConfidence={trends?.centroidDistance?.confidence}
-              />
+              <FadeIn delay={400} duration={250}>
+                <KpiCard
+                  title="Centroid Distance"
+                  value={kpis.centroidDistance.toFixed(2)}
+                  icon={Focus}
+                  delta={deltas.last3VsPrev3?.centroidDistance?.delta}
+                  higherIsBetter={false}
+                  subtitle="Bias from center"
+                  trend={trends?.centroidDistance?.direction}
+                  trendConfidence={trends?.centroidDistance?.confidence}
+                />
+              </FadeIn>
             )}
-            <KpiCard
-              title="Tightness Score"
-              value={kpis.tightnessScore}
-              icon={Sparkles}
-              delta={deltas.last3VsPrev3?.tightnessScore?.delta}
-              higherIsBetter={true}
-              subtitle="0-100 scale"
-              trend={trends?.tightnessScore.direction}
-              trendConfidence={trends?.tightnessScore.confidence}
-            />
-            <KpiCard
-              title="Shot Coverage"
-              value={`${(kpis.shotCoverage * 100).toFixed(1)}%`}
-              icon={PieChart}
-              subtitle="With position data"
-            />
+            <FadeIn delay={450} duration={250}>
+              <KpiCard
+                title="Tightness Score"
+                value={kpis.tightnessScore}
+                icon={Sparkles}
+                delta={deltas.last3VsPrev3?.tightnessScore?.delta}
+                higherIsBetter={true}
+                subtitle="0-100 scale"
+                trend={trends?.tightnessScore.direction}
+                trendConfidence={trends?.tightnessScore.confidence}
+              />
+            </FadeIn>
+            <FadeIn delay={500} duration={250}>
+              <KpiCard
+                title="Shot Coverage"
+                value={`${(kpis.shotCoverage * 100).toFixed(1)}%`}
+                icon={PieChart}
+                subtitle="With position data"
+              />
+            </FadeIn>
           </div>
-          <p className="text-xs text-muted-foreground mt-2 mb-6">Last 3 vs prev 3 sessions</p>
+          <FadeIn delay={550}>
+            <p className="text-xs text-muted-foreground mt-2 mb-6">Last 3 vs prev 3 sessions</p>
+          </FadeIn>
         </>
       )}
 
       {/* Overview Insights */}
-      <div className="mb-6">
-        <LazyLoad height="200px">
-          <ExpandedInsightsPanel
-            insights={insights}
-            title="Overview Insights"
-            description="High-level trends and recommendations across all your sessions"
-            loading={insightsLoading}
-            maxVisible={5}
-          />
-        </LazyLoad>
-      </div>
+      <FadeIn delay={600} duration={300}>
+        <div className="mb-6">
+          <LazyLoad height="200px">
+            <ExpandedInsightsPanel
+              insights={insights}
+              title="Overview Insights"
+              description="High-level trends and recommendations across all your sessions"
+              loading={insightsLoading}
+              maxVisible={5}
+            />
+          </LazyLoad>
+        </div>
+      </FadeIn>
 
       {/* Charts */}
       <div className="space-y-6 mb-6">
-        <ChartCard title="Average Score Over Sessions" icon={LineChart}>
-          <EChart option={avgScoreChartOption} height={300} />
-        </ChartCard>
+        <FadeIn delay={650} duration={300}>
+          <ChartCard title="Average Score Over Sessions" icon={LineChart}>
+            <EChart option={avgScoreChartOption} height={300} />
+          </ChartCard>
+        </FadeIn>
 
         {/* Distance Impact Analysis */}
-        <DistanceAnalysisCard
-          groupBy="firearm"
-          filters={{
-            firearmIds: filters.firearmIds,
-            caliberIds: filters.caliberIds,
-            opticIds: filters.opticIds,
-            distanceMin: filters.distanceMin,
-            distanceMax: filters.distanceMax,
-            minShots: filters.minShots,
-            positionOnly: filters.positionOnly,
-          }}
-          targetDiameterInches={10.5}
-          showMOA={true}
-          title="Distance Impact Analysis"
-        />
-
-        <ChartCard title="Bull Rate & Miss Rate" icon={TrendingUp}>
-          <EChart option={bullMissChartOption} height={300} />
-        </ChartCard>
-
-        {meanRadiusChartOption && (
-          <ChartCard title="Mean Radius (Precision)" icon={Radius}>
-            <EChart option={meanRadiusChartOption} height={300} />
-          </ChartCard>
-        )}
-
-        <ChartCard title="Shots Per Session" icon={Activity}>
-          <EChart option={shotCountChartOption} height={250} />
-        </ChartCard>
-
-        <ChartCard title="Ring Distribution" icon={PieChart}>
-          <EChart option={ringDistChartOption} height={300} />
-        </ChartCard>
-
-        {/* Fatigue & Sequence Analysis */}
-        <LazyLoad height="500px">
-          <SequenceAnalysisCard
+        <FadeIn delay={700} duration={300}>
+          <DistanceAnalysisCard
+            groupBy="firearm"
             filters={{
               firearmIds: filters.firearmIds,
               caliberIds: filters.caliberIds,
@@ -634,138 +629,196 @@ export default function AnalyticsPage() {
               minShots: filters.minShots,
               positionOnly: filters.positionOnly,
             }}
+            targetDiameterInches={10.5}
+            showMOA={true}
+            title="Distance Impact Analysis"
           />
-        </LazyLoad>
+        </FadeIn>
+
+        <FadeIn delay={750} duration={300}>
+          <ChartCard title="Bull Rate & Miss Rate" icon={TrendingUp}>
+            <EChart option={bullMissChartOption} height={300} />
+          </ChartCard>
+        </FadeIn>
+
+        {meanRadiusChartOption && (
+          <FadeIn delay={800} duration={300}>
+            <ChartCard title="Mean Radius (Precision)" icon={Radius}>
+              <EChart option={meanRadiusChartOption} height={300} />
+            </ChartCard>
+          </FadeIn>
+        )}
+
+        <FadeIn delay={850} duration={300}>
+          <ChartCard title="Shots Per Session" icon={Activity}>
+            <EChart option={shotCountChartOption} height={250} />
+          </ChartCard>
+        </FadeIn>
+
+        <FadeIn delay={900} duration={300}>
+          <ChartCard title="Ring Distribution" icon={PieChart}>
+            <EChart option={ringDistChartOption} height={300} />
+          </ChartCard>
+        </FadeIn>
+
+        {/* Fatigue & Sequence Analysis */}
+        <FadeIn delay={950} duration={300}>
+          <LazyLoad height="500px">
+            <SequenceAnalysisCard
+              filters={{
+                firearmIds: filters.firearmIds,
+                caliberIds: filters.caliberIds,
+                opticIds: filters.opticIds,
+                distanceMin: filters.distanceMin,
+                distanceMax: filters.distanceMax,
+                minShots: filters.minShots,
+                positionOnly: filters.positionOnly,
+              }}
+            />
+          </LazyLoad>
+        </FadeIn>
       </div>
 
       {/* Efficiency Summary */}
-      <div className="mb-6">
-        <LazyLoad height="400px">
-          <EfficiencySummary
-            filters={{
-              firearmIds: filters.firearmIds,
-              caliberIds: filters.caliberIds,
-              opticIds: filters.opticIds,
-            }}
-          />
-        </LazyLoad>
-      </div>
+      <FadeIn delay={1000} duration={300}>
+        <div className="mb-6">
+          <LazyLoad height="400px">
+            <EfficiencySummary
+              filters={{
+                firearmIds: filters.firearmIds,
+                caliberIds: filters.caliberIds,
+                opticIds: filters.opticIds,
+              }}
+            />
+          </LazyLoad>
+        </div>
+      </FadeIn>
 
       {/* Anomaly Detection Summary */}
-      <div className="mb-6">
-        <LazyLoad height="300px">
-          <AnomalySummaryWidget threshold={20} minSessions={5} maxDisplay={5} />
-        </LazyLoad>
-      </div>
+      <FadeIn delay={1050} duration={300}>
+        <div className="mb-6">
+          <LazyLoad height="300px">
+            <AnomalySummaryWidget threshold={20} minSessions={5} maxDisplay={5} />
+          </LazyLoad>
+        </div>
+      </FadeIn>
 
       {/* Drilldown Links */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-        <Link href="/analytics/targets">
-          <Card className="hover:bg-accent transition-colors cursor-pointer">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Shot Visualizations
-                </span>
-                <ArrowRight className="h-5 w-5" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Heatmaps, shot plots, bias analysis, and group metrics
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+        <FadeIn delay={1100} duration={250}>
+          <Link href="/analytics/targets">
+            <Card className="hover:bg-accent transition-colors cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Shot Visualizations
+                  </span>
+                  <ArrowRight className="h-5 w-5" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Heatmaps, shot plots, bias analysis, and group metrics
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </FadeIn>
 
-        <Link href="/analytics/firearms">
-          <Card className="hover:bg-accent transition-colors cursor-pointer">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Firearms
-                </span>
-                <ArrowRight className="h-5 w-5" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Performance leaderboard and trends by firearm
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+        <FadeIn delay={1150} duration={250}>
+          <Link href="/analytics/firearms">
+            <Card className="hover:bg-accent transition-colors cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Firearms
+                  </span>
+                  <ArrowRight className="h-5 w-5" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Performance leaderboard and trends by firearm
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </FadeIn>
 
-        <Link href="/analytics/calibers">
-          <Card className="hover:bg-accent transition-colors cursor-pointer">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Crosshair className="h-5 w-5" />
-                  Calibers
-                </span>
-                <ArrowRight className="h-5 w-5" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Performance leaderboard and trends by caliber
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+        <FadeIn delay={1200} duration={250}>
+          <Link href="/analytics/calibers">
+            <Card className="hover:bg-accent transition-colors cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Crosshair className="h-5 w-5" />
+                    Calibers
+                  </span>
+                  <ArrowRight className="h-5 w-5" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Performance leaderboard and trends by caliber
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </FadeIn>
       </div>
 
       {/* Insights */}
       {deltas.last3VsPrev3 && trends && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              Performance Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              {trends.avgScore.direction !== "stable" && (
-                <li>
-                  Overall trend shows your average score is{" "}
-                  <strong className={trends.avgScore.direction === "improving" ? "text-green-500" : "text-red-500"}>
-                    {trends.avgScore.direction}
-                  </strong>
-                  {" "}across all sessions.
-                </li>
-              )}
-              {deltas.last3VsPrev3.avgScore.delta !== null && Math.abs(deltas.last3VsPrev3.avgScore.delta) > 2 && (
-                <li>
-                  Your last 3 sessions averaged{" "}
-                  <strong className={deltas.last3VsPrev3.avgScore.isImprovement ? "text-green-500" : "text-red-500"}>
-                    {deltas.last3VsPrev3.avgScore.delta > 0 ? "+" : ""}
-                    {deltas.last3VsPrev3.avgScore.delta.toFixed(1)}%
-                  </strong>
-                  {" "}compared to the previous 3 sessions.
-                </li>
-              )}
-              {trends.bullRate.direction !== "stable" && (
-                <li>
-                  Your bull rate is trending{" "}
-                  <strong className={trends.bullRate.direction === "improving" ? "text-green-500" : "text-red-500"}>
-                    {trends.bullRate.direction}
-                  </strong>
-                  {" "}over time.
-                </li>
-              )}
-              {trends.meanRadius && trends.meanRadius.direction === "improving" && (
-                <li>
-                  Great progress! Your shot groupings are getting{" "}
-                  <strong className="text-green-500">tighter</strong> over time.
-                </li>
-              )}
-            </ul>
-          </CardContent>
-        </Card>
+        <FadeIn delay={1250} duration={300}>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                Performance Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                {trends.avgScore.direction !== "stable" && (
+                  <li>
+                    Overall trend shows your average score is{" "}
+                    <strong className={trends.avgScore.direction === "improving" ? "text-green-500" : "text-red-500"}>
+                      {trends.avgScore.direction}
+                    </strong>
+                    {" "}across all sessions.
+                  </li>
+                )}
+                {deltas.last3VsPrev3.avgScore.delta !== null && Math.abs(deltas.last3VsPrev3.avgScore.delta) > 2 && (
+                  <li>
+                    Your last 3 sessions averaged{" "}
+                    <strong className={deltas.last3VsPrev3.avgScore.isImprovement ? "text-green-500" : "text-red-500"}>
+                      {deltas.last3VsPrev3.avgScore.delta > 0 ? "+" : ""}
+                      {deltas.last3VsPrev3.avgScore.delta.toFixed(1)}%
+                    </strong>
+                    {" "}compared to the previous 3 sessions.
+                  </li>
+                )}
+                {trends.bullRate.direction !== "stable" && (
+                  <li>
+                    Your bull rate is trending{" "}
+                    <strong className={trends.bullRate.direction === "improving" ? "text-green-500" : "text-red-500"}>
+                      {trends.bullRate.direction}
+                    </strong>
+                    {" "}over time.
+                  </li>
+                )}
+                {trends.meanRadius && trends.meanRadius.direction === "improving" && (
+                  <li>
+                    Great progress! Your shot groupings are getting{" "}
+                    <strong className="text-green-500">tighter</strong> over time.
+                  </li>
+                )}
+              </ul>
+            </CardContent>
+          </Card>
+        </FadeIn>
       )}
     </div>
   );

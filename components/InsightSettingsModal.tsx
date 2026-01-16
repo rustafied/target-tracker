@@ -150,8 +150,8 @@ export function InsightSettingsModal({ open, onOpenChange }: InsightSettingsModa
         ) : (
           <div className="space-y-6 py-4 overflow-y-auto pr-2">
             {/* Confidence Threshold */}
-            <div className="space-y-3">
-              <Label htmlFor="confidence">
+            <div className="space-y-3 p-4 rounded-lg border border-white/10 bg-white/5">
+              <Label htmlFor="confidence" className="text-base font-semibold text-white">
                 Minimum Confidence: {Math.round(preferences.minConfidence * 100)}%
               </Label>
               <Slider
@@ -165,14 +165,14 @@ export function InsightSettingsModal({ open, onOpenChange }: InsightSettingsModa
                 }
                 className="w-full"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-white/60">
                 Only show insights with at least this confidence level
               </p>
             </div>
 
             {/* Max Insights */}
-            <div className="space-y-2">
-              <Label htmlFor="maxInsights">Maximum Insights Per View</Label>
+            <div className="space-y-2 p-4 rounded-lg border border-white/10 bg-white/5">
+              <Label htmlFor="maxInsights" className="text-base font-semibold text-white">Maximum Insights Per View</Label>
               <Input
                 id="maxInsights"
                 type="number"
@@ -185,22 +185,23 @@ export function InsightSettingsModal({ open, onOpenChange }: InsightSettingsModa
                     maxInsights: parseInt(e.target.value) || 5,
                   })
                 }
+                className="bg-white/5 border-white/20 text-white"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-white/60">
                 Limit the number of insights shown (1-20)
               </p>
             </div>
 
             {/* Verbosity */}
-            <div className="space-y-2">
-              <Label htmlFor="verbosity">Detail Level</Label>
+            <div className="space-y-2 p-4 rounded-lg border border-white/10 bg-white/5">
+              <Label htmlFor="verbosity" className="text-base font-semibold text-white">Detail Level</Label>
               <Select
                 value={preferences.verbosity}
                 onValueChange={(value: "short" | "long") =>
                   setPreferences({ ...preferences, verbosity: value })
                 }
               >
-                <SelectTrigger id="verbosity">
+                <SelectTrigger id="verbosity" className="bg-white/5 border-white/20 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -211,19 +212,19 @@ export function InsightSettingsModal({ open, onOpenChange }: InsightSettingsModa
             </div>
 
             {/* Insight Types */}
-            <div className="space-y-4">
-              <Label>Enabled Insight Types</Label>
+            <div className="space-y-4 p-4 rounded-lg border border-white/10 bg-white/5">
+              <Label className="text-base font-semibold text-white">Enabled Insight Types</Label>
               {Object.entries(groupedTypes).map(([category, types]) => (
-                <div key={category} className="space-y-3">
-                  <h4 className="text-sm font-semibold text-muted-foreground">
+                <div key={category} className="space-y-3 mt-4">
+                  <h4 className="text-sm font-semibold text-white/80 uppercase tracking-wide">
                     {category} Insights
                   </h4>
-                  <div className="space-y-3 pl-2">
+                  <div className="space-y-3 pl-2 border-l-2 border-white/20">
                     {types.map(({ type, label }) => (
-                      <div key={type} className="flex items-center justify-between gap-4 py-1">
+                      <div key={type} className="flex items-center justify-between gap-4 py-1.5 pl-3">
                         <label
                           htmlFor={type}
-                          className="text-sm cursor-pointer flex-1"
+                          className="text-sm cursor-pointer flex-1 text-white/90 hover:text-white transition-colors"
                         >
                           {label}
                         </label>

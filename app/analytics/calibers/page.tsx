@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingCard } from "@/components/ui/spinner";
 import { TableSkeleton, ChartCardSkeleton } from "@/components/analytics/SkeletonLoader";
+import { FadeIn } from "@/components/ui/fade-in";
 import type { EChartsOption } from "echarts";
 
 interface CaliberMetrics {
@@ -357,43 +358,52 @@ export default function CalibersAnalyticsPage() {
 
   return (
     <div>
-      <AnalyticsHeader
-        title="Calibers Analytics"
-        icon={Crosshair}
-        description="Performance leaderboard and trends by caliber"
-      >
-        <Link href="/analytics/compare?type=caliber">
-          <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Compare Calibers
-          </Button>
-        </Link>
-      </AnalyticsHeader>
+      <FadeIn duration={200}>
+        <AnalyticsHeader
+          title="Calibers Analytics"
+          icon={Crosshair}
+          description="Performance leaderboard and trends by caliber"
+        >
+          <Link href="/analytics/compare?type=caliber">
+            <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Compare Calibers
+            </Button>
+          </Link>
+        </AnalyticsHeader>
+      </FadeIn>
 
-      <FilterBar
-        filters={filters}
-        onChange={setFilters}
-        firearms={firearms}
-        calibers={calibers}
-        optics={optics}
-      />
+      <FadeIn delay={50} duration={200}>
+        <FilterBar
+          filters={filters}
+          onChange={setFilters}
+          firearms={firearms}
+          calibers={calibers}
+          optics={optics}
+        />
+      </FadeIn>
 
       {performanceOverTimeOption && (
-        <ChartCard title="Caliber Performance Over Time" icon={TrendingUp}>
-          <EChart option={performanceOverTimeOption} height={500} />
-        </ChartCard>
+        <FadeIn delay={100} duration={300}>
+          <ChartCard title="Caliber Performance Over Time" icon={TrendingUp}>
+            <EChart option={performanceOverTimeOption} height={500} />
+          </ChartCard>
+        </FadeIn>
       )}
 
       {distancePerformanceOption && (
-        <div className="mt-6">
-          <ChartCard title="Performance by Distance" icon={Ruler}>
-            <EChart option={distancePerformanceOption} height={400} />
-          </ChartCard>
-        </div>
+        <FadeIn delay={200} duration={300}>
+          <div className="mt-6">
+            <ChartCard title="Performance by Distance" icon={Ruler}>
+              <EChart option={distancePerformanceOption} height={400} />
+            </ChartCard>
+          </div>
+        </FadeIn>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <Card className="lg:col-span-2">
+        <FadeIn delay={300} duration={300}>
+          <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5" />
@@ -494,9 +504,11 @@ export default function CalibersAnalyticsPage() {
           </div>
         </CardContent>
       </Card>
+        </FadeIn>
 
         {/* Ammo Usage Pie Chart */}
-        <Card>
+        <FadeIn delay={350} duration={300}>
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
@@ -568,9 +580,11 @@ export default function CalibersAnalyticsPage() {
             </div>
           </CardContent>
         </Card>
+        </FadeIn>
 
         {/* Sequence Analysis by Caliber */}
-        <SequenceAnalysisCard
+        <FadeIn delay={400} duration={300}>
+          <SequenceAnalysisCard
           filters={{
             caliberIds: filters.caliberIds,
             firearmIds: filters.firearmIds,
@@ -583,6 +597,7 @@ export default function CalibersAnalyticsPage() {
           title="Fatigue Analysis by Caliber"
           description="How performance changes throughout sessions for different calibers"
         />
+        </FadeIn>
       </div>
     </div>
   );

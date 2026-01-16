@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ComparativeDashboard } from "@/components/analytics/ComparativeDashboard";
 import { LoadingCard } from "@/components/ui/spinner";
 import { ComparisonLoadingSkeleton } from "@/components/analytics/SkeletonLoader";
+import { FadeIn } from "@/components/ui/fade-in";
 import { toast } from "sonner";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -92,19 +93,23 @@ export default function ComparePage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <Link href="/analytics">
-          <Button variant="ghost" className="dark:hover:bg-white/10">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Analytics
-          </Button>
-        </Link>
-      </div>
+      <FadeIn duration={200}>
+        <div className="mb-6">
+          <Link href="/analytics">
+            <Button variant="ghost" className="dark:hover:bg-white/10">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Analytics
+            </Button>
+          </Link>
+        </div>
+      </FadeIn>
 
-      <ComparativeDashboard
-        type={type}
-        availableItems={availableItems}
-      />
+      <FadeIn delay={100} duration={300}>
+        <ComparativeDashboard
+          type={type}
+          availableItems={availableItems}
+        />
+      </FadeIn>
     </div>
   );
 }

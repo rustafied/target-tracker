@@ -20,6 +20,7 @@ import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingCard } from "@/components/ui/spinner";
+import { FadeIn } from "@/components/ui/fade-in";
 import type { EChartsOption } from "echarts";
 
 interface ShotsData {
@@ -454,30 +455,37 @@ export default function TargetsAnalyticsPage() {
 
   return (
     <div>
-      <AnalyticsHeader
-        title="Shot Visualizations"
-        icon={Target}
-        description="Heatmaps, shot plots, and precision analytics"
-      />
+      <FadeIn duration={200}>
+        <AnalyticsHeader
+          title="Shot Visualizations"
+          icon={Target}
+          description="Heatmaps, shot plots, and precision analytics"
+        />
+      </FadeIn>
 
-      <FilterBar
-        filters={filters}
-        onChange={setFilters}
-        firearms={firearms}
-        calibers={calibers}
-        optics={optics}
-      />
+      <FadeIn delay={50} duration={200}>
+        <FilterBar
+          filters={filters}
+          onChange={setFilters}
+          firearms={firearms}
+          calibers={calibers}
+          optics={optics}
+        />
+      </FadeIn>
 
       {data.meta.usesSynthetic && (
-        <div className="mb-4">
-          <WarningBadge message="Using synthetic shot positions for visualization" />
-        </div>
+        <FadeIn delay={100} duration={200}>
+          <div className="mb-4">
+            <WarningBadge message="Using synthetic shot positions for visualization" />
+          </div>
+        </FadeIn>
       )}
 
       {/* Group Metrics */}
       {data.group && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          <Card>
+          <FadeIn delay={150} duration={250}>
+            <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Target className="h-4 w-4" />
@@ -502,8 +510,10 @@ export default function TargetsAnalyticsPage() {
               <p className="text-xs text-muted-foreground mt-1">Max shot distance</p>
             </CardContent>
           </Card>
+          </FadeIn>
 
-          <Card>
+          <FadeIn delay={250} duration={250}>
+            <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Compass className="h-4 w-4" />
@@ -515,8 +525,10 @@ export default function TargetsAnalyticsPage() {
               <p className="text-xs text-muted-foreground mt-1">Bias from center</p>
             </CardContent>
           </Card>
+          </FadeIn>
 
-          <Card>
+          <FadeIn delay={300} duration={250}>
+            <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
@@ -528,16 +540,20 @@ export default function TargetsAnalyticsPage() {
               <p className="text-xs text-muted-foreground mt-1">0-100 scale</p>
             </CardContent>
           </Card>
+          </FadeIn>
         </div>
       )}
 
       {/* Visualizations */}
       <div className="space-y-6 mb-6">
-        <ChartCard title="Shot Heatmap" icon={Target}>
-          <EChart option={heatmapOption} height={500} />
-        </ChartCard>
+        <FadeIn delay={400} duration={300}>
+          <ChartCard title="Shot Heatmap" icon={Target}>
+            <EChart option={heatmapOption} height={500} />
+          </ChartCard>
+        </FadeIn>
 
-        <ChartCard
+        <FadeIn delay={500} duration={300}>
+          <ChartCard
           title="Shot Plot with Rings"
           icon={Target}
           action={
@@ -559,10 +575,12 @@ export default function TargetsAnalyticsPage() {
             </div>
           }
         >
-          <EChart option={scatterOption} height={500} />
-        </ChartCard>
+            <EChart option={scatterOption} height={500} />
+          </ChartCard>
+        </FadeIn>
 
         {data.centroid && (
+          <FadeIn delay={600} duration={300}>
           <ChartCard title="Directional Bias" icon={Compass}>
             <EChart option={quadrantOption} height={300} />
             <div className="mt-4 flex flex-col sm:flex-row sm:justify-center gap-4 text-center">
@@ -585,20 +603,24 @@ export default function TargetsAnalyticsPage() {
               </div>
             </div>
           </ChartCard>
+          </FadeIn>
         )}
 
         {data.bullAnalysis.length > 0 && (
+          <FadeIn delay={700} duration={300}>
           <ChartCard title="Bull-by-Bull Performance" icon={TrendingDown}>
             <EChart option={bullAnalysisOption} height={300} />
             <p className="text-sm text-muted-foreground mt-4">
               Detects fatigue patterns: if later bulls consistently show degraded performance.
             </p>
           </ChartCard>
+          </FadeIn>
         )}
       </div>
 
       {/* Meta Info */}
-      <Card>
+      <FadeIn delay={800} duration={300}>
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PieChart className="h-5 w-5" />
@@ -622,6 +644,7 @@ export default function TargetsAnalyticsPage() {
           </div>
         </CardContent>
       </Card>
+      </FadeIn>
     </div>
   );
 }

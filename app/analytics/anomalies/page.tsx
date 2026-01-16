@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { LoadingCard } from "@/components/ui/spinner";
 import { AnomalyFlag } from "@/components/AnomalyFlag";
 import { InsightsPanel } from "@/components/InsightsPanel";
+import { FadeIn } from "@/components/ui/fade-in";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -123,14 +124,17 @@ export default function AnomaliesPage() {
 
   return (
     <div>
-      <AnalyticsHeader
-        title="Session Anomaly Detection"
-        icon={AlertTriangle}
-        description="Identify outlier sessions and diagnose performance variations"
-      />
+      <FadeIn duration={200}>
+        <AnalyticsHeader
+          title="Session Anomaly Detection"
+          icon={AlertTriangle}
+          description="Identify outlier sessions and diagnose performance variations"
+        />
+      </FadeIn>
 
       {/* Settings Panel */}
-      <Card className="mb-6">
+      <FadeIn delay={100} duration={250}>
+        <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -193,10 +197,12 @@ export default function AnomaliesPage() {
           </div>
         </CardContent>
       </Card>
+      </FadeIn>
 
       {/* Global Averages */}
       {globalAverages && (
-        <Card className="mb-6">
+        <FadeIn delay={200} duration={250}>
+          <Card className="mb-6">
           <CardHeader>
             <CardTitle>Historical Baselines</CardTitle>
           </CardHeader>
@@ -224,11 +230,13 @@ export default function AnomaliesPage() {
             </p>
           </CardContent>
         </Card>
+        </FadeIn>
       )}
 
       {/* Insights */}
       {insights.length > 0 && (
-        <Card className="mb-6">
+        <FadeIn delay={300} duration={250}>
+          <Card className="mb-6">
           <CardHeader>
             <CardTitle>Key Insights</CardTitle>
           </CardHeader>
@@ -243,10 +251,12 @@ export default function AnomaliesPage() {
             </ul>
           </CardContent>
         </Card>
+        </FadeIn>
       )}
 
       {/* Anomalies List */}
-      <Card>
+      <FadeIn delay={400} duration={300}>
+        <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
@@ -349,6 +359,7 @@ export default function AnomaliesPage() {
           )}
         </CardContent>
       </Card>
+      </FadeIn>
 
       {/* Insights Panel */}
       {selectedAnomaly && (
