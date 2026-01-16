@@ -564,25 +564,24 @@ export default function TargetsAnalyticsPage() {
 
         {data.centroid && (
           <ChartCard title="Directional Bias" icon={Compass}>
-            <div className="grid md:grid-cols-2 gap-6">
+            <EChart option={quadrantOption} height={300} />
+            <div className="mt-4 flex flex-col sm:flex-row sm:justify-center gap-4 text-center">
               <div>
-                <EChart option={quadrantOption} height={300} />
+                <p className="text-sm text-muted-foreground">
+                  X Offset: <strong>{data.centroid.offsetX.toFixed(2)}</strong>{" "}
+                  {data.centroid.offsetX > 0 ? "(right)" : "(left)"}
+                </p>
               </div>
-              <div className="flex flex-col justify-center space-y-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Offset Vector</h4>
-                  <p className="text-sm text-muted-foreground">
-                    X Offset: <strong>{data.centroid.offsetX.toFixed(2)}</strong>{" "}
-                    {data.centroid.offsetX > 0 ? "(right)" : "(left)"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Y Offset: <strong>{data.centroid.offsetY.toFixed(2)}</strong>{" "}
-                    {data.centroid.offsetY > 0 ? "(down)" : "(up)"}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Distance: <strong>{data.centroid.centroidDistance.toFixed(2)}</strong>
-                  </p>
-                </div>
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Y Offset: <strong>{data.centroid.offsetY.toFixed(2)}</strong>{" "}
+                  {data.centroid.offsetY > 0 ? "(down)" : "(up)"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Distance: <strong>{data.centroid.centroidDistance.toFixed(2)}</strong>
+                </p>
               </div>
             </div>
           </ChartCard>

@@ -59,6 +59,10 @@ export async function GET(request: Request) {
       ? bulls.filter((b) => b.shotPositions && b.shotPositions.length > 0)
       : bulls;
 
+    // Fetch all firearms to get colors
+    const allFirearms = await Firearm.find({}).select('_id color').lean();
+    const firearmColorMap = new Map(allFirearms.map(f => [f._id.toString(), f.color]));
+
     // Calculate metrics per caliber
     const leaderboard = calibers
       .map((caliber) => {
@@ -77,9 +81,40 @@ export async function GET(request: Request) {
         // Apply min shots filter
         if (metrics.totalShots < minShots) return null;
 
+        // Find the most-used firearm for this caliber
+        const firearmUsage = new Map<string, number>();
+        caliberSheets.forEach((sheet: any) => {
+          const firearmId = sheet.firearmId.toString();
+          const sheetBulls = caliberBulls.filter(
+            (b) => b.targetSheetId.toString() === sheet._id.toString()
+          );
+          const shots = sheetBulls.reduce((sum, b) => sum + (
+            (b.score5Count || 0) +
+            (b.score4Count || 0) +
+            (b.score3Count || 0) +
+            (b.score2Count || 0) +
+            (b.score1Count || 0) +
+            (b.score0Count || 0)
+          ), 0);
+          firearmUsage.set(firearmId, (firearmUsage.get(firearmId) || 0) + shots);
+        });
+
+        // Get the firearm with most shots for this caliber
+        let primaryFirearmId = null;
+        let maxShots = 0;
+        firearmUsage.forEach((shots, firearmId) => {
+          if (shots > maxShots) {
+            maxShots = shots;
+            primaryFirearmId = firearmId;
+          }
+        });
+
+        const firearmColor = primaryFirearmId ? firearmColorMap.get(primaryFirearmId) : null;
+
         return {
           caliberId: caliber._id.toString(),
           caliberName: caliber.name,
+          firearmColor: firearmColor || null,
           ...metrics,
         };
       })

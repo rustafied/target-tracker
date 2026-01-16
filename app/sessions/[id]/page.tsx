@@ -37,6 +37,7 @@ import {
   Legend,
   ResponsiveContainer,
   LabelList,
+  Cell,
 } from "recharts";
 
 interface BullRecord {
@@ -414,6 +415,7 @@ export default function SessionDetailPage() {
     sheets.forEach(sheet => {
       const firearmId = sheet.firearmId._id;
       const firearmName = sheet.firearmId.name;
+      // Explicitly use the color from the firearm settings, fallback to defaults only if not set
       const firearmColor = sheet.firearmId.color;
       
       if (!firearmSheets.has(firearmId)) {
@@ -444,7 +446,6 @@ export default function SessionDetailPage() {
       smooth: true,
       symbol: "circle" as const,
       symbolSize: 8,
-      color: firearmData.color,
       lineStyle: {
         width: 3,
       },
@@ -454,6 +455,8 @@ export default function SessionDetailPage() {
     }));
 
     return {
+      // Explicitly set color palette from firearm settings
+      color: Array.from(firearmSheets.values()).map(f => f.color),
       tooltip: {
         trigger: "axis" as const,
         axisPointer: {
@@ -631,25 +634,43 @@ export default function SessionDetailPage() {
 
                 {/* Ammo Usage */}
                 {(() => {
-                  // Calculate ammo usage from actual sheets instead of transactions
-                  const caliberUsage: Record<string, number> = {};
+                  // Calculate ammo usage from actual sheets and track firearm colors
+                  const caliberData: Record<string, { rounds: number; firearmColors: Map<string, number> }> = {};
                   
                   sheets.forEach(sheet => {
                     const caliberName = sheet.caliberId.name;
+                    const firearmColor = sheet.firearmId.color || "#3b82f6";
                     const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
                     
-                    if (!caliberUsage[caliberName]) {
-                      caliberUsage[caliberName] = 0;
+                    if (!caliberData[caliberName]) {
+                      caliberData[caliberName] = { rounds: 0, firearmColors: new Map() };
                     }
-                    caliberUsage[caliberName] += totalShots;
+                    
+                    caliberData[caliberName].rounds += totalShots;
+                    const currentCount = caliberData[caliberName].firearmColors.get(firearmColor) || 0;
+                    caliberData[caliberName].firearmColors.set(firearmColor, currentCount + totalShots);
                   });
 
-                  const chartData = Object.entries(caliberUsage)
-                    .filter(([_, rounds]) => rounds > 0)
-                    .map(([name, rounds]) => ({
-                      name,
-                      rounds,
-                    }));
+                  // For each caliber, find the firearm color that was used most
+                  const chartData = Object.entries(caliberData)
+                    .filter(([_, data]) => data.rounds > 0)
+                    .map(([name, data]) => {
+                      let primaryColor = "#3b82f6";
+                      let maxShots = 0;
+                      
+                      data.firearmColors.forEach((shots, color) => {
+                        if (shots > maxShots) {
+                          maxShots = shots;
+                          primaryColor = color;
+                        }
+                      });
+                      
+                      return {
+                        name,
+                        rounds: data.rounds,
+                        fill: primaryColor,
+                      };
+                    });
 
                   if (chartData.length === 0) return null;
 
@@ -673,7 +694,10 @@ export default function SessionDetailPage() {
                             labelStyle={{ color: "#fff" }}
                             cursor={false}
                           />
-                          <Bar dataKey="rounds" fill="#3b82f6" name="Rounds Used">
+                          <Bar dataKey="rounds" name="Rounds Used">
+                            {chartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
                             <LabelList dataKey="rounds" position="top" fill="#fff" fontSize={12} />
                           </Bar>
                         </BarChart>

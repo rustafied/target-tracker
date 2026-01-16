@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
-import { Search, Package, AlertCircle, Plus, Pencil } from "lucide-react";
+import { Package, AlertCircle, Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { getBulletIcon } from "@/lib/bullet-icons";
 import Image from "next/image";
@@ -49,7 +49,6 @@ export default function AmmoPage() {
   const [inventory, setInventory] = useState<AmmoInventoryItem[]>([]);
   const [usageOverTime, setUsageOverTime] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [orderQuantities, setOrderQuantities] = useState<Record<string, string>>({});
   const [submittingOrder, setSubmittingOrder] = useState(false);
@@ -236,15 +235,7 @@ export default function AmmoPage() {
 
   const filteredInventory = inventory.filter((item) => {
     // Hide items with zero inventory
-    if (item.onHand === 0) return false;
-    
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    return (
-      item.caliber.name.toLowerCase().includes(search) ||
-      item.caliber.shortCode?.toLowerCase().includes(search) ||
-      item.caliber.category?.toLowerCase().includes(search)
-    );
+    return item.onHand > 0;
   });
 
   // Generate chart for usage over time
@@ -516,19 +507,6 @@ export default function AmmoPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search calibers..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
       {/* Charts */}
       {(usageChartOption || inventoryPieOption) && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
@@ -556,9 +534,7 @@ export default function AmmoPage() {
           <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground/20" />
           <h3 className="text-lg font-semibold mb-2">No calibers found</h3>
           <p className="text-muted-foreground mb-6">
-            {searchTerm
-              ? "No calibers match your search"
-              : "Add calibers in Setup to start tracking ammo"}
+            Add calibers in Setup to start tracking ammo
           </p>
           <Button onClick={() => router.push("/setup/calibers")}>
             Go to Setup → Calibers

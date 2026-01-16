@@ -30,8 +30,8 @@ const analyticsItems = [
   { name: "Overview", href: "/analytics", icon: LineChart },
   { name: "Targets", href: "/analytics/targets", icon: Target },
   { name: "Firearms", href: "/analytics/firearms", icon: Zap },
-  { name: "Calibers", href: "/analytics/calibers", icon: Crosshair },
   { name: "Optics", href: "/analytics/optics", icon: Eye },
+  { name: "Calibers", href: "/analytics/calibers", icon: Crosshair },
 ];
 
 const setupItems = [

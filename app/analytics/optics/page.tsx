@@ -9,16 +9,18 @@ import {
   TrendingUp,
   Target,
   Crosshair,
-  Radius,
   Activity,
   Ruler,
+  Award,
+  Trophy,
 } from "lucide-react";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
 import { FilterBar, AnalyticsFilters } from "@/components/analytics/FilterBar";
 import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
-import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
+import { EChart } from "@/components/analytics/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { LoadingCard } from "@/components/ui/spinner";
 import type { EChartsOption } from "echarts";
 
@@ -52,7 +54,6 @@ export default function OpticsAnalyticsPage() {
   const [firearms, setFirearms] = useState<{ _id: string; name: string }[]>([]);
   const [calibers, setCalibers] = useState<{ _id: string; name: string }[]>([]);
   const [optics, setOptics] = useState<{ _id: string; name: string }[]>([]);
-  const [selectedOptic, setSelectedOptic] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<AnalyticsFilters>({
     firearmIds: searchParams.get("firearmIds")?.split(",").filter(Boolean) || [],
@@ -131,9 +132,6 @@ export default function OpticsAnalyticsPage() {
       if (res.ok) {
         const fetchedData = await res.json();
         setData(fetchedData);
-        if (fetchedData.leaderboard.length > 0 && !selectedOptic) {
-          setSelectedOptic(fetchedData.leaderboard[0].opticId);
-        }
       } else {
         toast.error("Failed to load optic analytics");
       }
@@ -190,55 +188,226 @@ export default function OpticsAnalyticsPage() {
     );
   }
 
-  const selectedData = data.leaderboard.find((o) => o.opticId === selectedOptic);
-  const selectedTrend = selectedOptic ? data.trends[selectedOptic] : null;
-  const selectedDistanceCurve = selectedOptic ? data.distanceCurves[selectedOptic] : null;
+  // Create combined performance over time chart
+  const performanceOverTimeOption: EChartsOption | null = (() => {
+    if (!data.trends || Object.keys(data.trends).length === 0) return null;
 
-  const trendChartOption: EChartsOption | null = selectedTrend
-    ? {
-        tooltip: { trigger: "axis" },
-        legend: { data: ["Avg Score", "Bull Rate"], textStyle: { color: "hsl(var(--foreground))" } },
-        xAxis: { type: "category", data: selectedTrend.map((s: any, i: number) => `S${i + 1}`) },
-        yAxis: [
-          { type: "value", name: "Avg Score", min: 0, max: 5 },
-          { type: "value", name: "Bull Rate", min: 0, max: 1 },
-        ],
-        series: [
-          {
-            name: "Avg Score",
-            data: selectedTrend.map((s: any) => s.avgScorePerShot),
-            type: "line",
-            smooth: true,
-            lineStyle: { color: CHART_COLORS.primary, width: 3 },
-          },
-          {
-            name: "Bull Rate",
-            data: selectedTrend.map((s: any) => s.bullRate),
-            type: "line",
-            yAxisIndex: 1,
-            smooth: true,
-            lineStyle: { color: CHART_COLORS.success, width: 3 },
-          },
-        ],
-      }
-    : null;
+    const maxSessions = Math.max(
+      ...Object.values(data.trends).map((trend: any) => trend.length)
+    );
 
-  const distanceCurveOption: EChartsOption | null = selectedDistanceCurve
-    ? {
-        tooltip: { trigger: "axis" },
-        xAxis: { type: "category", data: selectedDistanceCurve.map((d: any) => `${d.distance}yd`) },
-        yAxis: { type: "value", name: "Avg Score", min: 0, max: 5 },
-        series: [
-          {
-            data: selectedDistanceCurve.map((d: any) => d.avgScorePerShot),
-            type: "line",
-            smooth: true,
-            lineStyle: { color: CHART_COLORS.primary, width: 3 },
-            areaStyle: { color: CHART_COLORS.primary, opacity: 0.1 },
-          },
-        ],
-      }
-    : null;
+    const xAxisLabels = Array.from({ length: maxSessions }, (_, i) => `Session ${i + 1}`);
+
+    const defaultColors = [
+      "#3b82f6", "#22c55e", "#f59e0b", "#ef4444",
+      "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
+    ];
+
+    const series = data.leaderboard.map((optic, index) => {
+      const opticTrend = data.trends[optic.opticId] || [];
+      const color = defaultColors[index % defaultColors.length];
+
+      return {
+        name: optic.opticName,
+        type: "line" as const,
+        data: opticTrend.map((s: any) => s.avgScorePerShot),
+        smooth: true,
+        symbol: "circle" as const,
+        symbolSize: 8,
+        lineStyle: {
+          width: 3,
+          color: color,
+        },
+        itemStyle: {
+          color: color,
+        },
+        emphasis: {
+          focus: "series" as const,
+        },
+      };
+    });
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+        axisPointer: {
+          type: "cross" as const,
+        },
+      },
+      legend: {
+        data: data.leaderboard.map((o) => o.opticName),
+        top: 10,
+      },
+      grid: {
+        left: 60,
+        right: 30,
+        top: 60,
+        bottom: 60,
+        containLabel: true,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: xAxisLabels,
+        name: "Session",
+        nameLocation: "middle" as const,
+        nameGap: 30,
+      },
+      yAxis: {
+        type: "value" as const,
+        name: "Average Score",
+        nameLocation: "middle" as const,
+        nameGap: 45,
+        min: 0,
+        max: 5,
+      },
+      series,
+    };
+  })();
+
+  // Score & Bull Rate combined chart
+  const scoreBullRateOption: EChartsOption | null = (() => {
+    if (!data.trends || Object.keys(data.trends).length === 0) return null;
+
+    const maxSessions = Math.max(
+      ...Object.values(data.trends).map((trend: any) => trend.length)
+    );
+
+    const xAxisLabels = Array.from({ length: maxSessions }, (_, i) => `Session ${i + 1}`);
+
+    const defaultColors = [
+      "#3b82f6", "#22c55e", "#f59e0b", "#ef4444",
+      "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
+    ];
+
+    const scoreSeries = data.leaderboard.map((optic, index) => {
+      const opticTrend = data.trends[optic.opticId] || [];
+      return {
+        name: `${optic.opticName} - Score`,
+        type: "line" as const,
+        data: opticTrend.map((s: any) => s.avgScorePerShot),
+        smooth: true,
+        yAxisIndex: 0,
+        lineStyle: { width: 2, color: defaultColors[index % defaultColors.length] },
+      };
+    });
+
+    const bullRateSeries = data.leaderboard.map((optic, index) => {
+      const opticTrend = data.trends[optic.opticId] || [];
+      return {
+        name: `${optic.opticName} - Bull Rate`,
+        type: "line" as const,
+        data: opticTrend.map((s: any) => s.bullRate),
+        smooth: true,
+        yAxisIndex: 1,
+        lineStyle: { width: 2, type: "dashed" as const, color: defaultColors[index % defaultColors.length] },
+      };
+    });
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+      },
+      legend: {
+        data: [...scoreSeries.map(s => s.name), ...bullRateSeries.map(s => s.name)],
+        top: 10,
+      },
+      grid: {
+        left: 60,
+        right: 60,
+        top: 60,
+        bottom: 60,
+        containLabel: true,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: xAxisLabels,
+      },
+      yAxis: [
+        {
+          type: "value" as const,
+          name: "Avg Score",
+          min: 0,
+          max: 5,
+        },
+        {
+          type: "value" as const,
+          name: "Bull Rate",
+          min: 0,
+          max: 1,
+        },
+      ],
+      series: [...scoreSeries, ...bullRateSeries],
+    };
+  })();
+
+  // Performance by distance for all optics
+  const distancePerformanceOption: EChartsOption | null = (() => {
+    if (!data.distanceCurves || Object.keys(data.distanceCurves).length === 0) return null;
+
+    // Collect all unique distances
+    const allDistances = new Set<number>();
+    Object.values(data.distanceCurves).forEach((curve: any) => {
+      curve.forEach((point: any) => allDistances.add(point.distance));
+    });
+
+    const sortedDistances = Array.from(allDistances).sort((a, b) => a - b);
+    const xAxisLabels = sortedDistances.map(d => `${d}yd`);
+
+    const defaultColors = [
+      "#3b82f6", "#22c55e", "#f59e0b", "#ef4444",
+      "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
+    ];
+
+    const series = data.leaderboard.map((optic, index) => {
+      const opticCurve = data.distanceCurves[optic.opticId] || [];
+      const dataMap = new Map(opticCurve.map((point: any) => [point.distance, point.avgScorePerShot]));
+      
+      return {
+        name: optic.opticName,
+        type: "line" as const,
+        data: sortedDistances.map(d => dataMap.get(d) || null),
+        smooth: true,
+        connectNulls: true,
+        lineStyle: {
+          width: 3,
+          color: defaultColors[index % defaultColors.length],
+        },
+      };
+    });
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+      },
+      legend: {
+        data: data.leaderboard.map((o) => o.opticName),
+        top: 10,
+      },
+      grid: {
+        left: 60,
+        right: 30,
+        top: 60,
+        bottom: 60,
+        containLabel: true,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: xAxisLabels,
+        name: "Distance (yards)",
+        nameLocation: "middle" as const,
+        nameGap: 30,
+      },
+      yAxis: {
+        type: "value" as const,
+        name: "Average Score",
+        nameLocation: "middle" as const,
+        nameGap: 45,
+        min: 0,
+        max: 5,
+      },
+      series,
+    };
+  })();
 
   return (
     <div>
@@ -256,124 +425,119 @@ export default function OpticsAnalyticsPage() {
         optics={optics}
       />
 
-      <Card className="mb-6">
+      {performanceOverTimeOption && (
+        <ChartCard title="Optic Performance Over Time" icon={TrendingUp}>
+          <EChart option={performanceOverTimeOption} height={500} />
+        </ChartCard>
+      )}
+
+      <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Optic Leaderboard</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5" />
+            Optic Leaderboard
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {data.leaderboard.map((optic, index) => (
-              <button
-                key={optic.opticId}
-                onClick={() => setSelectedOptic(optic.opticId)}
-                className={`w-full text-left p-4 rounded-lg transition-colors ${
-                  selectedOptic === optic.opticId
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary hover:bg-accent"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold">#{index + 1}</span>
-                    <span className="text-lg font-semibold">{optic.opticName}</span>
+            {data.leaderboard.map((optic, index) => {
+              const defaultColors = [
+                "#3b82f6", "#22c55e", "#f59e0b", "#ef4444",
+                "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
+              ];
+              const opticColor = defaultColors[index % defaultColors.length];
+              
+              return (
+                <div
+                  key={optic.opticId}
+                  className="relative p-4 rounded-lg border bg-card transition-all hover:shadow-md"
+                >
+                  <div 
+                    className="absolute -left-2 -top-2 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg"
+                    style={{ backgroundColor: opticColor }}
+                  >
+                    #{index + 1}
                   </div>
-                  <span className="text-2xl font-bold">{optic.avgScorePerShot.toFixed(2)}</span>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <div className="opacity-70">Bull Rate</div>
-                    <div className="font-semibold">{(optic.bullRate * 100).toFixed(1)}%</div>
-                  </div>
-                  <div>
-                    <div className="opacity-70">Miss Rate</div>
-                    <div className="font-semibold">{(optic.missRate * 100).toFixed(1)}%</div>
-                  </div>
-                  {optic.meanRadius !== undefined && optic.meanRadius !== null && (
-                    <div>
-                      <div className="opacity-70">Mean Radius</div>
-                      <div className="font-semibold">{optic.meanRadius.toFixed(2)}</div>
+                  
+                  <div 
+                    className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
+                    style={{ backgroundColor: opticColor }}
+                  />
+                  
+                  <div className="flex items-center justify-between mb-3 ml-6">
+                    <div className="flex items-center gap-3">
+                      <Eye className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-lg font-bold">{optic.opticName}</span>
+                      {index === 0 && (
+                        <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600">
+                          <Award className="h-3 w-3 mr-1" />
+                          Top
+                        </Badge>
+                      )}
                     </div>
-                  )}
-                  <div>
-                    <div className="opacity-70">Shots</div>
-                    <div className="font-semibold">{optic.totalShots}</div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold" style={{ color: opticColor }}>
+                        {optic.avgScorePerShot.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Avg Score</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 ml-6">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-green-500" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Bull Rate</div>
+                        <div className="font-semibold text-sm">{(optic.bullRate * 100).toFixed(1)}%</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Crosshair className="h-4 w-4 text-red-500" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Miss Rate</div>
+                        <div className="font-semibold text-sm">{(optic.missRate * 100).toFixed(1)}%</div>
+                      </div>
+                    </div>
+                    
+                    {optic.meanRadius !== undefined && optic.meanRadius !== null && (
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-blue-500" />
+                        <div>
+                          <div className="text-xs text-muted-foreground">Mean Radius</div>
+                          <div className="font-semibold text-sm">{optic.meanRadius.toFixed(2)}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-purple-500" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Total Shots</div>
+                        <div className="font-semibold text-sm">{optic.totalShots}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      {selectedData && (
-        <>
-          <h2 className="text-2xl font-bold mb-4">{selectedData.opticName} - Detailed Analysis</h2>
+      <div className="space-y-6 mt-6">
+        {scoreBullRateOption && (
+          <ChartCard title="Score & Bull Rate Over Sessions" icon={TrendingUp}>
+            <EChart option={scoreBullRateOption} height={400} />
+          </ChartCard>
+        )}
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Avg Score/Shot
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{selectedData.avgScorePerShot.toFixed(2)}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Bull Rate
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{(selectedData.bullRate * 100).toFixed(1)}%</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Crosshair className="h-4 w-4" />
-                  Miss Rate
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{(selectedData.missRate * 100).toFixed(1)}%</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Activity className="h-4 w-4" />
-                  Total Shots
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{selectedData.totalShots}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6 mb-6">
-            {trendChartOption && (
-              <ChartCard title="Score & Bull Rate Over Sessions" icon={TrendingUp}>
-                <EChart option={trendChartOption} height={300} />
-              </ChartCard>
-            )}
-
-            {distanceCurveOption && (
-              <ChartCard title="Performance by Distance" icon={Ruler}>
-                <EChart option={distanceCurveOption} height={300} />
-              </ChartCard>
-            )}
-          </div>
-        </>
-      )}
+        {distancePerformanceOption && (
+          <ChartCard title="Performance by Distance" icon={Ruler}>
+            <EChart option={distancePerformanceOption} height={400} />
+          </ChartCard>
+        )}
+      </div>
     </div>
   );
 }

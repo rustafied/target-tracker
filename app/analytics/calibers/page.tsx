@@ -7,24 +7,24 @@ import {
   Crosshair,
   TrendingUp,
   Target,
-  Radius,
-  Focus,
   Activity,
-  Ruler,
-  Sparkles,
+  Award,
+  Trophy,
 } from "lucide-react";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
 import { FilterBar, AnalyticsFilters } from "@/components/analytics/FilterBar";
 import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
-import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
+import { EChart } from "@/components/analytics/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { LoadingCard } from "@/components/ui/spinner";
 import type { EChartsOption } from "echarts";
 
 interface CaliberMetrics {
   caliberId: string;
   caliberName: string;
+  firearmColor?: string | null;
   totalShots: number;
   totalScore: number;
   avgScorePerShot: number;
@@ -52,7 +52,6 @@ export default function CalibersAnalyticsPage() {
   const [firearms, setFirearms] = useState<{ _id: string; name: string }[]>([]);
   const [calibers, setCalibers] = useState<{ _id: string; name: string }[]>([]);
   const [optics, setOptics] = useState<{ _id: string; name: string }[]>([]);
-  const [selectedCaliber, setSelectedCaliber] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<AnalyticsFilters>({
     firearmIds: searchParams.get("firearmIds")?.split(",").filter(Boolean) || [],
@@ -131,9 +130,6 @@ export default function CalibersAnalyticsPage() {
       if (res.ok) {
         const fetchedData = await res.json();
         setData(fetchedData);
-        if (fetchedData.leaderboard.length > 0 && !selectedCaliber) {
-          setSelectedCaliber(fetchedData.leaderboard[0].caliberId);
-        }
       } else {
         toast.error("Failed to load caliber analytics");
       }
@@ -193,55 +189,88 @@ export default function CalibersAnalyticsPage() {
     );
   }
 
-  const selectedData = data.leaderboard.find((c) => c.caliberId === selectedCaliber);
-  const selectedTrend = selectedCaliber ? data.trends[selectedCaliber] : null;
-  const selectedDistanceCurve = selectedCaliber ? data.distanceCurves[selectedCaliber] : null;
+  // Create combined performance over time chart
+  const performanceOverTimeOption: EChartsOption | null = (() => {
+    if (!data.trends || Object.keys(data.trends).length === 0) return null;
 
-  const trendChartOption: EChartsOption | null = selectedTrend
-    ? {
-        tooltip: { trigger: "axis" },
-        legend: { data: ["Avg Score", "Bull Rate"], textStyle: { color: "hsl(var(--foreground))" } },
-        xAxis: { type: "category", data: selectedTrend.map((s: any, i: number) => `S${i + 1}`) },
-        yAxis: [
-          { type: "value", name: "Avg Score", min: 0, max: 5 },
-          { type: "value", name: "Bull Rate", min: 0, max: 1 },
-        ],
-        series: [
-          {
-            name: "Avg Score",
-            data: selectedTrend.map((s: any) => s.avgScorePerShot),
-            type: "line",
-            smooth: true,
-            lineStyle: { color: CHART_COLORS.primary, width: 3 },
-          },
-          {
-            name: "Bull Rate",
-            data: selectedTrend.map((s: any) => s.bullRate),
-            type: "line",
-            yAxisIndex: 1,
-            smooth: true,
-            lineStyle: { color: CHART_COLORS.success, width: 3 },
-          },
-        ],
-      }
-    : null;
+    // Find the maximum number of sessions across all calibers
+    const maxSessions = Math.max(
+      ...Object.values(data.trends).map((trend: any) => trend.length)
+    );
 
-  const distanceCurveOption: EChartsOption | null = selectedDistanceCurve
-    ? {
-        tooltip: { trigger: "axis" },
-        xAxis: { type: "category", data: selectedDistanceCurve.map((d: any) => `${d.distance}yd`) },
-        yAxis: { type: "value", name: "Avg Score", min: 0, max: 5 },
-        series: [
-          {
-            data: selectedDistanceCurve.map((d: any) => d.avgScorePerShot),
-            type: "line",
-            smooth: true,
-            lineStyle: { color: CHART_COLORS.primary, width: 3 },
-            areaStyle: { color: CHART_COLORS.primary, opacity: 0.1 },
-          },
-        ],
-      }
-    : null;
+    const xAxisLabels = Array.from({ length: maxSessions }, (_, i) => `Session ${i + 1}`);
+
+    // Create a series for each caliber
+    const series = data.leaderboard.map((caliber, index) => {
+      const caliberTrend = data.trends[caliber.caliberId] || [];
+      const defaultColors = [
+        "#3b82f6", // blue
+        "#22c55e", // green
+        "#f59e0b", // amber
+        "#ef4444", // red
+        "#8b5cf6", // violet
+        "#06b6d4", // cyan
+        "#ec4899", // pink
+        "#14b8a6", // teal
+      ];
+      const color = caliber.firearmColor || defaultColors[index % defaultColors.length];
+
+      return {
+        name: caliber.caliberName,
+        type: "line" as const,
+        data: caliberTrend.map((s: any) => s.avgScorePerShot),
+        smooth: true,
+        symbol: "circle" as const,
+        symbolSize: 8,
+        lineStyle: {
+          width: 3,
+          color: color,
+        },
+        itemStyle: {
+          color: color,
+        },
+        emphasis: {
+          focus: "series" as const,
+        },
+      };
+    });
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+        axisPointer: {
+          type: "cross" as const,
+        },
+      },
+      legend: {
+        data: data.leaderboard.map((c) => c.caliberName),
+        top: 10,
+      },
+      grid: {
+        left: 60,
+        right: 30,
+        top: 60,
+        bottom: 60,
+        containLabel: true,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: xAxisLabels,
+        name: "Session",
+        nameLocation: "middle" as const,
+        nameGap: 30,
+      },
+      yAxis: {
+        type: "value" as const,
+        name: "Average Score",
+        nameLocation: "middle" as const,
+        nameGap: 45,
+        min: 0,
+        max: 5,
+      },
+      series,
+    };
+  })();
 
   return (
     <div>
@@ -259,124 +288,189 @@ export default function CalibersAnalyticsPage() {
         optics={optics}
       />
 
-      <Card className="mb-6">
+      {performanceOverTimeOption && (
+        <ChartCard title="Caliber Performance Over Time" icon={TrendingUp}>
+          <EChart option={performanceOverTimeOption} height={500} />
+        </ChartCard>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle>Caliber Leaderboard</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5" />
+            Caliber Leaderboard
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {data.leaderboard.map((caliber, index) => (
-              <button
-                key={caliber.caliberId}
-                onClick={() => setSelectedCaliber(caliber.caliberId)}
-                className={`w-full text-left p-4 rounded-lg transition-colors ${
-                  selectedCaliber === caliber.caliberId
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary hover:bg-accent"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold">#{index + 1}</span>
-                    <span className="text-lg font-semibold">{caliber.caliberName}</span>
+            {data.leaderboard.map((caliber, index) => {
+              const defaultColors = [
+                "#3b82f6", // blue
+                "#22c55e", // green
+                "#f59e0b", // amber
+                "#ef4444", // red
+                "#8b5cf6", // violet
+                "#06b6d4", // cyan
+                "#ec4899", // pink
+                "#14b8a6", // teal
+              ];
+              const caliberColor = caliber.firearmColor || defaultColors[index % defaultColors.length];
+              
+              return (
+                <div
+                  key={caliber.caliberId}
+                  className="relative p-4 rounded-lg border bg-card transition-all hover:shadow-md"
+                >
+                  {/* Rank Badge */}
+                  <div 
+                    className="absolute -left-2 -top-2 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg"
+                    style={{ backgroundColor: caliberColor }}
+                  >
+                    #{index + 1}
                   </div>
-                  <span className="text-2xl font-bold">{caliber.avgScorePerShot.toFixed(2)}</span>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <div className="opacity-70">Bull Rate</div>
-                    <div className="font-semibold">{(caliber.bullRate * 100).toFixed(1)}%</div>
-                  </div>
-                  <div>
-                    <div className="opacity-70">Miss Rate</div>
-                    <div className="font-semibold">{(caliber.missRate * 100).toFixed(1)}%</div>
-                  </div>
-                  {caliber.meanRadius !== undefined && caliber.meanRadius !== null && (
-                    <div>
-                      <div className="opacity-70">Mean Radius</div>
-                      <div className="font-semibold">{caliber.meanRadius.toFixed(2)}</div>
+                  
+                  {/* Color indicator bar */}
+                  <div 
+                    className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
+                    style={{ backgroundColor: caliberColor }}
+                  />
+                  
+                  <div className="flex items-center justify-between mb-3 ml-6">
+                    <div className="flex items-center gap-3">
+                      <Crosshair className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-lg font-bold">{caliber.caliberName}</span>
+                      {index === 0 && (
+                        <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600">
+                          <Award className="h-3 w-3 mr-1" />
+                          Top
+                        </Badge>
+                      )}
                     </div>
-                  )}
-                  <div>
-                    <div className="opacity-70">Shots</div>
-                    <div className="font-semibold">{caliber.totalShots}</div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold" style={{ color: caliberColor }}>
+                        {caliber.avgScorePerShot.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Avg Score</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 ml-6">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-green-500" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Bull Rate</div>
+                        <div className="font-semibold text-sm">{(caliber.bullRate * 100).toFixed(1)}%</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Crosshair className="h-4 w-4 text-red-500" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Miss Rate</div>
+                        <div className="font-semibold text-sm">{(caliber.missRate * 100).toFixed(1)}%</div>
+                      </div>
+                    </div>
+                    
+                    {caliber.meanRadius !== undefined && caliber.meanRadius !== null && (
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-blue-500" />
+                        <div>
+                          <div className="text-xs text-muted-foreground">Mean Radius</div>
+                          <div className="font-semibold text-sm">{caliber.meanRadius.toFixed(2)}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-purple-500" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Total Shots</div>
+                        <div className="font-semibold text-sm">{caliber.totalShots}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      {selectedData && (
-        <>
-          <h2 className="text-2xl font-bold mb-4">{selectedData.caliberName} - Detailed Analysis</h2>
+        {/* Ammo Usage Pie Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Ammo Usage
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EChart option={(() => {
+              const defaultColors = [
+                "#3b82f6", // blue
+                "#22c55e", // green
+                "#f59e0b", // amber
+                "#ef4444", // red
+                "#8b5cf6", // violet
+                "#06b6d4", // cyan
+                "#ec4899", // pink
+                "#14b8a6", // teal
+              ];
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Avg Score/Shot
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{selectedData.avgScorePerShot.toFixed(2)}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Bull Rate
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{(selectedData.bullRate * 100).toFixed(1)}%</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Crosshair className="h-4 w-4" />
-                  Miss Rate
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{(selectedData.missRate * 100).toFixed(1)}%</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Activity className="h-4 w-4" />
-                  Total Shots
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{selectedData.totalShots}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6 mb-6">
-            {trendChartOption && (
-              <ChartCard title="Score & Bull Rate Over Sessions" icon={TrendingUp}>
-                <EChart option={trendChartOption} height={300} />
-              </ChartCard>
-            )}
-
-            {distanceCurveOption && (
-              <ChartCard title="Performance by Distance" icon={Ruler}>
-                <EChart option={distanceCurveOption} height={300} />
-              </ChartCard>
-            )}
-          </div>
-        </>
-      )}
+              return {
+                tooltip: {
+                  trigger: "item" as const,
+                  formatter: "{b}: {c} rounds ({d}%)",
+                },
+                series: [
+                  {
+                    name: "Ammo Usage",
+                    type: "pie" as const,
+                    radius: ["40%", "70%"],
+                    center: ["50%", "50%"],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                      borderRadius: 10,
+                      borderColor: "#000",
+                      borderWidth: 2,
+                    },
+                    label: {
+                      show: false,
+                    },
+                    emphasis: {
+                      label: {
+                        show: true,
+                        fontSize: 16,
+                        fontWeight: "bold",
+                      },
+                    },
+                    labelLine: {
+                      show: false,
+                    },
+                    data: data.leaderboard.map((caliber, index) => ({
+                      value: caliber.totalShots,
+                      name: caliber.caliberName,
+                      itemStyle: {
+                        color: caliber.firearmColor || defaultColors[index % defaultColors.length],
+                      },
+                    })),
+                  },
+                ],
+              };
+            })()} height={400} />
+            
+            <div className="mt-4 pt-4 border-t">
+              <div className="text-sm text-muted-foreground text-center">
+                <strong className="text-foreground text-lg">
+                  {data.leaderboard.reduce((sum, c) => sum + c.totalShots, 0).toLocaleString()}
+                </strong>
+                <div className="text-xs mt-1">Total Rounds Fired</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

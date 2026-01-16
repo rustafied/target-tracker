@@ -47,7 +47,7 @@ export async function GET(
     const templateIds = [...new Set(rawSheets.map(s => s.targetTemplateId?.toString()).filter((id): id is string => Boolean(id)))];
     
     const [firearms, calibers, optics, templates] = await Promise.all([
-      Firearm.find({ _id: { $in: firearmIds } }).lean(),
+      Firearm.find({ _id: { $in: firearmIds } }).select('_id name color manufacturer model').lean(),
       Caliber.find({ _id: { $in: caliberIds } }).lean(),
       Optic.find({ _id: { $in: opticIds } }).lean(),
       templateIds.length > 0 ? TargetTemplate.find({ _id: { $in: templateIds } }).lean() : Promise.resolve([]),

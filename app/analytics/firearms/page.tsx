@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
-import { Target } from "lucide-react";
+import { Target, TrendingUp, Crosshair, Activity, Award, Trophy } from "lucide-react";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
+import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
 import { EChart } from "@/components/analytics/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { LoadingCard } from "@/components/ui/spinner";
 import type { EChartsOption } from "echarts";
 
@@ -185,54 +187,105 @@ export default function FirearmsAnalyticsPage() {
         description="Performance leaderboard and trends by firearm"
       />
 
-      {/* Main Layout: Chart + Leaderboard */}
-      <Card className="mb-6">
+      {performanceChartOption && (
+        <ChartCard title="Firearm Performance Over Time" icon={TrendingUp}>
+          <EChart option={performanceChartOption} height={500} />
+        </ChartCard>
+      )}
+
+      <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Performance by Firearm</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5" />
+            Firearm Leaderboard
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Performance Chart - 2/3 width */}
-            <div className="lg:col-span-2">
-              {performanceChartOption && (
-                <div style={{ width: "100%", height: "590px" }}>
-                  <EChart option={performanceChartOption} height="100%" />
-                </div>
-              )}
-            </div>
-
-            {/* Right: Leaderboard - 1/3 width */}
-            <div className="space-y-3 max-h-[590px] overflow-y-auto">
-              <h3 className="text-lg font-semibold mb-3 sticky top-0 bg-card pt-2 pb-2">Leaderboard</h3>
-              {data.leaderboard.map((firearm, index) => (
+          <div className="space-y-3">
+            {data.leaderboard.map((firearm, index) => {
+              const defaultColors = [
+                "#3b82f6", "#22c55e", "#f59e0b", "#ef4444",
+                "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
+              ];
+              const firearmColor = firearm.firearmColor || defaultColors[index % defaultColors.length];
+              
+              return (
                 <div
                   key={firearm.firearmId}
-                  className="w-full text-left p-3 rounded-lg bg-secondary"
+                  className="relative p-4 rounded-lg border bg-card transition-all hover:shadow-md"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl font-bold">#{index + 1}</span>
-                      <span className="font-semibold">{firearm.firearmName}</span>
-                    </div>
-                    <span className="text-xl font-bold">{firearm.avgScorePerShot.toFixed(2)}</span>
+                  <div 
+                    className="absolute -left-2 -top-2 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg"
+                    style={{ backgroundColor: firearmColor }}
+                  >
+                    #{index + 1}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <div className="opacity-70">Bull Rate</div>
-                      <div className="font-semibold">{(firearm.bullRate * 100).toFixed(1)}%</div>
+                  
+                  <div 
+                    className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
+                    style={{ backgroundColor: firearmColor }}
+                  />
+                  
+                  <div className="flex items-center justify-between mb-3 ml-6">
+                    <div className="flex items-center gap-3">
+                      <Target className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-lg font-bold">{firearm.firearmName}</span>
+                      {index === 0 && (
+                        <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600">
+                          <Award className="h-3 w-3 mr-1" />
+                          Top
+                        </Badge>
+                      )}
                     </div>
-                    <div>
-                      <div className="opacity-70">Shots</div>
-                      <div className="font-semibold">{firearm.totalShots}</div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold" style={{ color: firearmColor }}>
+                        {firearm.avgScorePerShot.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Avg Score</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 ml-6">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-green-500" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Bull Rate</div>
+                        <div className="font-semibold text-sm">{(firearm.bullRate * 100).toFixed(1)}%</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Crosshair className="h-4 w-4 text-red-500" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Miss Rate</div>
+                        <div className="font-semibold text-sm">{(firearm.missRate * 100).toFixed(1)}%</div>
+                      </div>
+                    </div>
+                    
+                    {firearm.meanRadius !== undefined && firearm.meanRadius !== null && (
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-blue-500" />
+                        <div>
+                          <div className="text-xs text-muted-foreground">Mean Radius</div>
+                          <div className="font-semibold text-sm">{firearm.meanRadius.toFixed(2)}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-purple-500" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Total Shots</div>
+                        <div className="font-semibold text-sm">{firearm.totalShots}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
-
     </div>
   );
 }
