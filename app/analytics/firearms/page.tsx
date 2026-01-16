@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
-import { Target, TrendingUp, Crosshair, Activity, Award, Trophy } from "lucide-react";
+import { Target, TrendingUp, Crosshair, Activity, Award, Trophy, Ruler } from "lucide-react";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
 import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingCard } from "@/components/ui/spinner";
 import type { EChartsOption } from "echarts";
+import { meanRadiusToMOA } from "@/lib/utils";
 
 interface FirearmMetrics {
   firearmId: string;
@@ -88,6 +89,77 @@ export default function FirearmsAnalyticsPage() {
       </div>
     );
   }
+
+  // Distance performance chart
+  const distancePerformanceOption: EChartsOption | null = (() => {
+    if (!data.distanceCurves || Object.keys(data.distanceCurves).length === 0) return null;
+
+    // Collect all unique distances
+    const allDistances = new Set<number>();
+    Object.values(data.distanceCurves).forEach((curve: any) => {
+      curve.forEach((point: any) => allDistances.add(point.distance));
+    });
+
+    const sortedDistances = Array.from(allDistances).sort((a, b) => a - b);
+    const xAxisLabels = sortedDistances.map(d => `${d}yd`);
+
+    const defaultColors = [
+      "#3b82f6", "#22c55e", "#f59e0b", "#ef4444",
+      "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
+    ];
+
+    const series = data.leaderboard.map((firearm, index) => {
+      const firearmCurve = data.distanceCurves[firearm.firearmId] || [];
+      const dataMap = new Map(firearmCurve.map((point: any) => [point.distance, point.avgScorePerShot]));
+      
+      return {
+        name: firearm.firearmName,
+        type: "line" as const,
+        data: sortedDistances.map(d => dataMap.get(d) || null),
+        smooth: true,
+        connectNulls: true,
+        lineStyle: {
+          width: 3,
+          color: firearm.firearmColor || defaultColors[index % defaultColors.length],
+        },
+        symbol: "circle",
+        symbolSize: 8,
+      };
+    });
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+      },
+      legend: {
+        data: data.leaderboard.map((f) => f.firearmName),
+        top: 10,
+      },
+      grid: {
+        left: 60,
+        right: 30,
+        top: 60,
+        bottom: 60,
+        containLabel: true,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: xAxisLabels,
+        name: "Distance",
+        nameLocation: "middle" as const,
+        nameGap: 30,
+      },
+      yAxis: {
+        type: "value" as const,
+        name: "Average Score",
+        nameLocation: "middle" as const,
+        nameGap: 45,
+        min: 0,
+        max: 5,
+      },
+      series,
+    };
+  })();
 
   // Multi-firearm performance chart
   const performanceChartOption: EChartsOption | null = (() => {
@@ -191,6 +263,14 @@ export default function FirearmsAnalyticsPage() {
         <ChartCard title="Firearm Performance Over Time" icon={TrendingUp}>
           <EChart option={performanceChartOption} height={500} />
         </ChartCard>
+      )}
+
+      {distancePerformanceOption && (
+        <div className="mt-6">
+          <ChartCard title="Performance by Distance" icon={Ruler}>
+            <EChart option={distancePerformanceOption} height={400} />
+          </ChartCard>
+        </div>
       )}
 
       <Card className="mt-6">

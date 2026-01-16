@@ -10,6 +10,7 @@ import {
   Activity,
   Award,
   Trophy,
+  Ruler,
 } from "lucide-react";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
 import { FilterBar, AnalyticsFilters } from "@/components/analytics/FilterBar";
@@ -189,6 +190,79 @@ export default function CalibersAnalyticsPage() {
     );
   }
 
+  // Distance performance chart
+  const distancePerformanceOption: EChartsOption | null = (() => {
+    if (!data.distanceCurves || Object.keys(data.distanceCurves).length === 0) return null;
+
+    // Collect all unique distances
+    const allDistances = new Set<number>();
+    Object.values(data.distanceCurves).forEach((curve: any) => {
+      curve.forEach((point: any) => allDistances.add(point.distance));
+    });
+
+    const sortedDistances = Array.from(allDistances).sort((a, b) => a - b);
+    const xAxisLabels = sortedDistances.map(d => `${d}yd`);
+
+    const defaultColors = [
+      "#3b82f6", "#22c55e", "#f59e0b", "#ef4444",
+      "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
+    ];
+
+    const series = data.leaderboard.map((caliber, index) => {
+      const caliberCurve = data.distanceCurves[caliber.caliberId] || [];
+      const dataMap = new Map(caliberCurve.map((point: any) => [point.distance, point.avgScorePerShot]));
+      
+      const color = caliber.firearmColor || defaultColors[index % defaultColors.length];
+      
+      return {
+        name: caliber.caliberName,
+        type: "line" as const,
+        data: sortedDistances.map(d => dataMap.get(d) || null),
+        smooth: true,
+        connectNulls: true,
+        lineStyle: {
+          width: 3,
+          color: color,
+        },
+        symbol: "circle",
+        symbolSize: 8,
+      };
+    });
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+      },
+      legend: {
+        data: data.leaderboard.map((c) => c.caliberName),
+        top: 10,
+      },
+      grid: {
+        left: 60,
+        right: 30,
+        top: 60,
+        bottom: 60,
+        containLabel: true,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: xAxisLabels,
+        name: "Distance",
+        nameLocation: "middle" as const,
+        nameGap: 30,
+      },
+      yAxis: {
+        type: "value" as const,
+        name: "Average Score",
+        nameLocation: "middle" as const,
+        nameGap: 45,
+        min: 0,
+        max: 5,
+      },
+      series,
+    };
+  })();
+
   // Create combined performance over time chart
   const performanceOverTimeOption: EChartsOption | null = (() => {
     if (!data.trends || Object.keys(data.trends).length === 0) return null;
@@ -292,6 +366,14 @@ export default function CalibersAnalyticsPage() {
         <ChartCard title="Caliber Performance Over Time" icon={TrendingUp}>
           <EChart option={performanceOverTimeOption} height={500} />
         </ChartCard>
+      )}
+
+      {distancePerformanceOption && (
+        <div className="mt-6">
+          <ChartCard title="Performance by Distance" icon={Ruler}>
+            <EChart option={distancePerformanceOption} height={400} />
+          </ChartCard>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">

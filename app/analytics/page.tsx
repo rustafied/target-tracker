@@ -27,6 +27,7 @@ import { KpiCard } from "@/components/analytics/KpiCard";
 import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
 import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
+import { DistanceAnalysisCard } from "@/components/analytics/DistanceAnalysisCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingCard } from "@/components/ui/spinner";
@@ -517,6 +518,23 @@ export default function AnalyticsPage() {
         <ChartCard title="Average Score Over Sessions" icon={LineChart}>
           <EChart option={avgScoreChartOption} height={300} />
         </ChartCard>
+
+        {/* Distance Impact Analysis */}
+        <DistanceAnalysisCard
+          groupBy="firearm"
+          filters={{
+            firearmIds: filters.firearmIds,
+            caliberIds: filters.caliberIds,
+            opticIds: filters.opticIds,
+            distanceMin: filters.distanceMin,
+            distanceMax: filters.distanceMax,
+            minShots: filters.minShots,
+            positionOnly: filters.positionOnly,
+          }}
+          targetDiameterInches={10.5}
+          showMOA={true}
+          title="Distance Impact Analysis"
+        />
 
         <ChartCard title="Bull Rate & Miss Rate" icon={TrendingUp}>
           <EChart option={bullMissChartOption} height={300} />
