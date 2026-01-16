@@ -572,7 +572,7 @@ export default function SheetDetailPage() {
     }
 
     // Use the firearm's color from the sheet
-    const firearmColor = sheet?.firearmId?.color || "#3b82f6";
+    const firearmColor = (sheet?.firearmId as any)?.color || "#3b82f6";
 
     const series = [{
       name: currentFirearm.firearmName,
