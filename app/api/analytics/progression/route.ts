@@ -14,6 +14,7 @@ interface SheetWithMetrics {
   firearmId: string;
   firearmName: string;
   createdAt: Date;
+  date: Date;
   distanceYards: number;
   averageScore: number;
   totalShots: number;
@@ -24,6 +25,9 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get("sessionId");
+    const firearmId = searchParams.get("firearmId");
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
 
     await connectToDatabase();
 
@@ -33,16 +37,27 @@ export async function GET(request: Request) {
     void Optic;
     void TargetTemplate;
 
-    // Build query - filter by session if provided
+    // Build query - filter by session or firearm if provided
     const query: any = {};
     if (sessionId) {
       query.rangeSessionId = sessionId;
     }
+    if (firearmId) {
+      query.firearmId = firearmId;
+    }
 
-    // Fetch sheets with populated firearm info
-    const sheets = await TargetSheet.find(query)
-      .populate("firearmId", "name")
-      .sort({ createdAt: 1 });
+    // Fetch sheets with populated firearm and session info
+    let sheetsQuery = TargetSheet.find(query)
+      .populate("firearmId", "name color")
+      .populate("rangeSessionId", "date")
+      .sort({ createdAt: -1 });
+
+    // Apply limit if fetching by firearm (to get most recent N sheets)
+    if (firearmId && limit) {
+      sheetsQuery = sheetsQuery.limit(limit);
+    }
+
+    const sheets = await sheetsQuery;
 
     // Calculate metrics for each sheet
     const sheetsWithMetrics: SheetWithMetrics[] = await Promise.all(
@@ -65,6 +80,7 @@ export async function GET(request: Request) {
           firearmId: (sheet.firearmId as any)._id.toString(),
           firearmName: (sheet.firearmId as any).name,
           createdAt: sheet.createdAt,
+          date: (sheet.rangeSessionId as any).date,
           distanceYards: sheet.distanceYards,
           averageScore,
           totalShots,
@@ -89,7 +105,7 @@ export async function GET(request: Request) {
       return acc;
     }, {} as Record<string, { firearmId: string; firearmName: string; sheets: SheetWithMetrics[] }>);
 
-    // Convert to array and sort sheets within each firearm chronologically
+    // Convert to array and sort sheets within each firearm chronologically (oldest to newest)
     const firearms = Object.values(groupedByFirearm).map(group => ({
       ...group,
       sheets: group.sheets.sort((a, b) => 

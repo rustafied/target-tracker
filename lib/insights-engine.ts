@@ -140,18 +140,24 @@ export function detectTrend(values: number[]): 'improving' | 'declining' | 'stab
   
   const slope = numerator / denominator;
   
-  if (Math.abs(slope) < 0.05) return 'stable';
+  // Adjusted threshold: 0.02 is more reasonable (about 2% change per session)
+  if (Math.abs(slope) < 0.02) return 'stable';
   return slope > 0 ? 'improving' : 'declining';
 }
 
 export function calculateQuadrantBias(positions: Array<{ x: number; y: number }>) {
   const quadrants = { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0 };
   
+  // Center coordinates: positions are in SVG space (0-200) with center at (100, 100)
+  // SVG y-axis increases downward, so y > 100 is "low" (below center)
   positions.forEach(pos => {
-    if (pos.x < 0 && pos.y > 0) quadrants.topLeft++;
-    else if (pos.x >= 0 && pos.y > 0) quadrants.topRight++;
-    else if (pos.x < 0 && pos.y <= 0) quadrants.bottomLeft++;
-    else quadrants.bottomRight++;
+    const cx = pos.x - 100; // Negative = left, positive = right
+    const cy = pos.y - 100; // Negative = high (above center), positive = low (below center)
+    
+    if (cx < 0 && cy < 0) quadrants.topLeft++;       // high-left
+    else if (cx >= 0 && cy < 0) quadrants.topRight++; // high-right
+    else if (cx < 0 && cy >= 0) quadrants.bottomLeft++; // low-left
+    else quadrants.bottomRight++;                      // low-right
   });
   
   const total = positions.length;

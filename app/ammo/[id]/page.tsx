@@ -21,7 +21,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ArrowLeft, Plus, Minus, Package, TrendingDown, Target, Calendar, ChevronDown } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Package, TrendingDown, Target, Calendar, ChevronDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format, isValid } from "date-fns";
 import { getBulletIcon } from "@/lib/bullet-icons";
@@ -88,6 +88,9 @@ export default function AmmoDetailPage({
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
   const [adjustAmount, setAdjustAmount] = useState("");
   const [adjustNote, setAdjustNote] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -200,6 +203,37 @@ export default function AmmoDetailPage({
       return;
     }
     handleAdjust(delta, adjustNote ? adjustNote : undefined);
+  }
+
+  async function handleDeleteTransaction() {
+    if (!transactionToDelete) return;
+
+    try {
+      setIsDeleting(true);
+      const res = await fetch(`/api/ammo/transactions/${transactionToDelete._id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("Transaction deleted");
+        setDeleteDialogOpen(false);
+        setTransactionToDelete(null);
+        loadData(); // Reload all data to update inventory and transaction list
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete transaction");
+      }
+    } catch (error) {
+      toast.error("Failed to delete transaction");
+      console.error(error);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  function canDeleteTransaction(transaction: Transaction): boolean {
+    // Only allow deletion of manual add/subtract transactions
+    return transaction.reason === "manual_add" || transaction.reason === "manual_subtract";
   }
 
   const reasonLabels: Record<string, string> = {
@@ -661,7 +695,21 @@ export default function AmmoDetailPage({
                       )}
                     </div>
 
-                    <div className="flex-shrink-0 flex items-center gap-2">
+                    <div className="flex-shrink-0 flex items-center gap-3">
+                      {canDeleteTransaction(item) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTransactionToDelete(item);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                       <div className={`text-2xl font-bold ${
                         displayDelta > 0 ? "text-green-400" : "text-red-400"
                       }`}>
@@ -878,6 +926,73 @@ export default function AmmoDetailPage({
               className="dark:bg-white dark:text-black dark:hover:bg-white/90"
             >
               Apply
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Transaction?</DialogTitle>
+          </DialogHeader>
+          
+          {transactionToDelete && (
+            <div className="space-y-4">
+              <p className="text-sm text-white/70">
+                This will delete the transaction and reverse its inventory change.
+              </p>
+              
+              <div className="p-4 rounded-lg border border-white/10 bg-white/5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold">
+                    {reasonLabels[transactionToDelete.reason] || transactionToDelete.reason}
+                  </span>
+                  <span className={`text-xl font-bold ${
+                    transactionToDelete.delta > 0 ? "text-green-400" : "text-red-400"
+                  }`}>
+                    {transactionToDelete.delta > 0 ? "+" : ""}
+                    {transactionToDelete.delta.toLocaleString()} rounds
+                  </span>
+                </div>
+                {transactionToDelete.note && (
+                  <p className="text-sm text-white/60 italic">{transactionToDelete.note}</p>
+                )}
+                <p className="text-xs text-white/40 mt-2">
+                  {format(new Date(transactionToDelete.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setTransactionToDelete(null);
+              }}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteTransaction}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Spinner className="mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Transaction
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

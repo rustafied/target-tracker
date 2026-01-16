@@ -123,9 +123,12 @@ export async function generateSetupMilestoneInsight(ctx: SessionContext): Promis
   const allPositions = ctx.bulls.flatMap(b => getBullPositions(b));
   if (allPositions.length < 3) return null;
   
-  const meanRadius = allPositions.reduce((sum, pos) => 
-    sum + Math.sqrt(pos.x ** 2 + pos.y ** 2), 0
-  ) / allPositions.length;
+  // Center coordinates before calculating radius (positions are in SVG space 0-200 with center at 100,100)
+  const meanRadius = allPositions.reduce((sum, pos) => {
+    const dx = pos.x - 100;
+    const dy = pos.y - 100;
+    return sum + Math.sqrt(dx ** 2 + dy ** 2);
+  }, 0) / allPositions.length;
   
   // Get historical mean radius for this setup
   const priorBulls = await BullRecord.find({ 
@@ -135,9 +138,11 @@ export async function generateSetupMilestoneInsight(ctx: SessionContext): Promis
   const priorPositions = priorBulls.flatMap(b => getBullPositions(b));
   if (priorPositions.length < 3) return null;
   
-  const priorMeanRadius = priorPositions.reduce((sum, pos) => 
-    sum + Math.sqrt(pos.x ** 2 + pos.y ** 2), 0
-  ) / priorPositions.length;
+  const priorMeanRadius = priorPositions.reduce((sum, pos) => {
+    const dx = pos.x - 100;
+    const dy = pos.y - 100;
+    return sum + Math.sqrt(dx ** 2 + dy ** 2);
+  }, 0) / priorPositions.length;
   
   const improvement = calculatePercentChange(priorMeanRadius, meanRadius); // Lower is better
   
@@ -284,6 +289,8 @@ export async function generateBiasPatternInsight(ctx: SessionContext): Promise<I
   const positions = bulls.flatMap(b => getBullPositions(b));
   
   console.log(`[generateBiasPatternInsight] Total shots fired: ${shotsFired}, Position data available: ${positions.length}`);
+  console.log(`[generateBiasPatternInsight] Bulls count: ${bulls.length}`);
+  console.log(`[generateBiasPatternInsight] Sample positions (first 5):`, positions.slice(0, 5));
   
   // Need at least 20 positions AND at least 30% of total shots to be confident
   if (positions.length < 20) {
@@ -298,21 +305,26 @@ export async function generateBiasPatternInsight(ctx: SessionContext): Promise<I
   }
   
   const bias = calculateQuadrantBias(positions);
-  console.log(`[generateBiasPatternInsight] Bias:`, bias);
+  console.log(`[generateBiasPatternInsight] Bias calculation results:`, {
+    quadrant: bias.quadrant,
+    concentration: bias.concentration,
+    counts: bias.counts,
+    totalPositions: positions.length
+  });
   
   if (bias.concentration > 0.6) { // 60%+ in one quadrant
     const quadrantNames: Record<string, string> = {
-      topLeft: 'low-left',
-      topRight: 'low-right',
-      bottomLeft: 'high-left',
-      bottomRight: 'high-right',
+      topLeft: 'high-left',      // x < 100, y < 100 (left and above center)
+      topRight: 'high-right',    // x >= 100, y < 100 (right and above center)
+      bottomLeft: 'low-left',    // x < 100, y >= 100 (left and below center)
+      bottomRight: 'low-right',  // x >= 100, y >= 100 (right and below center)
     };
     
     const quadrantAdvice: Record<string, string> = {
-      topLeft: 'possible grip issue or trigger pull',
-      topRight: 'possible anticipation or flinch',
-      bottomLeft: 'possible sight misalignment',
-      bottomRight: 'possible breathing or stance',
+      topLeft: 'possible sight misalignment',
+      topRight: 'possible breathing or stance',
+      bottomLeft: 'possible grip issue or trigger pull',
+      bottomRight: 'possible anticipation or flinch',
     };
     
     const percentageText = `${(bias.concentration * 100).toFixed(0)}%`;
@@ -350,13 +362,22 @@ export async function generateTrendSummaryInsight(ctx: OverviewContext): Promise
   // Convert userId string to ObjectId for query
   const userObjectId = new Types.ObjectId(ctx.userId);
   
+  console.log('[generateTrendSummaryInsight] Three months ago:', threeMonthsAgo.toISOString());
+  console.log('[generateTrendSummaryInsight] Querying with userId:', userObjectId);
+  
   const sessions = await RangeSession.find({
     userId: userObjectId,
     date: { $gte: threeMonthsAgo },
   }).select('_id date').sort({ date: 1 }).lean();
   
   console.log('[generateTrendSummaryInsight] Found sessions:', sessions.length, '(need 5+)');
-  if (sessions.length < 5) return null;
+  if (sessions.length > 0) {
+    console.log('[generateTrendSummaryInsight] Date range:', sessions[0].date, 'to', sessions[sessions.length-1].date);
+  }
+  if (sessions.length < 5) {
+    console.log('[generateTrendSummaryInsight] Not enough sessions, returning null');
+    return null;
+  }
   
   // Batch fetch all sheets and bulls for these sessions
   const allSheets = await TargetSheet.find({ 
@@ -379,8 +400,13 @@ export async function generateTrendSummaryInsight(ctx: OverviewContext): Promise
   });
   
   const trend = detectTrend(monthlyAvgs);
+  console.log('[generateTrendSummaryInsight] Trend detected:', trend);
+  console.log('[generateTrendSummaryInsight] Monthly averages:', monthlyAvgs.map(a => a.toFixed(2)).join(', '));
   
-  if (trend === 'stable') return null;
+  if (trend === 'stable') {
+    console.log('[generateTrendSummaryInsight] Trend is stable, returning null');
+    return null;
+  }
   
   const firstAvg = monthlyAvgs[0];
   const lastAvg = monthlyAvgs[monthlyAvgs.length - 1];
@@ -512,14 +538,22 @@ export async function generateUsageRecommendationInsight(ctx: OverviewContext): 
   const totalShots = validStats.reduce((sum, s) => sum + s.shotCount, 0);
   
   // Find high performers with low usage
-  const underused = validStats
-    .map(s => ({
-      ...s,
-      usagePercent: (s.shotCount / totalShots) * 100,
-    }))
-    .filter(s => s.avgScore >= 3.5 && s.usagePercent < 15)
+  const withUsage = validStats.map(s => ({
+    ...s,
+    usagePercent: (s.shotCount / totalShots) * 100,
+  }));
+  
+  console.log('[generateUsageRecommendationInsight] Firearm usage:');
+  withUsage.forEach(s => {
+    console.log(`  - ${s.firearm.name}: ${s.avgScore.toFixed(2)} avg, ${s.usagePercent.toFixed(1)}% usage (high: ${s.avgScore >= 3.2}, low usage: ${s.usagePercent < 15})`);
+  });
+  
+  // Lowered threshold from 3.5 to 3.2 (more realistic for most shooters)
+  const underused = withUsage
+    .filter(s => s.avgScore >= 3.2 && s.usagePercent < 15)
     .sort((a, b) => b.avgScore - a.avgScore);
   
+  console.log('[generateUsageRecommendationInsight] Underused firearms:', underused.length);
   if (underused.length === 0) return null;
   
   const gem = underused[0];
@@ -546,21 +580,20 @@ export async function generateInventoryAlertInsight(ctx: OverviewContext): Promi
   console.log('[generateInventoryAlertInsight] Starting for userId:', ctx.userId);
   const userObjectId = new Types.ObjectId(ctx.userId);
   
-  // Get recent usage (last 30 days)
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
-  const recentSessions = await RangeSession.find({
+  // Get all recent sessions to calculate average usage per session
+  const allRecentSessions = await RangeSession.find({
     userId: userObjectId,
-    date: { $gte: thirtyDaysAgo },
-  });
+  }).sort({ date: -1 }).limit(10).select('_id date');
   
-  console.log('[generateInventoryAlertInsight] Found recent sessions:', recentSessions.length);
-  if (recentSessions.length === 0) return null;
+  console.log('[generateInventoryAlertInsight] Found recent sessions:', allRecentSessions.length);
+  if (allRecentSessions.length === 0) {
+    console.log('[generateInventoryAlertInsight] No recent sessions, returning null');
+    return null;
+  }
   
   // Batch fetch all sheets for these sessions
   const allSheets = await TargetSheet.find({ 
-    rangeSessionId: { $in: recentSessions.map(s => s._id) } 
+    rangeSessionId: { $in: allRecentSessions.map(s => s._id) } 
   });
   
   // Batch fetch all bulls for these sheets
@@ -568,45 +601,87 @@ export async function generateInventoryAlertInsight(ctx: OverviewContext): Promi
     targetSheetId: { $in: allSheets.map(s => s._id) } 
   });
   
-  // Calculate caliber usage
-  const caliberUsage = new Map<string, number>();
+  console.log('[generateInventoryAlertInsight] Found sheets:', allSheets.length, 'bulls:', allBulls.length);
+  
+  // Calculate average usage per session for each caliber
+  const caliberUsageBySession = new Map<string, { totalShots: number; sessionCount: number; sessions: Set<string> }>();
   
   allSheets.forEach(sheet => {
     if (sheet.caliberId) {
-      const current = caliberUsage.get(sheet.caliberId.toString()) || 0;
+      const caliberIdStr = sheet.caliberId.toString();
       const sheetBulls = allBulls.filter(b => b.targetSheetId.toString() === sheet._id.toString());
       const sheetShots = sheetBulls.reduce((sum, b) => sum + calculateBullTotalShots(b), 0);
-      caliberUsage.set(sheet.caliberId.toString(), current + sheetShots);
+      
+      if (!caliberUsageBySession.has(caliberIdStr)) {
+        caliberUsageBySession.set(caliberIdStr, { totalShots: 0, sessionCount: 0, sessions: new Set() });
+      }
+      
+      const current = caliberUsageBySession.get(caliberIdStr)!;
+      
+      // Only count sessions where this caliber was actually used
+      if (sheetShots > 0) {
+        current.totalShots += sheetShots;
+        
+        // Count this session only once per caliber (even if multiple sheets)
+        const sessionId = sheet.rangeSessionId.toString();
+        if (!current.sessions.has(sessionId)) {
+          current.sessions.add(sessionId);
+          current.sessionCount += 1;
+        }
+      }
     }
   });
   
-  // Find low stock calibers with high usage (AmmoInventory.userId is Discord ID string)
-  const ammoRecords = await AmmoInventory.find({ userId: ctx.userId });
+  console.log('[generateInventoryAlertInsight] Caliber usage:', 
+    Array.from(caliberUsageBySession.entries()).map(([id, data]) => 
+      `${id}: ${data.totalShots} shots across ${data.sessionCount} sessions`
+    )
+  );
   
-  for (const [caliberIdStr, usage] of caliberUsage.entries()) {
+  // Find calibers with low stock (AmmoInventory.userId is Discord ID string)
+  const ammoRecords = await AmmoInventory.find({ userId: ctx.userId });
+  console.log('[generateInventoryAlertInsight] Found ammo records:', ammoRecords.length);
+  
+  for (const [caliberIdStr, usageData] of caliberUsageBySession.entries()) {
     const caliberId = new Types.ObjectId(caliberIdStr);
     const ammo = ammoRecords.find(a => a.caliberId?.equals(caliberId));
     const caliber = await Caliber.findById(caliberId);
     
-    if (!ammo || !caliber) continue;
+    console.log(`[generateInventoryAlertInsight] Checking caliber ${caliberIdStr}:`, {
+      hasAmmo: !!ammo,
+      hasCaliber: !!caliber,
+      stock: ammo?.onHand || 0,
+      totalShots: usageData.totalShots,
+      sessionCount: usageData.sessionCount
+    });
+    
+    if (!ammo || !caliber || usageData.sessionCount === 0) continue;
     
     const stock = ammo.onHand || 0;
-    const avgUsagePerDay = usage / 30;
-    const daysRemaining = stock / avgUsagePerDay;
+    const avgShotsPerSession = usageData.totalShots / usageData.sessionCount;
+    const sessionsRemaining = avgShotsPerSession > 0 ? stock / avgShotsPerSession : Infinity;
     
-    if (daysRemaining < 14 && stock < 2000) {
+    console.log(`[generateInventoryAlertInsight] ${caliber.name}: ${stock} rounds, avg ${avgShotsPerSession.toFixed(0)} rounds/session, ${sessionsRemaining.toFixed(1)} sessions remaining`);
+    
+    // Alert when 5 sessions or fewer remaining
+    if (sessionsRemaining <= 5) {
+      const severity = sessionsRemaining < 2 ? 'warning' : 'info';
+      const sessionsText = Math.floor(sessionsRemaining) === 1 ? 'session' : 'sessions';
+      
       return {
         id: `inventory-${ctx.userId}-${caliberIdStr}`,
         type: 'inventory-alert',
         category: 'overview',
-        text: `${caliber.name} stock low (${stock.toLocaleString()} rounds) after heavy use—reorder soon.`,
+        text: `${caliber.name} running low—only ${Math.floor(sessionsRemaining)} ${sessionsText} remaining (${stock.toLocaleString()} rounds at ${Math.round(avgShotsPerSession)} rounds/session avg).`,
         confidence: 0.9,
-        severity: stock < 500 ? 'warning' : 'info',
+        severity,
         metadata: {
           caliberName: caliber.name,
           stock,
-          usage,
-          daysRemaining: Math.round(daysRemaining),
+          avgShotsPerSession: Math.round(avgShotsPerSession),
+          sessionsRemaining: Math.floor(sessionsRemaining),
+          totalShots: usageData.totalShots,
+          sessionCount: usageData.sessionCount,
         },
         relatedLinks: [
           { label: 'Manage Ammo', href: '/ammo' },
@@ -632,7 +707,10 @@ export async function generateCompositeFlagInsight(ctx: OverviewContext): Promis
   
   console.log('[generateCompositeFlagInsight] Found recent sessions:', recentSessions.length);
   
-  if (recentSessions.length < 10) return null;
+  if (recentSessions.length < 10) {
+    console.log('[generateCompositeFlagInsight] Not enough sessions (need 10), returning null');
+    return null;
+  }
   
   // Batch fetch all sheets and bulls for these sessions
   const allSheets = await TargetSheet.find({ 
@@ -674,6 +752,10 @@ export async function generateCompositeFlagInsight(ctx: OverviewContext): Promis
   const firstMissRate = firstHalf.reduce((sum, m) => sum + m.missRate, 0) / 5;
   const secondMissRate = secondHalf.reduce((sum, m) => sum + m.missRate, 0) / 5;
   const missRateChange = calculatePercentChange(secondMissRate, firstMissRate);
+  
+  console.log('[generateCompositeFlagInsight] Bull rate change:', bullRateChange.toFixed(1) + '%');
+  console.log('[generateCompositeFlagInsight] Miss rate change:', missRateChange.toFixed(1) + '%');
+  console.log('[generateCompositeFlagInsight] Condition: bull rate >10% improving AND miss rate <5% change');
   
   if (bullRateChange > 10 && Math.abs(missRateChange) < 5) {
     return {
@@ -852,8 +934,13 @@ export async function generateCompositeRecommendationInsight(ctx: ComparisonCont
       if (bulls.length === 0) return null;
       
       const positions = bulls.flatMap(b => getBullPositions(b));
+      // Center coordinates before calculating radius (positions are in SVG space 0-200 with center at 100,100)
       const meanRadius = positions.length > 0
-        ? positions.reduce((sum, pos) => sum + Math.sqrt(pos.x ** 2 + pos.y ** 2), 0) / positions.length
+        ? positions.reduce((sum, pos) => {
+            const dx = pos.x - 100;
+            const dy = pos.y - 100;
+            return sum + Math.sqrt(dx ** 2 + dy ** 2);
+          }, 0) / positions.length
         : 0;
       
       const totalScore = bulls.reduce((sum, b) => sum + calculateBullScore(b), 0);

@@ -753,8 +753,8 @@ export default function AmmoPage() {
             </div>
 
             <div className="space-y-3">
-              <Label>Select Calibers and Enter Rounds Used</Label>
-              <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[60px]">
+              <Label className="text-base font-semibold">Select Calibers and Enter Rounds Used</Label>
+              <div className="flex flex-wrap gap-2 p-4 border-2 rounded-lg min-h-[60px] bg-muted/20">
                 {inventory.filter(item => item.onHand > 0).map((item) => {
                   const caliberId = item.caliber._id;
                   const hasValue = usageData[caliberId] && usageData[caliberId].trim() !== "";
@@ -788,38 +788,49 @@ export default function AmmoPage() {
 
               {/* Input fields for selected calibers */}
               {Object.keys(usageData).length > 0 && (
-                <div className="space-y-3 pt-2">
+                <div className="space-y-4 pt-4">
                   {Object.keys(usageData).map((caliberId) => {
                     const item = inventory.find((inv) => inv.caliber._id === caliberId);
                     if (!item) return null;
 
                     return (
-                      <div key={caliberId} className="flex items-center gap-3">
-                        <Label
-                          htmlFor={`usage-${caliberId}`}
-                          className="flex-1 font-normal"
-                        >
-                          <div className="font-semibold">{item.caliber.name}</div>
-                          <div className="text-xs text-muted-foreground/60">
-                            Available: {item.onHand} rounds
+                      <div 
+                        key={caliberId} 
+                        className="p-6 border-2 border-blue-500/30 dark:border-blue-400/30 rounded-lg bg-blue-500/5 dark:bg-blue-400/5 space-y-3"
+                      >
+                        <div className="text-center space-y-1">
+                          <Label
+                            htmlFor={`usage-${caliberId}`}
+                            className="text-2xl font-bold block"
+                          >
+                            {item.caliber.name}
+                          </Label>
+                          <div className="text-sm text-muted-foreground">
+                            Available: <span className="font-semibold">{item.onHand}</span> rounds
                           </div>
-                        </Label>
-                        <Input
-                          id={`usage-${caliberId}`}
-                          type="number"
-                          min="1"
-                          max={item.onHand}
-                          step="1"
-                          value={usageData[caliberId] || ""}
-                          onChange={(e) =>
-                            setUsageData({
-                              ...usageData,
-                              [caliberId]: e.target.value,
-                            })
-                          }
-                          placeholder="Rounds used"
-                          className="w-32"
-                        />
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <Input
+                            id={`usage-${caliberId}`}
+                            type="number"
+                            min="1"
+                            max={item.onHand}
+                            step="1"
+                            value={usageData[caliberId] || ""}
+                            onChange={(e) =>
+                              setUsageData({
+                                ...usageData,
+                                [caliberId]: e.target.value,
+                              })
+                            }
+                            placeholder="Rounds used"
+                            className="text-4xl font-bold text-center h-20 w-full max-w-xs border-2 border-blue-500/50 dark:border-blue-400/50 focus:border-blue-600 dark:focus:border-blue-300"
+                            autoFocus
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Enter number of rounds fired
+                          </p>
+                        </div>
                       </div>
                     );
                   })}
@@ -828,12 +839,13 @@ export default function AmmoPage() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={() => setUsageDialogOpen(false)}
               disabled={submittingUsage}
+              size="lg"
             >
               Cancel
             </Button>
@@ -841,6 +853,8 @@ export default function AmmoPage() {
               type="button"
               onClick={handleSubmitUsage}
               disabled={submittingUsage}
+              size="lg"
+              className="text-lg px-8"
             >
               {submittingUsage ? "Recording..." : "Record Usage"}
             </Button>

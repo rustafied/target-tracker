@@ -27,6 +27,7 @@ import { LoadingScreen } from "@/components/ui/spinner";
 import { EChart } from "@/components/analytics/EChart";
 import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCard";
 import { ExpandedInsightsPanel, Insight } from "@/components/ExpandedInsightsPanel";
+import { FadeIn } from "@/components/ui/fade-in";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -296,77 +297,89 @@ export default function SessionDetailPage() {
   if (loading) {
     return (
       <div>
-        {/* Header with buttons */}
-        <div className="flex items-center justify-between mb-6 animate-pulse">
-          <div className="h-9 w-64 bg-[#2a2a2a] rounded"></div>
-          <div className="flex gap-2">
-            <div className="h-10 w-24 bg-[#2a2a2a] rounded"></div>
-            <div className="h-10 w-32 bg-[#2a2a2a] rounded"></div>
-            <div className="h-10 w-24 bg-[#2a2a2a] rounded"></div>
+        {/* Header with title, location, and buttons */}
+        <div className="mb-6 animate-pulse">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-8 w-8 bg-[#2a2a2a] rounded"></div>
+                <div className="h-9 w-64 bg-[#2a2a2a] rounded"></div>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="h-4 w-4 bg-[#2a2a2a] rounded"></div>
+                <div className="h-5 w-40 bg-[#2a2a2a] rounded"></div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <div className="h-10 w-28 bg-[#2a2a2a] rounded"></div>
+              <div className="h-10 w-10 bg-[#2a2a2a] rounded"></div>
+              <div className="h-10 w-10 bg-[#2a2a2a] rounded"></div>
+            </div>
           </div>
         </div>
 
-        {/* Session Info Card */}
+        {/* Session Summary Card */}
         <Card className="mb-6 animate-pulse">
-          <CardContent className="p-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-5 bg-[#2a2a2a] rounded"></div>
+              <div className="h-6 w-48 bg-[#2a2a2a] rounded"></div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i}>
                   <div className="h-4 w-24 bg-[#2a2a2a] rounded mb-2"></div>
-                  <div className="h-6 w-32 bg-[#2a2a2a] rounded"></div>
+                  <div className="h-8 w-20 bg-[#2a2a2a] rounded mb-1"></div>
+                  <div className="h-3 w-16 bg-[#2a2a2a] rounded"></div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="pb-2">
-                <div className="h-4 w-24 bg-[#2a2a2a] rounded"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 w-16 bg-[#2a2a2a] rounded mb-2"></div>
-                <div className="h-3 w-20 bg-[#2a2a2a] rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Charts */}
+        {/* Session Overview Chart */}
         <Card className="mb-6 animate-pulse">
           <CardHeader>
-            <div className="h-6 w-48 bg-[#2a2a2a] rounded"></div>
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-5 bg-[#2a2a2a] rounded"></div>
+              <div className="h-6 w-80 bg-[#2a2a2a] rounded"></div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[400px] bg-[#1a1a1a] rounded flex items-center justify-center">
-              <div className="h-32 w-32 bg-[#2a2a2a] rounded"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <div className="h-4 w-64 bg-[#2a2a2a] rounded mb-3"></div>
+                <div className="h-[590px] bg-[#1a1a1a] rounded flex items-center justify-center">
+                  <div className="h-32 w-32 bg-[#2a2a2a] rounded"></div>
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div className="h-[250px] bg-[#1a1a1a] rounded"></div>
+                <div className="h-[280px] bg-[#1a1a1a] rounded"></div>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Sheets List */}
-        <Card className="animate-pulse">
+        <Card className="mb-6 animate-pulse">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="h-6 w-32 bg-[#2a2a2a] rounded"></div>
-              <div className="h-10 w-28 bg-[#2a2a2a] rounded"></div>
-            </div>
+            <div className="h-6 w-24 bg-[#2a2a2a] rounded"></div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="h-5 w-32 bg-[#2a2a2a] rounded mb-2"></div>
-                    <div className="flex gap-2 mb-2">
-                      <div className="h-4 w-20 bg-[#2a2a2a] rounded"></div>
-                      <div className="h-4 w-16 bg-[#2a2a2a] rounded"></div>
-                      <div className="h-4 w-16 bg-[#2a2a2a] rounded"></div>
+                <div key={i} className="flex items-start gap-4 p-4 border rounded-lg">
+                  <div className="flex-1 space-y-3">
+                    <div className="h-6 w-40 bg-[#2a2a2a] rounded"></div>
+                    <div className="flex flex-wrap gap-2">
+                      {Array.from({ length: 4 }).map((_, j) => (
+                        <div key={j} className="h-6 w-20 bg-[#2a2a2a] rounded"></div>
+                      ))}
                     </div>
-                    <div className="h-3 w-48 bg-[#2a2a2a] rounded"></div>
+                    <div className="h-4 w-full bg-[#2a2a2a] rounded"></div>
                   </div>
                   <div className="flex gap-2">
                     <div className="h-8 w-8 bg-[#2a2a2a] rounded"></div>
@@ -618,12 +631,13 @@ export default function SessionDetailPage() {
   return (
     <TooltipProvider delayDuration={0}>
       <div>
-        <div className="mb-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-3">
-                <Calendar className="h-8 w-8" />
-                {format(new Date(session.date), "MMMM d, yyyy")}
+        <FadeIn duration={200}>
+          <div className="mb-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold flex items-center gap-3">
+                  <Calendar className="h-8 w-8" />
+                  {format(new Date(session.date), "MMMM d, yyyy")}
                 {session.notes && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -661,11 +675,13 @@ export default function SessionDetailPage() {
               </Button>
             </div>
           </div>
-        </div>
+          </div>
+        </FadeIn>
 
       {/* Session Summary Stats */}
       {sheets.length > 0 && totalBulletsFired > 0 && (
-        <Card className="mb-6">
+        <FadeIn delay={100} duration={250}>
+          <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TargetIcon className="h-5 w-5" />
@@ -720,11 +736,13 @@ export default function SessionDetailPage() {
             </div>
           </CardContent>
         </Card>
+        </FadeIn>
       )}
 
       {/* Sheet Averages Graph */}
       {sheets.length > 0 && sheets.some((s) => (s.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0) > 0) && (
-        <Card className="mb-6">
+        <FadeIn delay={150} duration={250}>
+          <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
@@ -827,12 +845,14 @@ export default function SessionDetailPage() {
             </div>
           </CardContent>
         </Card>
+        </FadeIn>
       )}
 
-      <h2 className="text-2xl font-bold mb-4">Target Sheets</h2>
+      <FadeIn delay={200} duration={250}>
+        <h2 className="text-2xl font-bold mb-4">Target Sheets</h2>
 
-      {/* Firearm Filter */}
-      {(() => {
+        {/* Firearm Filter */}
+        {(() => {
         const uniqueFirearms = Array.from(
           new Map(sheets.map(s => [s.firearmId._id, { id: s.firearmId._id, name: s.firearmId.name, color: s.firearmId.color }])).values()
         );
@@ -1078,6 +1098,7 @@ export default function SessionDetailPage() {
           />
         </div>
       )}
+      </FadeIn>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>

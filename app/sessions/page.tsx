@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { LoadingCard } from "@/components/ui/spinner";
+import { FadeIn } from "@/components/ui/fade-in";
 import { toast } from "sonner";
 
 interface RangeSession {
@@ -161,28 +162,33 @@ export default function SessionsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Sessions</h1>
-          <p className="text-muted-foreground mt-1">Track your range visits</p>
+      <FadeIn duration={200}>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Sessions</h1>
+            <p className="text-muted-foreground mt-1">Track your range visits</p>
+          </div>
+          <Button onClick={openCreateDialog}>
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">New Session</span>
+          </Button>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">New Session</span>
-        </Button>
-      </div>
+      </FadeIn>
 
       {sessions.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">
-              No sessions yet. Click "New Session" to get started.
-            </p>
-          </CardContent>
-        </Card>
+        <FadeIn delay={100} duration={250}>
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-center text-muted-foreground">
+                No sessions yet. Click "New Session" to get started.
+              </p>
+            </CardContent>
+          </Card>
+        </FadeIn>
       ) : (
         <div className="space-y-3">
-          {sessions.map((session) => (
+          {sessions.map((session, index) => (
+            <FadeIn key={session._id} delay={100 + index * 50} duration={250}>
               <Card
                 key={session._id}
                 className="cursor-pointer hover:bg-accent transition-colors group"
@@ -338,6 +344,7 @@ export default function SessionsPage() {
                 </div>
               </CardContent>
             </Card>
+            </FadeIn>
           ))}
         </div>
       )}

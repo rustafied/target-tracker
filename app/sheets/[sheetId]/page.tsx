@@ -15,6 +15,7 @@ import { TargetUploadModal } from "@/components/TargetUploadModal";
 import { ImageViewerModal } from "@/components/ImageViewerModal";
 import { LoadingScreen } from "@/components/ui/spinner";
 import { EChart } from "@/components/analytics/EChart";
+import { FadeIn } from "@/components/ui/fade-in";
 import {
   Dialog,
   DialogContent,
@@ -142,11 +143,11 @@ export default function SheetDetailPage() {
 
   const fetchProgressionData = async () => {
     try {
-      // Wait for sheet to be loaded to get session ID
+      // Wait for sheet to be loaded to get firearm ID
       if (!sheet) return;
       
-      const sessionId = sheet.rangeSessionId._id;
-      const res = await fetch(`/api/analytics/progression?sessionId=${sessionId}`);
+      const firearmId = sheet.firearmId._id;
+      const res = await fetch(`/api/analytics/progression?firearmId=${firearmId}&limit=20`);
       if (res.ok) {
         const data = await res.json();
         setProgressionData(data);
@@ -564,36 +565,40 @@ export default function SheetDetailPage() {
       return null;
     }
 
-    const colors = [
-      "#3b82f6", // blue
-      "#22c55e", // green
-      "#f59e0b", // amber
-      "#ef4444", // red
-      "#8b5cf6", // violet
-      "#06b6d4", // cyan
-      "#ec4899", // pink
-      "#14b8a6", // teal
-    ];
+    // Get the current firearm's data (should only be one)
+    const currentFirearm = progressionData.firearms[0];
+    if (!currentFirearm || !currentFirearm.sheets || currentFirearm.sheets.length === 0) {
+      return null;
+    }
 
-    const series = progressionData.firearms.map((firearm: any, index: number) => ({
-      name: firearm.firearmName,
+    // Use the firearm's color from the sheet
+    const firearmColor = sheet?.firearmId?.color || "#3b82f6";
+
+    const series = [{
+      name: currentFirearm.firearmName,
       type: "line" as const,
-      data: firearm.sheets.map((sheet: any) => sheet.averageScore.toFixed(2)),
+      data: currentFirearm.sheets.map((s: any) => parseFloat(s.averageScore.toFixed(2))),
       smooth: true,
       symbol: "circle" as const,
       symbolSize: 8,
-      color: colors[index % colors.length],
+      color: firearmColor,
       lineStyle: {
         width: 3,
       },
       emphasis: {
         focus: "series" as const,
       },
-    }));
+    }];
 
-    // Create x-axis labels (sheet number per firearm)
-    const maxSheets = Math.max(...progressionData.firearms.map((f: any) => f.sheets.length));
-    const xAxisData = Array.from({ length: maxSheets }, (_, i) => `Sheet ${i + 1}`);
+    // Create x-axis labels showing most recent sheets (oldest to newest, with most recent labeled differently)
+    const sheetCount = currentFirearm.sheets.length;
+    const xAxisData = currentFirearm.sheets.map((s: any, i: number) => {
+      if (i === sheetCount - 1) {
+        return "Current";
+      }
+      const position = sheetCount - i - 1;
+      return `-${position}`;
+    });
 
     return {
       tooltip: {
@@ -602,29 +607,25 @@ export default function SheetDetailPage() {
           type: "cross" as const,
         },
         formatter: (params: any) => {
-          let result = "";
-          params.forEach((param: any) => {
-            if (param.value) {
-              result += `${param.marker}${param.seriesName}: ${param.value}<br/>`;
-            }
-          });
-          return result;
+          if (params && params[0]) {
+            const param = params[0];
+            const index = param.dataIndex;
+            const sheetData = currentFirearm.sheets[index];
+            return `${param.marker}${param.seriesName}<br/>Score: ${param.value}<br/>Date: ${new Date(sheetData.date).toLocaleDateString()}`;
+          }
+          return "";
         },
-      },
-      legend: {
-        data: progressionData.firearms.map((f: any) => f.firearmName),
-        top: 10,
       },
       grid: {
         left: 60,
         right: 30,
-        top: 60,
+        top: 30,
         bottom: 60,
       },
       xAxis: {
         type: "category" as const,
         data: xAxisData,
-        name: "Sheet Number (per firearm)",
+        name: "Sheet History (Relative Position)",
         nameLocation: "middle" as const,
         nameGap: 30,
       },
@@ -644,40 +645,46 @@ export default function SheetDetailPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <Button variant="ghost" onClick={() => sheet && router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`)}>
-          <ArrowLeft className="h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">Back to Session</span>
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={openEditDialog}>
-            <Edit className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Edit Sheet</span>
+      <FadeIn duration={200}>
+        <div className="flex items-center justify-between mb-6">
+          <Button variant="ghost" onClick={() => sheet && router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`)}>
+            <ArrowLeft className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Back to Session</span>
           </Button>
-          <Button variant="outline" onClick={() => setUploadModalOpen(true)}>
-            <Upload className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Upload</span>
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            <Save className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">{saving ? "Saving..." : "Save Scores"}</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={openEditDialog}>
+              <Edit className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Edit Sheet</span>
+            </Button>
+            <Button variant="outline" onClick={() => setUploadModalOpen(true)}>
+              <Upload className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Upload</span>
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              <Save className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{saving ? "Saving..." : "Save Scores"}</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      </FadeIn>
 
       {/* Progression Chart */}
       {progressionChartOption && (
-        <Card className="mb-6">
+        <FadeIn delay={100} duration={250}>
+          <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Performance Progression by Firearm</CardTitle>
+            <CardTitle>Performance History - {sheet.firearmId.name}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">Last 20 sheets across all sessions</p>
           </CardHeader>
           <CardContent>
             <EChart option={progressionChartOption} height={300} />
           </CardContent>
         </Card>
+        </FadeIn>
       )}
 
-      <Card className="mb-6">
+      <FadeIn delay={150} duration={250}>
+        <Card className="mb-6">
         <CardHeader>
           <CardTitle>{sheet.sheetLabel || "Target Sheet"}</CardTitle>
         </CardHeader>
@@ -752,13 +759,15 @@ export default function SheetDetailPage() {
           )}
         </CardContent>
       </Card>
+      </FadeIn>
 
       {/* Bulls Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {bulls.map((bull, index) => {
           const metrics = calculateBullMetrics(bull as any);
           return (
-            <Card key={bull._id}>
+            <FadeIn key={bull._id} delay={200 + index * 50} duration={250}>
+              <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -846,6 +855,7 @@ export default function SheetDetailPage() {
                 </div>
               </CardContent>
             </Card>
+            </FadeIn>
           );
         })}
       </div>
