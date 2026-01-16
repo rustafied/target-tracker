@@ -366,8 +366,8 @@ export default function FirearmsPage() {
           </p>
         </div>
         <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Firearm
+          <Plus className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">Add Firearm</span>
         </Button>
       </div>
 

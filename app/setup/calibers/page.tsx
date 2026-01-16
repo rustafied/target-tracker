@@ -267,8 +267,8 @@ export default function CalibersPage() {
           </p>
         </div>
         <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Caliber
+          <Plus className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">Add Caliber</span>
         </Button>
       </div>
 

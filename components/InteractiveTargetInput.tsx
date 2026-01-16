@@ -295,7 +295,7 @@ export function InteractiveTargetInput({ shots, onShotsChange, bullIndex, isExpa
 
       {/* Expanded view dialog */}
       <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-        <DialogContent className="!max-w-none w-[90vw] h-[90vh] !p-6 flex flex-col !gap-4">
+        <DialogContent className="!max-w-none w-[90vw] h-[90vh] [&>div]:!p-6 [&>div]:flex [&>div]:flex-col [&>div]:!gap-4">
           <DialogTitle className="text-center text-xl font-semibold">
             {template?.aimPoints?.find(ap => ap.id === aimPointId)?.name || `Bull ${bullIndex}`}
           </DialogTitle>

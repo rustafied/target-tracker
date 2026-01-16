@@ -441,7 +441,14 @@ export default function AnalyticsPage() {
         title="Analytics"
         icon={BarChart3}
         description="Track your shooting performance over time"
-      />
+      >
+        <Link href="/analytics/compare?type=firearm">
+          <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Compare Items
+          </Button>
+        </Link>
+      </AnalyticsHeader>
 
       <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
 

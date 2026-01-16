@@ -280,8 +280,8 @@ export default function OpticsPage() {
           </p>
         </div>
         <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Optic
+          <Plus className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">Add Optic</span>
         </Button>
       </div>
 

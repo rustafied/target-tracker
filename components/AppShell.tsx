@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Target, LineChart, Settings, Menu, ChevronDown, ChevronRight, Crosshair, Eye, Zap, Radius, LogOut, User, LayoutGrid, Package } from "lucide-react";
+import { Target, LineChart, Settings, Menu, ChevronDown, ChevronRight, Crosshair, Eye, Zap, Radius, LogOut, User, LayoutGrid, Package, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -28,6 +28,7 @@ const navigation = [
 
 const analyticsItems = [
   { name: "Overview", href: "/analytics", icon: LineChart },
+  { name: "Compare", href: "/analytics/compare?type=firearm", icon: BarChart3 },
   { name: "Targets", href: "/analytics/targets", icon: Target },
   { name: "Firearms", href: "/analytics/firearms", icon: Zap },
   { name: "Optics", href: "/analytics/optics", icon: Eye },

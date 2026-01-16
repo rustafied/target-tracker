@@ -11,8 +11,11 @@ import {
   Award,
   Trophy,
   Ruler,
+  BarChart3,
 } from "lucide-react";
+import Link from "next/link";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
+import { Button } from "@/components/ui/button";
 import { FilterBar, AnalyticsFilters } from "@/components/analytics/FilterBar";
 import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
@@ -353,7 +356,14 @@ export default function CalibersAnalyticsPage() {
         title="Calibers Analytics"
         icon={Crosshair}
         description="Performance leaderboard and trends by caliber"
-      />
+      >
+        <Link href="/analytics/compare?type=caliber">
+          <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Compare Calibers
+          </Button>
+        </Link>
+      </AnalyticsHeader>
 
       <FilterBar
         filters={filters}

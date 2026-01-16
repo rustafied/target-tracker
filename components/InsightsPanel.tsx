@@ -80,7 +80,7 @@ export function InsightsPanel({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${bgColor}`}>

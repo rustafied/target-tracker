@@ -507,7 +507,7 @@ export default function SessionDetailPage() {
   const sessionProgressionChartOption = getSessionProgressionChartOption();
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={0}>
       <div>
         <div className="mb-6">
           <div className="flex items-start justify-between mb-4">
@@ -518,12 +518,16 @@ export default function SessionDetailPage() {
                 {session.notes && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button className="text-muted-foreground hover:text-foreground transition-colors">
+                      <button 
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="View session notes"
+                      >
                         <StickyNote className="h-6 w-6" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-sm">
-                      <p className="text-sm">{session.notes}</p>
+                    <TooltipContent className="max-w-sm" side="bottom" align="start">
+                      <p className="text-sm whitespace-pre-wrap">{session.notes}</p>
                     </TooltipContent>
                   </Tooltip>
                 )}

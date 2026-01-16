@@ -275,7 +275,7 @@ export default function AnomaliesPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {filteredAnomalies.map((anomaly) => (
                 <div
                   key={anomaly.sessionId}

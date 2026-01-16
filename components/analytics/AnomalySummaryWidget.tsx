@@ -186,7 +186,7 @@ export function AnomalySummaryWidget({
             )}
 
             {/* Anomaly List */}
-            <div className="space-y-2">
+            <div className="space-y-4">
               {displayedAnomalies.map((anomaly) => {
                 const config = severityConfig[anomaly.severity];
                 const Icon = config.icon;

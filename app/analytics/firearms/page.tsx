@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import Link from "next/link";
 
-import { Target, TrendingUp, Crosshair, Activity, Award, Trophy, Ruler } from "lucide-react";
+import { Target, TrendingUp, Crosshair, Activity, Award, Trophy, Ruler, BarChart3 } from "lucide-react";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
+import { Button } from "@/components/ui/button";
 import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
 import { EChart } from "@/components/analytics/EChart";
@@ -258,7 +260,14 @@ export default function FirearmsAnalyticsPage() {
         title="Firearms Analytics"
         icon={Target}
         description="Performance leaderboard and trends by firearm"
-      />
+      >
+        <Link href="/analytics/compare?type=firearm">
+          <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Compare Firearms
+          </Button>
+        </Link>
+      </AnalyticsHeader>
 
       {performanceChartOption && (
         <ChartCard title="Firearm Performance Over Time" icon={TrendingUp}>
