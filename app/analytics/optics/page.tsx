@@ -18,6 +18,7 @@ import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
 import { FilterBar, AnalyticsFilters } from "@/components/analytics/FilterBar";
 import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
+import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCard";
 import { EChart } from "@/components/analytics/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -537,6 +538,21 @@ export default function OpticsAnalyticsPage() {
             <EChart option={distancePerformanceOption} height={400} />
           </ChartCard>
         )}
+
+        {/* Sequence Analysis by Optic */}
+        <SequenceAnalysisCard
+          filters={{
+            opticIds: filters.opticIds,
+            firearmIds: filters.firearmIds,
+            caliberIds: filters.caliberIds,
+            distanceMin: filters.distanceMin,
+            distanceMax: filters.distanceMax,
+            minShots: filters.minShots,
+            positionOnly: filters.positionOnly,
+          }}
+          title="Fatigue Analysis by Optic"
+          description="How performance changes throughout sessions for different optics"
+        />
       </div>
     </div>
   );

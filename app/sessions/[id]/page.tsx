@@ -24,6 +24,7 @@ import { SingleBullVisualization } from "@/components/SingleBullVisualization";
 import { SessionHeatmap } from "@/components/SessionHeatmap";
 import { LoadingScreen } from "@/components/ui/spinner";
 import { EChart } from "@/components/analytics/EChart";
+import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCard";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -922,6 +923,18 @@ export default function SessionDetailPage() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {/* Fatigue & Sequence Analysis */}
+      {totalBulletsFired >= 20 && (
+        <div className="mt-6">
+          <SequenceAnalysisCard
+            filters={{ minShots: 10 }}
+            sessionIds={[sessionId]}
+            title="Shot-by-Shot Performance (This Session)"
+            description="Analyze how your performance changes throughout this session"
+          />
         </div>
       )}
 

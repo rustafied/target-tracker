@@ -8,6 +8,7 @@ import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
 import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
 import { EChart } from "@/components/analytics/EChart";
+import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingCard } from "@/components/ui/spinner";
@@ -366,6 +367,13 @@ export default function FirearmsAnalyticsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Sequence Analysis by Firearm */}
+      <SequenceAnalysisCard
+        filters={{ minShots: 20 }}
+        title="Fatigue Analysis by Firearm"
+        description="How performance changes throughout sessions for different firearms"
+      />
     </div>
   );
 }

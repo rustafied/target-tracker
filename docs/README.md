@@ -10,7 +10,7 @@ A Next.js application for logging and visualizing shooting range sessions with p
 - ⚡ **Quick Entry** - Type 6-digit codes (e.g., "543210") to instantly populate all score counts per aim point
 - 📸 **Target Image Recognition** - Upload target photos and automatically detect bullet placements using OpenCV
 - 🎯 **Comprehensive Tracking** - Associate each sheet with firearm, caliber, optic, distance, and target type
-- 📈 **Analytics & Visualizations** - Trend graphs, multi-firearm comparison charts, bullseye visualizations, and session heatmaps
+- 📈 **Analytics & Visualizations** - Trend graphs, multi-firearm comparison charts, bullseye visualizations, session heatmaps, and fatigue/sequence analysis
 - 🔫 **Equipment Management** - CRUD for firearms, optics, and calibers with drag-drop ordering
 - 🔗 **Equipment Relationships** - Firearms can be linked to specific compatible calibers and optics with auto-filtering
 - 🎚️ **Default Distances** - Set default distance for each firearm to speed up sheet creation
@@ -206,6 +206,8 @@ Comprehensive project documentation is available in the `/readme` folder:
 - **[Recognition Setup Guide](./readme/15-target-recognition-setup.md) - Installation and usage**
 - **[Authentication Setup](./readme/17-authentication-setup.md) - Discord OAuth configuration**
 - **[Custom Target Templates](./readme/18-custom-target-types.md) - Template system specification**
+- **[Fatigue & Sequence Analysis](./readme/22-fatigue-sequence-analysis.md) - Feature specification**
+- **[Fatigue Analysis Quick Start](./readme/23-fatigue-analysis-quick-start.md) - User guide**
 
 ## Tech Stack
 

@@ -28,6 +28,7 @@ import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
 import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
 import { DistanceAnalysisCard } from "@/components/analytics/DistanceAnalysisCard";
+import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingCard } from "@/components/ui/spinner";
@@ -553,6 +554,19 @@ export default function AnalyticsPage() {
         <ChartCard title="Ring Distribution" icon={PieChart}>
           <EChart option={ringDistChartOption} height={300} />
         </ChartCard>
+
+        {/* Fatigue & Sequence Analysis */}
+        <SequenceAnalysisCard
+          filters={{
+            firearmIds: filters.firearmIds,
+            caliberIds: filters.caliberIds,
+            opticIds: filters.opticIds,
+            distanceMin: filters.distanceMin,
+            distanceMax: filters.distanceMax,
+            minShots: filters.minShots,
+            positionOnly: filters.positionOnly,
+          }}
+        />
       </div>
 
       {/* Drilldown Links */}
