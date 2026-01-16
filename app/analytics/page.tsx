@@ -31,9 +31,12 @@ import { DistanceAnalysisCard } from "@/components/analytics/DistanceAnalysisCar
 import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCard";
 import { EfficiencySummary } from "@/components/analytics/EfficiencySummary";
 import { AnomalySummaryWidget } from "@/components/analytics/AnomalySummaryWidget";
+import { ExpandedInsightsPanel, Insight } from "@/components/ExpandedInsightsPanel";
+import { LazyLoad } from "@/components/LazyLoad";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingCard } from "@/components/ui/spinner";
+import { AnalyticsLoadingSkeleton, KpiCardSkeleton, ChartCardSkeleton } from "@/components/analytics/SkeletonLoader";
 import type { EChartsOption } from "echarts";
 
 interface OverviewData {
@@ -72,6 +75,8 @@ export default function AnalyticsPage() {
   
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
   const [firearms, setFirearms] = useState<{ _id: string; name: string }[]>([]);
   const [calibers, setCalibers] = useState<{ _id: string; name: string }[]>([]);
   const [optics, setOptics] = useState<{ _id: string; name: string }[]>([]);
@@ -89,12 +94,32 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     fetchReferenceData();
+    // Defer insights fetching to reduce initial load
+    const timer = setTimeout(() => {
+      fetchInsights();
+    }, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     fetchAnalytics();
     updateURL();
   }, [filters]);
+
+  const fetchInsights = async () => {
+    try {
+      setInsightsLoading(true);
+      const res = await fetch('/api/insights/overview');
+      if (res.ok) {
+        const data = await res.json();
+        setInsights(data.insights || []);
+      }
+    } catch (error) {
+      console.error("Error fetching insights:", error);
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
 
   const fetchReferenceData = async () => {
     try {
@@ -194,9 +219,10 @@ export default function AnalyticsPage() {
 
   if (loading && !data) {
     return (
-      <div>
+      <div className="space-y-6">
         <AnalyticsHeader title="Analytics" icon={BarChart3} description="Track your shooting performance over time" />
-        <LoadingCard />
+        <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+        <AnalyticsLoadingSkeleton />
       </div>
     );
   }
@@ -542,6 +568,19 @@ export default function AnalyticsPage() {
         </>
       )}
 
+      {/* Overview Insights */}
+      <div className="mb-6">
+        <LazyLoad height="200px">
+          <ExpandedInsightsPanel
+            insights={insights}
+            title="Overview Insights"
+            description="High-level trends and recommendations across all your sessions"
+            loading={insightsLoading}
+            maxVisible={5}
+          />
+        </LazyLoad>
+      </div>
+
       {/* Charts */}
       <div className="space-y-6 mb-6">
         <ChartCard title="Average Score Over Sessions" icon={LineChart}>
@@ -584,33 +623,39 @@ export default function AnalyticsPage() {
         </ChartCard>
 
         {/* Fatigue & Sequence Analysis */}
-        <SequenceAnalysisCard
-          filters={{
-            firearmIds: filters.firearmIds,
-            caliberIds: filters.caliberIds,
-            opticIds: filters.opticIds,
-            distanceMin: filters.distanceMin,
-            distanceMax: filters.distanceMax,
-            minShots: filters.minShots,
-            positionOnly: filters.positionOnly,
-          }}
-        />
+        <LazyLoad height="500px">
+          <SequenceAnalysisCard
+            filters={{
+              firearmIds: filters.firearmIds,
+              caliberIds: filters.caliberIds,
+              opticIds: filters.opticIds,
+              distanceMin: filters.distanceMin,
+              distanceMax: filters.distanceMax,
+              minShots: filters.minShots,
+              positionOnly: filters.positionOnly,
+            }}
+          />
+        </LazyLoad>
       </div>
 
       {/* Efficiency Summary */}
       <div className="mb-6">
-        <EfficiencySummary
-          filters={{
-            firearmIds: filters.firearmIds,
-            caliberIds: filters.caliberIds,
-            opticIds: filters.opticIds,
-          }}
-        />
+        <LazyLoad height="400px">
+          <EfficiencySummary
+            filters={{
+              firearmIds: filters.firearmIds,
+              caliberIds: filters.caliberIds,
+              opticIds: filters.opticIds,
+            }}
+          />
+        </LazyLoad>
       </div>
 
       {/* Anomaly Detection Summary */}
       <div className="mb-6">
-        <AnomalySummaryWidget threshold={20} minSessions={5} maxDisplay={5} />
+        <LazyLoad height="300px">
+          <AnomalySummaryWidget threshold={20} minSessions={5} maxDisplay={5} />
+        </LazyLoad>
       </div>
 
       {/* Drilldown Links */}

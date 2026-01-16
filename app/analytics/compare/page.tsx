@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { ComparativeDashboard } from "@/components/analytics/ComparativeDashboard";
 import { LoadingCard } from "@/components/ui/spinner";
+import { ComparisonLoadingSkeleton } from "@/components/analytics/SkeletonLoader";
 import { toast } from "sonner";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -75,7 +76,7 @@ export default function ComparePage() {
 
   if (loading) {
     return (
-      <div>
+      <div className="space-y-6">
         <div className="mb-6">
           <Link href="/analytics">
             <Button variant="ghost" className="dark:hover:bg-white/10">
@@ -84,7 +85,7 @@ export default function ComparePage() {
             </Button>
           </Link>
         </div>
-        <LoadingCard />
+        <ComparisonLoadingSkeleton />
       </div>
     );
   }

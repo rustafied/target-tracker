@@ -9,6 +9,7 @@ import { OverlaidChart } from "./OverlaidChart";
 import { DeltaTable } from "./DeltaTable";
 import { ComparisonInsights } from "./ComparisonInsights";
 import { ComparisonFilters } from "./ComparisonFilters";
+import { ExpandedInsightsPanel, Insight } from "@/components/ExpandedInsightsPanel";
 import { Loader2, LayoutGrid, BarChart3, Download, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import html2canvas from "html2canvas";
@@ -82,6 +83,10 @@ export function ComparativeDashboard({
     insights: string[];
   } | null>(null);
 
+  // Expanded insights
+  const [expandedInsights, setExpandedInsights] = useState<Insight[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+
   // Filters
   const [filters, setFilters] = useState({
     startDate: "",
@@ -122,11 +127,43 @@ export function ComparativeDashboard({
       }
 
       setComparisonData(data);
+
+      // Fetch expanded insights
+      await fetchExpandedInsights();
     } catch (err: any) {
       setError(err.message || "An error occurred while fetching data");
       setComparisonData(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchExpandedInsights = async () => {
+    if (selectedIds.length < 2) return;
+
+    try {
+      setInsightsLoading(true);
+      
+      // Map type to plural form for API
+      const itemType = type === "firearm" ? "firearms" 
+        : type === "optic" ? "optics" 
+        : type === "caliber" ? "calibers" 
+        : "firearms"; // fallback
+
+      const params = new URLSearchParams({
+        itemIds: selectedIds.join(","),
+        itemType,
+      });
+
+      const response = await fetch(`/api/insights/comparison?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setExpandedInsights(data.insights || []);
+      }
+    } catch (err) {
+      console.error("Error fetching expanded insights:", err);
+    } finally {
+      setInsightsLoading(false);
     }
   };
 
@@ -356,8 +393,19 @@ export function ComparativeDashboard({
           {/* Delta Table */}
           <DeltaTable deltas={comparisonData.deltas} items={comparisonData.items} />
 
-          {/* Insights */}
-          <ComparisonInsights insights={comparisonData.insights} />
+          {/* Expanded Insights */}
+          <ExpandedInsightsPanel
+            insights={expandedInsights}
+            title="Comparison Insights"
+            description="Detailed analysis comparing your selected items"
+            loading={insightsLoading}
+            maxVisible={5}
+          />
+
+          {/* Legacy Insights (if any) */}
+          {comparisonData.insights && comparisonData.insights.length > 0 && (
+            <ComparisonInsights insights={comparisonData.insights} />
+          )}
         </div>
       )}
 

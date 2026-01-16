@@ -26,6 +26,7 @@ import { SessionHeatmap } from "@/components/SessionHeatmap";
 import { LoadingScreen } from "@/components/ui/spinner";
 import { EChart } from "@/components/analytics/EChart";
 import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCard";
+import { ExpandedInsightsPanel, Insight } from "@/components/ExpandedInsightsPanel";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -110,6 +111,8 @@ export default function SessionDetailPage() {
   const [allSessions, setAllSessions] = useState<any[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteSheetDialogOpen, setDeleteSheetDialogOpen] = useState(false);
   const [sheetToDelete, setSheetToDelete] = useState<Sheet | null>(null);
@@ -127,8 +130,24 @@ export default function SessionDetailPage() {
       fetchSession();
       fetchLocations();
       fetchAllSessions();
+      fetchInsights();
     }
   }, [sessionId]);
+
+  const fetchInsights = async () => {
+    try {
+      setInsightsLoading(true);
+      const res = await fetch(`/api/insights/session/${sessionId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setInsights(data.insights || []);
+      }
+    } catch (error) {
+      console.error("Error fetching insights:", error);
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
 
   const fetchLocations = async () => {
     try {
@@ -942,6 +961,19 @@ export default function SessionDetailPage() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {/* Expanded Insights */}
+      {totalBulletsFired >= 5 && (
+        <div className="mt-6">
+          <ExpandedInsightsPanel
+            insights={insights}
+            title="Session Insights"
+            description="Personalized recommendations and observations for this session"
+            loading={insightsLoading}
+            maxVisible={5}
+          />
         </div>
       )}
 

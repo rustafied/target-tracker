@@ -26,6 +26,7 @@ import { EChart } from "@/components/analytics/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingCard } from "@/components/ui/spinner";
+import { TableSkeleton, ChartCardSkeleton } from "@/components/analytics/SkeletonLoader";
 import type { EChartsOption } from "echarts";
 
 interface OpticMetrics {
@@ -161,13 +162,17 @@ export default function OpticsAnalyticsPage() {
 
   if (loading && !data) {
     return (
-      <div>
+      <div className="space-y-6">
         <AnalyticsHeader
           title="Optics Analytics"
           icon={Eye}
           description="Performance leaderboard and trends by optic"
         />
-        <LoadingCard />
+        <div className="grid gap-6 md:grid-cols-2">
+          <ChartCardSkeleton height="400px" />
+          <ChartCardSkeleton height="400px" />
+        </div>
+        <TableSkeleton rows={8} />
       </div>
     );
   }

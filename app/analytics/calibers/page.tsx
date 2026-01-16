@@ -24,6 +24,7 @@ import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCar
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingCard } from "@/components/ui/spinner";
+import { TableSkeleton, ChartCardSkeleton } from "@/components/analytics/SkeletonLoader";
 import type { EChartsOption } from "echarts";
 
 interface CaliberMetrics {
@@ -160,13 +161,17 @@ export default function CalibersAnalyticsPage() {
 
   if (loading && !data) {
     return (
-      <div>
+      <div className="space-y-6">
         <AnalyticsHeader
           title="Calibers Analytics"
           icon={Crosshair}
           description="Performance leaderboard and trends by caliber"
         />
-        <LoadingCard />
+        <div className="grid gap-6 md:grid-cols-2">
+          <ChartCardSkeleton height="400px" />
+          <ChartCardSkeleton height="400px" />
+        </div>
+        <TableSkeleton rows={8} />
       </div>
     );
   }

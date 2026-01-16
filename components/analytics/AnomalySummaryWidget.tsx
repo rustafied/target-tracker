@@ -186,8 +186,8 @@ export function AnomalySummaryWidget({
             )}
 
             {/* Anomaly List */}
-            <div className="space-y-4">
-              {displayedAnomalies.map((anomaly) => {
+            <div>
+              {displayedAnomalies.map((anomaly, index) => {
                 const config = severityConfig[anomaly.severity];
                 const Icon = config.icon;
                 const topDeviation = anomaly.deviations
@@ -195,40 +195,49 @@ export function AnomalySummaryWidget({
                   .sort((a, b) => Math.abs(b.percentDeviation) - Math.abs(a.percentDeviation))[0];
 
                 return (
-                  <Link key={anomaly.sessionId} href={`/sessions/${anomaly.slug}`}>
-                    <div
+                  <Link 
+                    key={anomaly.sessionId} 
+                    href={`/sessions/${anomaly.slug}`}
+                    className={index < displayedAnomalies.length - 1 ? "block mb-4" : "block"}
+                  >
+                    <Card
                       className={`
-                        p-3 rounded-lg border transition-colors cursor-pointer
-                        ${config.bgColor} ${config.borderColor}
-                        hover:opacity-80
+                        group p-3 transition-all duration-200 cursor-pointer border-0
+                        ${config.bgColor}
                       `}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-2 flex-1 min-w-0">
-                          <Icon className={`h-4 w-4 ${config.color} flex-shrink-0 mt-0.5`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="text-sm font-medium">
-                                {format(new Date(anomaly.date), "MMM d, yyyy")}
-                              </p>
-                              {anomaly.location && (
-                                <span className="text-xs text-muted-foreground">• {anomaly.location}</span>
-                              )}
-                            </div>
-                            {topDeviation && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <Icon className={`h-4 w-4 ${config.color}`} />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {format(new Date(anomaly.date), "MMM d, yyyy")}
+                            </p>
+                            {anomaly.location && (
                               <p className="text-xs text-muted-foreground">
-                                {topDeviation.metric}:{" "}
+                                {anomaly.location}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {topDeviation && (
+                            <div className="text-right">
+                              <p className="text-xs text-muted-foreground">
+                                {topDeviation.metric}
+                              </p>
+                              <p className="text-sm font-semibold">
                                 <span className={topDeviation.percentDeviation > 0 ? "text-red-500" : "text-green-500"}>
                                   {topDeviation.percentDeviation > 0 ? "+" : ""}
                                   {topDeviation.percentDeviation.toFixed(1)}%
                                 </span>
                               </p>
-                            )}
-                          </div>
+                            </div>
+                          )}
+                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                         </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       </div>
-                    </div>
+                    </Card>
                   </Link>
                 );
               })}
@@ -236,9 +245,9 @@ export function AnomalySummaryWidget({
 
             {/* View All Link */}
             {anomalies.length > maxDisplay && (
-              <div className="mt-4 text-center">
+              <div className="mt-6 text-center">
                 <Link href="/sessions">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="default">
                     View all {anomalies.length} anomalies
                   </Button>
                 </Link>

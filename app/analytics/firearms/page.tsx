@@ -14,6 +14,8 @@ import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCar
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingCard } from "@/components/ui/spinner";
+import { TableSkeleton, ChartCardSkeleton } from "@/components/analytics/SkeletonLoader";
+import { PageLoadingSpinner } from "@/components/ui/loading-spinner";
 import type { EChartsOption } from "echarts";
 import { meanRadiusToMOA } from "@/lib/utils";
 
@@ -66,13 +68,17 @@ export default function FirearmsAnalyticsPage() {
 
   if (loading && !data) {
     return (
-      <div>
+      <div className="space-y-6">
         <AnalyticsHeader
           title="Firearms Analytics"
           icon={Target}
           description="Performance leaderboard and trends by firearm"
         />
-        <LoadingCard />
+        <div className="grid gap-6 md:grid-cols-2">
+          <ChartCardSkeleton height="400px" />
+          <ChartCardSkeleton height="400px" />
+        </div>
+        <TableSkeleton rows={8} />
       </div>
     );
   }
@@ -114,6 +120,7 @@ export default function FirearmsAnalyticsPage() {
     const series = data.leaderboard.map((firearm, index) => {
       const firearmCurve = data.distanceCurves[firearm.firearmId] || [];
       const dataMap = new Map(firearmCurve.map((point: any) => [point.distance, point.avgScorePerShot]));
+      const color = firearm.firearmColor || defaultColors[index % defaultColors.length];
       
       return {
         name: firearm.firearmName,
@@ -123,14 +130,24 @@ export default function FirearmsAnalyticsPage() {
         connectNulls: true,
         lineStyle: {
           width: 3,
-          color: firearm.firearmColor || defaultColors[index % defaultColors.length],
+          color: color,
+        },
+        itemStyle: {
+          color: color,
         },
         symbol: "circle",
         symbolSize: 8,
       };
     });
 
+    // Calculate dynamic y-axis range based on actual data
+    const allValues = series.flatMap(s => s.data.filter((v): v is number => v !== null));
+    const minValue = allValues.length > 0 ? Math.min(...allValues) : 0;
+    const maxValue = allValues.length > 0 ? Math.max(...allValues) : 5;
+    const padding = (maxValue - minValue) * 0.1 || 0.5; // 10% padding or 0.5 minimum
+
     return {
+      color: data.leaderboard.map((f, index) => f.firearmColor || defaultColors[index % defaultColors.length]),
       tooltip: {
         trigger: "axis" as const,
       },
@@ -157,8 +174,8 @@ export default function FirearmsAnalyticsPage() {
         name: "Average Score",
         nameLocation: "middle" as const,
         nameGap: 45,
-        min: 0,
-        max: 5,
+        min: Math.max(0, minValue - padding),
+        max: Math.min(5, maxValue + padding),
       },
       series,
     };
@@ -185,6 +202,7 @@ export default function FirearmsAnalyticsPage() {
       
       // Sort by session index to ensure chronological order
       const sortedTrend = [...trend].sort((a: any, b: any) => a.sessionIndex - b.sessionIndex);
+      const color = firearm.firearmColor || defaultColors[index % defaultColors.length];
       
       return {
         name: firearm.firearmName,
@@ -193,9 +211,12 @@ export default function FirearmsAnalyticsPage() {
         smooth: true,
         symbol: "circle" as const,
         symbolSize: 8,
-        color: firearm.firearmColor || defaultColors[index % defaultColors.length],
         lineStyle: {
           width: 3,
+          color: color,
+        },
+        itemStyle: {
+          color: color,
         },
         emphasis: {
           focus: "series" as const,
@@ -207,7 +228,14 @@ export default function FirearmsAnalyticsPage() {
     const maxSessions = Math.max(...data.leaderboard.map(f => (data.trends[f.firearmId] || []).length));
     const xAxisLabels = Array.from({ length: maxSessions }, (_, i) => `Sheet ${i + 1}`);
 
+    // Calculate dynamic y-axis range based on actual data
+    const allValues = series.flatMap(s => s.data.filter((v): v is number => v !== undefined && v !== null));
+    const minValue = allValues.length > 0 ? Math.min(...allValues) : 0;
+    const maxValue = allValues.length > 0 ? Math.max(...allValues) : 5;
+    const padding = (maxValue - minValue) * 0.1 || 0.5; // 10% padding or 0.5 minimum
+
     return {
+      color: data.leaderboard.map((f, index) => f.firearmColor || defaultColors[index % defaultColors.length]),
       tooltip: {
         trigger: "axis" as const,
         axisPointer: {
@@ -247,8 +275,8 @@ export default function FirearmsAnalyticsPage() {
         name: "Average Score",
         nameLocation: "middle" as const,
         nameGap: 45,
-        min: 0,
-        max: 5,
+        min: Math.max(0, minValue - padding),
+        max: Math.min(5, maxValue + padding),
       },
       series,
     };
