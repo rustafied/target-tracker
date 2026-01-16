@@ -279,13 +279,26 @@ export async function generateEfficiencySnapshotInsight(ctx: SessionContext): Pr
 }
 
 export async function generateBiasPatternInsight(ctx: SessionContext): Promise<Insight | null> {
-  const { bulls } = ctx;
+  const { bulls, shotsFired } = ctx;
   
   const positions = bulls.flatMap(b => getBullPositions(b));
   
-  if (positions.length < 5) return null;
+  console.log(`[generateBiasPatternInsight] Total shots fired: ${shotsFired}, Position data available: ${positions.length}`);
+  
+  // Need at least 20 positions AND at least 30% of total shots to be confident
+  if (positions.length < 20) {
+    console.log(`[generateBiasPatternInsight] Not enough position data (${positions.length} < 20)`);
+    return null;
+  }
+  
+  const positionCoverage = positions.length / shotsFired;
+  if (positionCoverage < 0.3) {
+    console.log(`[generateBiasPatternInsight] Position coverage too low (${(positionCoverage * 100).toFixed(0)}% < 30%)`);
+    return null;
+  }
   
   const bias = calculateQuadrantBias(positions);
+  console.log(`[generateBiasPatternInsight] Bias:`, bias);
   
   if (bias.concentration > 0.6) { // 60%+ in one quadrant
     const quadrantNames: Record<string, string> = {
@@ -308,13 +321,16 @@ export async function generateBiasPatternInsight(ctx: SessionContext): Promise<I
       id: `bias-${ctx.session._id}`,
       type: 'bias-pattern',
       category: 'session',
-      text: `Shots clustered ${quadrantNames[bias.quadrant]} (${percentageText} of rounds)—${quadrantAdvice[bias.quadrant]}.`,
-      confidence: calculateConfidence(positions.length, bias.concentration),
+      text: `Shots clustered ${quadrantNames[bias.quadrant]} (${percentageText} of ${positions.length} tracked rounds)—${quadrantAdvice[bias.quadrant]}.`,
+      confidence: calculateConfidence(positions.length, bias.concentration) * positionCoverage, // Lower confidence if we don't have all position data
       severity: bias.concentration > 0.7 ? 'warning' : 'info',
       metadata: {
         quadrant: bias.quadrant,
         concentration: bias.concentration,
         counts: bias.counts,
+        positionCoverage,
+        totalShots: shotsFired,
+        trackedShots: positions.length,
       },
     };
   }
