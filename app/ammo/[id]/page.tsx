@@ -509,13 +509,22 @@ export default function AmmoDetailPage({
                       )}
                     </div>
 
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 flex items-center gap-2">
                       <div className={`text-2xl font-bold ${
                         displayDelta > 0 ? "text-green-400" : "text-red-400"
                       }`}>
                         {displayDelta > 0 ? "+" : ""}
                         {displayDelta.toLocaleString()}
                       </div>
+                      {caliber && (
+                        <Image
+                          src={getBulletIcon(caliber.category || "rifle")}
+                          alt=""
+                          width={14}
+                          height={14}
+                          className="opacity-60"
+                        />
+                      )}
                     </div>
                   </div>
                 );
@@ -548,19 +557,19 @@ export default function AmmoDetailPage({
                             </Badge>
                           </div>
 
-                          <button
+                          <span
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(`/sessions/${session.slug || session._id}`);
                             }}
-                            className="text-sm text-white/80 hover:text-white hover:underline flex items-center gap-2 mb-1"
+                            className="text-sm text-white/80 hover:text-white hover:underline flex items-center gap-2 mb-1 cursor-pointer"
                           >
                             <Calendar className="w-3.5 h-3.5" />
                             {hasValidSessionDate ? format(new Date(sessionDate), "MMM d, yyyy") : "Session"}
                             {session?.location && (
                               <span className="text-white/60">@ {session.location}</span>
                             )}
-                          </button>
+                          </span>
 
                           <p className="text-xs text-white/40 mt-1">
                             {hasValidSessionDate && format(new Date(sessionDate), "MMM d, yyyy")}
@@ -569,13 +578,22 @@ export default function AmmoDetailPage({
                           </p>
                         </div>
 
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 flex items-center gap-2">
                           <div className={`text-2xl font-bold ${
                             totalDelta > 0 ? "text-green-400" : "text-red-400"
                           }`}>
                             {totalDelta > 0 ? "+" : ""}
                             {totalDelta.toLocaleString()}
                           </div>
+                          {caliber && (
+                            <Image
+                              src={getBulletIcon(caliber.category || "rifle")}
+                              alt=""
+                              width={14}
+                              height={14}
+                              className="opacity-60"
+                            />
+                          )}
                         </div>
                       </div>
                       
@@ -603,11 +621,22 @@ export default function AmmoDetailPage({
                                 {item.sheetId?.sheetLabel || `Sheet ${sheetIdx + 1}`}
                               </div>
                             </div>
-                            <div className={`text-lg font-semibold ${
-                              item.delta > 0 ? "text-green-400" : "text-red-400"
-                            }`}>
-                              {item.delta > 0 ? "+" : ""}
-                              {item.delta.toLocaleString()}
+                            <div className="flex items-center gap-1.5">
+                              <div className={`text-lg font-semibold ${
+                                item.delta > 0 ? "text-green-400" : "text-red-400"
+                              }`}>
+                                {item.delta > 0 ? "+" : ""}
+                                {item.delta.toLocaleString()}
+                              </div>
+                              {caliber && (
+                                <Image
+                                  src={getBulletIcon(caliber.category || "rifle")}
+                                  alt=""
+                                  width={11}
+                                  height={11}
+                                  className="opacity-60"
+                                />
+                              )}
                             </div>
                           </button>
                         ))}
