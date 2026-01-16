@@ -14,6 +14,7 @@ import Image from "next/image";
 import { EChart } from "@/components/analytics/EChart";
 import type { EChartsOption } from "echarts";
 import { format } from "date-fns";
+import { AmmoEfficiency } from "@/components/analytics/AmmoEfficiency";
 import {
   Dialog,
   DialogContent,
@@ -528,6 +529,11 @@ export default function AmmoPage() {
         </div>
       )}
 
+      {/* Efficiency Metrics Section */}
+      <div className="mb-6">
+        <AmmoEfficiency />
+      </div>
+
       {/* Inventory Grid */}
       {filteredInventory.length === 0 ? (
         <Card className="p-12 text-center">
@@ -546,7 +552,7 @@ export default function AmmoPage() {
             <Card
               key={item._id}
               className="p-5 hover:bg-accent transition-colors relative cursor-pointer"
-              onClick={() => router.push(`/ammo/${item.caliber._id}`)}
+              onClick={() => router.push(`/ammo/${(item.caliber as any).slug || item.caliber._id}`)}
             >
               <div className="flex items-center justify-between gap-4">
                 {/* Left side: Icon and Caliber Info */}
@@ -606,6 +612,11 @@ export default function AmmoPage() {
           ))}
         </div>
       )}
+
+      {/* Efficiency Info/Insights at bottom */}
+      <div className="mt-6">
+        <AmmoEfficiency infoOnly={true} />
+      </div>
 
       {/* Add Order Dialog */}
       <Dialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}>

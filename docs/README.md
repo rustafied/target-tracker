@@ -20,6 +20,7 @@ A Next.js application for logging and visualizing shooting range sessions with p
 - 🎯 **Ammo Inventory Tracking** - Automatic deduction from inventory based on shots fired, transaction history, usage charts
 - 📦 **Bulk Order Management** - Tag-based multi-caliber order entry and non-session usage recording
 - 📈 **Usage Analytics** - Line charts for usage over time and pie charts for stock distribution
+- 💰 **Ammo Efficiency Metrics** - Performance per round analysis, cost tracking, value rankings, and smart insights to optimize ammo spending
 - 🔗 **SEO-Friendly URLs** - Descriptive slugs for sessions and sheets (e.g., `2026-01-04-reloaderz`)
 - 📱 **Mobile-First Design** - Dark theme, optimized for quick data entry with scrollable modals
 - ☁️ **Cloud Database** - MongoDB Atlas for reliable data storage
@@ -192,22 +193,26 @@ target-tracker/
 
 Comprehensive project documentation is available in the `/readme` folder:
 
-- [Overview](./readme/00-overview.md) - Project goals and tech stack
-- [Domain Model](./readme/01-domain-model.md) - Data entities and relationships
-- [User Flows](./readme/02-user-flows.md) - Key user journeys
-- [UI & Design](./readme/03-ui-design.md) - Component specs and layout
-- [API & Backend](./readme/04-api-backend.md) - Routes and MongoDB setup
-- [Implementation Plan](./readme/05-implementation-plan.md) - Build sequence
-- [Future Features](./readme/06-future-features.md) - Planned expansions
-- [Session URL Slugs](./readme/08-session-url-slugs.md) - Descriptive URL slugs
-- **[Implementation Status](./readme/09-implementation-status.md) - Current state and completed features**
-- [Deployment Guide](./readme/10-deployment-guide.md) - Vercel & MongoDB Atlas setup
-- [Target Image Recognition](./readme/14-target-image-recognition.md) - Feature specification
-- **[Recognition Setup Guide](./readme/15-target-recognition-setup.md) - Installation and usage**
-- **[Authentication Setup](./readme/17-authentication-setup.md) - Discord OAuth configuration**
-- **[Custom Target Templates](./readme/18-custom-target-types.md) - Template system specification**
-- **[Fatigue & Sequence Analysis](./readme/22-fatigue-sequence-analysis.md) - Feature specification**
-- **[Fatigue Analysis Quick Start](./readme/23-fatigue-analysis-quick-start.md) - User guide**
+- [Overview](./00-overview.md) - Project goals and tech stack
+- [Domain Model](./01-domain-model.md) - Data entities and relationships
+- [User Flows](./02-user-flows.md) - Key user journeys
+- [UI & Design](./03-ui-design.md) - Component specs and layout
+- [API & Backend](./04-api-backend.md) - Routes and MongoDB setup
+- [Implementation Plan](./05-implementation-plan.md) - Build sequence
+- [Future Features](./06-future-features.md) - Planned expansions
+- [Session URL Slugs](./08-session-url-slugs.md) - Descriptive URL slugs
+- **[Implementation Status](./09-implementation-status.md) - Current state and completed features**
+- [Deployment Guide](./10-deployment-guide.md) - Vercel & MongoDB Atlas setup
+- [Target Image Recognition](./14-target-image-recognition.md) - Feature specification
+- **[Recognition Setup Guide](./15-target-recognition-setup.md) - Installation and usage**
+- **[Authentication Setup](./17-authentication-setup.md) - Discord OAuth configuration**
+- **[Custom Target Templates](./18-custom-target-types.md) - Template system specification**
+- **[Ammo Tracking](./19-ammo-tracking.md) - Inventory and usage tracking**
+- **[Ammo Quick Start](./20-ammo-quick-start.md) - User guide for ammo features**
+- **[Fatigue & Sequence Analysis](./22-fatigue-sequence-analysis.md) - Feature specification**
+- **[Fatigue Analysis Quick Start](./23-fatigue-analysis-quick-start.md) - User guide**
+- **[Ammo Efficiency Metrics](./24-ammo-efficiency-metrics.md) - Performance per round analysis**
+- **[Ammo Efficiency Quick Start](./25-ammo-efficiency-quick-start.md) - User guide for efficiency metrics**
 
 ## Tech Stack
 

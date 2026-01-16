@@ -58,6 +58,19 @@ interface UsageDataPoint {
   rounds: number;
 }
 
+interface SessionEfficiency {
+  sessionId: string;
+  sessionSlug?: string;
+  date: string;
+  location?: string;
+  totalShots: number;
+  avgScore: number;
+  bullsPer100: number;
+  costPerRound?: number;
+  costPerBull?: number;
+  valueScore: number;
+}
+
 export default function AmmoDetailPage({
   params,
 }: {
@@ -70,6 +83,7 @@ export default function AmmoDetailPage({
   const [inventory, setInventory] = useState<Inventory | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [usageData, setUsageData] = useState<UsageDataPoint[]>([]);
+  const [efficiencyData, setEfficiencyData] = useState<SessionEfficiency[]>([]);
   const [loading, setLoading] = useState(true);
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
   const [adjustAmount, setAdjustAmount] = useState("");
@@ -83,11 +97,12 @@ export default function AmmoDetailPage({
     try {
       setLoading(true);
 
-      const [caliberRes, inventoryRes, transactionsRes, usageRes] = await Promise.all([
+      const [caliberRes, inventoryRes, transactionsRes, usageRes, efficiencyRes] = await Promise.all([
         fetch(`/api/calibers/${id}`),
         fetch(`/api/ammo/inventory`),
         fetch(`/api/ammo/transactions?caliberId=${id}&limit=50`),
         fetch(`/api/ammo/usage-over-time`),
+        fetch(`/api/ammo/efficiency/${id}`),
       ]);
 
       if (caliberRes.ok) {
@@ -100,7 +115,8 @@ export default function AmmoDetailPage({
       // Always set inventory, even if it's 0
       if (inventoryRes.ok) {
         const data = await inventoryRes.json();
-        const inv = data.find((i: any) => i.caliber._id === id);
+        // Match by ID or slug
+        const inv = data.find((i: any) => i.caliber._id === id || i.caliber.slug === id);
         if (inv) {
           setInventory({
             onHand: inv.onHand,
@@ -126,7 +142,8 @@ export default function AmmoDetailPage({
       // Load usage data for this specific caliber
       if (usageRes.ok) {
         const data = await usageRes.json();
-        const caliberUsage = data.calibers.find((c: any) => c._id === id);
+        // Match by ID or slug
+        const caliberUsage = data.calibers.find((c: any) => c._id === id || c.slug === id);
         if (caliberUsage) {
           setUsageData(caliberUsage.usage);
         } else {
@@ -134,6 +151,14 @@ export default function AmmoDetailPage({
         }
       } else {
         setUsageData([]);
+      }
+
+      // Load efficiency data
+      if (efficiencyRes.ok) {
+        const data = await efficiencyRes.json();
+        setEfficiencyData(data.sessions || []);
+      } else {
+        setEfficiencyData([]);
       }
     } catch (error) {
       toast.error("Failed to load ammo details");
@@ -145,10 +170,12 @@ export default function AmmoDetailPage({
 
   async function handleAdjust(delta: number, note?: string) {
     try {
+      // Use the actual caliber ID from state if available (handles slug URLs)
+      const caliberIdToUse = caliber?._id || id;
       const res = await fetch("/api/ammo/inventory/adjust", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ caliberId: id, delta, note }),
+        body: JSON.stringify({ caliberId: caliberIdToUse, delta, note }),
       });
 
       if (res.ok) {
@@ -290,6 +317,108 @@ export default function AmmoDetailPage({
 
   const usageChartOption = getUsageChartOption();
 
+  // Generate efficiency chart - Value Score & Performance over time
+  const getEfficiencyChartOption = (): EChartsOption | null => {
+    if (efficiencyData.length === 0) return null;
+
+    const hasCostData = efficiencyData.some((d) => d.costPerRound !== undefined);
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+        backgroundColor: "rgba(0, 0, 0, 0.9)",
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        textStyle: { color: "#fff" },
+        formatter: (params: any) => {
+          const session = efficiencyData[params[0].dataIndex];
+          let tooltip = `<strong>${format(new Date(session.date), "MMM d, yyyy")}</strong><br/>`;
+          if (session.location) tooltip += `${session.location}<br/>`;
+          tooltip += `<br/>Value Score: <strong>${session.valueScore.toFixed(1)}</strong><br/>`;
+          tooltip += `Avg Score: ${session.avgScore.toFixed(2)}<br/>`;
+          tooltip += `Bulls/100: ${session.bullsPer100.toFixed(1)}<br/>`;
+          tooltip += `Shots: ${session.totalShots}<br/>`;
+          if (hasCostData && session.costPerBull) {
+            tooltip += `<br/>Cost/Bull: $${session.costPerBull.toFixed(2)}`;
+          }
+          return tooltip;
+        },
+      },
+      legend: {
+        data: hasCostData ? ["Value Score", "Cost per Bull ($)"] : ["Value Score", "Bulls per 100"],
+        textStyle: { color: "rgba(255, 255, 255, 0.6)" },
+        top: 10,
+      },
+      grid: {
+        left: "3%",
+        right: hasCostData ? "6%" : "4%",
+        bottom: "3%",
+        top: 60,
+        containLabel: true,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: efficiencyData.map((d) => format(new Date(d.date), "MMM d")),
+        axisLine: { lineStyle: { color: "rgba(255, 255, 255, 0.1)" } },
+        axisLabel: { color: "rgba(255, 255, 255, 0.6)" },
+      },
+      yAxis: [
+        {
+          type: "value" as const,
+          name: "Value Score",
+          nameTextStyle: { color: "rgba(255, 255, 255, 0.6)" },
+          axisLine: { lineStyle: { color: "rgba(255, 255, 255, 0.1)" } },
+          axisLabel: { color: "rgba(255, 255, 255, 0.6)" },
+          splitLine: { lineStyle: { color: "rgba(255, 255, 255, 0.05)" } },
+        },
+        {
+          type: "value" as const,
+          name: hasCostData ? "Cost per Bull ($)" : "Bulls per 100",
+          nameTextStyle: { color: "rgba(255, 255, 255, 0.6)" },
+          axisLine: { lineStyle: { color: "rgba(255, 255, 255, 0.1)" } },
+          axisLabel: { color: "rgba(255, 255, 255, 0.6)" },
+          splitLine: { show: false },
+          inverse: hasCostData, // Invert cost axis so lower is better (visually up)
+        },
+      ],
+      series: [
+        {
+          name: "Value Score",
+          type: "line" as const,
+          data: efficiencyData.map((d) => d.valueScore),
+          smooth: true,
+          symbol: "circle" as const,
+          symbolSize: 8,
+          color: "#22c55e",
+          lineStyle: {
+            width: 3,
+          },
+          areaStyle: {
+            opacity: 0.15,
+            color: "#22c55e",
+          },
+        },
+        {
+          name: hasCostData ? "Cost per Bull ($)" : "Bulls per 100",
+          type: "line" as const,
+          yAxisIndex: 1,
+          data: hasCostData
+            ? efficiencyData.map((d) => d.costPerBull || null)
+            : efficiencyData.map((d) => d.bullsPer100),
+          smooth: true,
+          symbol: "diamond" as const,
+          symbolSize: 8,
+          color: hasCostData ? "#f59e0b" : "#3b82f6",
+          lineStyle: {
+            width: 2,
+            type: hasCostData ? "dashed" as const : "solid" as const,
+          },
+        },
+      ],
+    };
+  };
+
+  const efficiencyChartOption = getEfficiencyChartOption();
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -408,12 +537,35 @@ export default function AmmoDetailPage({
         </Card>
       </div>
 
-      {/* Usage Chart */}
-      {usageChartOption && (
-        <Card className="p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Usage Over Time</h2>
-          <EChart option={usageChartOption} height={300} />
-        </Card>
+      {/* Charts - Side by Side */}
+      {(efficiencyChartOption || usageChartOption) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Efficiency Chart */}
+          {efficiencyChartOption && (
+            <Card className="p-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold">Efficiency Over Time</h2>
+                <p className="text-sm text-white/60 mt-1">
+                  {efficiencyData.some((d) => d.costPerRound !== undefined)
+                    ? "Value score and cost per bullseye"
+                    : "Value score and accuracy"}
+                </p>
+              </div>
+              <EChart option={efficiencyChartOption} height={300} />
+            </Card>
+          )}
+
+          {/* Usage Chart */}
+          {usageChartOption && (
+            <Card className="p-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold">Usage Over Time</h2>
+                <p className="text-sm text-white/60 mt-1">Rounds fired per session</p>
+              </div>
+              <EChart option={usageChartOption} height={300} />
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Notes */}
