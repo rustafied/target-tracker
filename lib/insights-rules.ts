@@ -302,11 +302,13 @@ export async function generateBiasPatternInsight(ctx: SessionContext): Promise<I
       bottomRight: 'possible breathing or stance',
     };
     
+    const percentageText = `${(bias.concentration * 100).toFixed(0)}%`;
+    
     return {
       id: `bias-${ctx.session._id}`,
       type: 'bias-pattern',
       category: 'session',
-      text: `Shots clustered ${quadrantNames[bias.quadrant]} (${formatPercentage(bias.concentration * 100, 0)} of rounds)—${quadrantAdvice[bias.quadrant]}.`,
+      text: `Shots clustered ${quadrantNames[bias.quadrant]} (${percentageText} of rounds)—${quadrantAdvice[bias.quadrant]}.`,
       confidence: calculateConfidence(positions.length, bias.concentration),
       severity: bias.concentration > 0.7 ? 'warning' : 'info',
       metadata: {
