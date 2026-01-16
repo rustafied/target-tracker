@@ -98,18 +98,16 @@ export async function generateSetupMilestoneInsight(ctx: SessionContext): Promis
   const [mostUsedSetup] = Array.from(setupCounts.entries()).sort((a, b) => b[1] - a[1])[0];
   const [firearmId, caliberId, opticId] = mostUsedSetup.split('-');
   
-  // Find prior sessions that used this setup
-  const priorSheets = await TargetSheet.find({
+  // Find prior sheets that used this setup
+  const priorSheetsForSetup = await TargetSheet.find({
     userId: session.userId,
     firearmId: new Types.ObjectId(firearmId),
     caliberId: new Types.ObjectId(caliberId),
     opticId: new Types.ObjectId(opticId),
     rangeSessionId: { $ne: session._id },
-  }).lean().select('rangeSessionId');
+  }).lean().select('_id rangeSessionId');
   
-  const priorSessionIds = new Set(priorSheets.map(s => s.rangeSessionId.toString()));
-  
-  if (priorSessionIds.size === 0) {
+  if (priorSheetsForSetup.length === 0) {
     return {
       id: `milestone-${session._id}`,
       type: 'setup-milestone',
@@ -131,7 +129,7 @@ export async function generateSetupMilestoneInsight(ctx: SessionContext): Promis
   
   // Get historical mean radius for this setup
   const priorBulls = await BullRecord.find({ 
-    targetSheetId: { $in: priorSheets.map(s => s._id) },
+    targetSheetId: { $in: priorSheetsForSetup.map(s => s._id) },
   }).lean().select('shotPositions');
   
   const priorPositions = priorBulls.flatMap(b => getBullPositions(b));
