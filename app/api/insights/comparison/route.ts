@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     const insights = await generateComparisonInsights(
       itemIds,
       itemType,
-      userId,
+      userId.toString(),
       config
     );
 
