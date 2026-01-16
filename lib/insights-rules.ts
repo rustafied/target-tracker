@@ -79,20 +79,37 @@ export async function generateVsAverageInsight(ctx: SessionContext): Promise<Ins
 }
 
 export async function generateSetupMilestoneInsight(ctx: SessionContext): Promise<Insight | null> {
-  const { session } = ctx;
+  const { session, sheets } = ctx;
   
-  if (!session.firearmId) return null;
+  if (sheets.length === 0) return null;
   
-  // Find prior sessions with same setup
-  const priorSessions = await RangeSession.find({
-    userId: session.userId,
-    firearmId: session.firearmId,
-    opticId: session.opticId,
-    caliberId: session.caliberId,
-    _id: { $ne: session._id },
+  // Get the most common setup from this session's sheets
+  const setupCounts = new Map<string, number>();
+  sheets.forEach(sheet => {
+    if (sheet.firearmId && sheet.caliberId && sheet.opticId) {
+      const key = `${sheet.firearmId}-${sheet.caliberId}-${sheet.opticId}`;
+      setupCounts.set(key, (setupCounts.get(key) || 0) + 1);
+    }
   });
   
-  if (priorSessions.length === 0) {
+  if (setupCounts.size === 0) return null;
+  
+  // Get the most used setup
+  const [mostUsedSetup] = Array.from(setupCounts.entries()).sort((a, b) => b[1] - a[1])[0];
+  const [firearmId, caliberId, opticId] = mostUsedSetup.split('-');
+  
+  // Find prior sessions that used this setup
+  const priorSheets = await TargetSheet.find({
+    userId: session.userId,
+    firearmId: new Types.ObjectId(firearmId),
+    caliberId: new Types.ObjectId(caliberId),
+    opticId: new Types.ObjectId(opticId),
+    rangeSessionId: { $ne: session._id },
+  }).lean().select('rangeSessionId');
+  
+  const priorSessionIds = new Set(priorSheets.map(s => s.rangeSessionId.toString()));
+  
+  if (priorSessionIds.size === 0) {
     return {
       id: `milestone-${session._id}`,
       type: 'setup-milestone',
@@ -113,12 +130,9 @@ export async function generateSetupMilestoneInsight(ctx: SessionContext): Promis
   ) / allPositions.length;
   
   // Get historical mean radius for this setup
-  const priorSheets = await TargetSheet.find({ 
-    rangeSessionId: { $in: priorSessions.map(s => s._id) } 
-  });
   const priorBulls = await BullRecord.find({ 
     targetSheetId: { $in: priorSheets.map(s => s._id) },
-  });
+  }).lean().select('shotPositions');
   
   const priorPositions = priorBulls.flatMap(b => getBullPositions(b));
   if (priorPositions.length < 3) return null;
@@ -131,8 +145,8 @@ export async function generateSetupMilestoneInsight(ctx: SessionContext): Promis
   
   if (improvement < 10) return null; // Not significant enough
   
-  const firearm = await Firearm.findById(session.firearmId);
-  const optic = session.opticId ? await Optic.findById(session.opticId) : null;
+  const firearm = await Firearm.findById(firearmId).lean().select('name');
+  const optic = await Optic.findById(opticId).lean().select('name');
   
   const setupName = optic 
     ? `${firearm?.name} + ${optic.name}`
