@@ -466,7 +466,80 @@ export default function SheetDetailPage() {
   };
 
   if (loading) {
-    return <LoadingScreen />;
+    return (
+      <div>
+        {/* Header with buttons */}
+        <div className="flex items-center justify-between mb-6 animate-pulse">
+          <div className="h-10 w-32 bg-[#2a2a2a] rounded"></div>
+          <div className="flex gap-2">
+            <div className="h-10 w-24 bg-[#2a2a2a] rounded"></div>
+            <div className="h-10 w-24 bg-[#2a2a2a] rounded"></div>
+            <div className="h-10 w-32 bg-[#2a2a2a] rounded"></div>
+          </div>
+        </div>
+
+        {/* Progression Chart */}
+        <Card className="mb-6 animate-pulse">
+          <CardHeader>
+            <div className="h-6 w-64 bg-[#2a2a2a] rounded"></div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] bg-[#1a1a1a] rounded flex items-center justify-center">
+              <div className="h-24 w-24 bg-[#2a2a2a] rounded"></div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Sheet Info Card */}
+        <Card className="mb-6 animate-pulse">
+          <CardHeader>
+            <div className="h-6 w-40 bg-[#2a2a2a] rounded"></div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i}>
+                  <div className="h-4 w-20 bg-[#2a2a2a] rounded mb-1"></div>
+                  <div className="h-5 w-24 bg-[#2a2a2a] rounded"></div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bulls/Targets */}
+        <div className="space-y-6">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="h-6 w-32 bg-[#2a2a2a] rounded"></div>
+                  <div className="h-8 w-24 bg-[#2a2a2a] rounded"></div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Target visualization area */}
+                  <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] aspect-square flex items-center justify-center">
+                    <div className="h-48 w-48 bg-[#2a2a2a] rounded-full"></div>
+                  </div>
+                  {/* Score input area */}
+                  <div className="space-y-4">
+                    <div className="h-10 w-full bg-[#2a2a2a] rounded"></div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {Array.from({ length: 6 }).map((_, j) => (
+                        <div key={j} className="h-16 bg-[#2a2a2a] rounded"></div>
+                      ))}
+                    </div>
+                    <div className="h-24 bg-[#2a2a2a] rounded"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (!sheet) {

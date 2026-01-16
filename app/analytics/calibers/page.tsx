@@ -168,11 +168,37 @@ export default function CalibersAnalyticsPage() {
           icon={Crosshair}
           description="Performance leaderboard and trends by caliber"
         />
-        <div className="grid gap-6 md:grid-cols-2">
-          <ChartCardSkeleton height="400px" />
+        <div className="h-12 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl animate-pulse"></div>
+        <ChartCardSkeleton height="500px" />
+        <ChartCardSkeleton height="400px" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <div className="h-6 w-48 bg-[#2a2a2a] rounded animate-pulse"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="relative p-4 rounded-lg border bg-card animate-pulse">
+                    <div className="h-10 w-10 bg-[#2a2a2a] rounded-full absolute -left-2 -top-2"></div>
+                    <div className="flex items-center justify-between mb-3 ml-6">
+                      <div className="h-6 w-32 bg-[#2a2a2a] rounded"></div>
+                      <div className="h-8 w-16 bg-[#2a2a2a] rounded"></div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 ml-6">
+                      <div className="h-10 bg-[#2a2a2a] rounded"></div>
+                      <div className="h-10 bg-[#2a2a2a] rounded"></div>
+                      <div className="h-10 bg-[#2a2a2a] rounded"></div>
+                      <div className="h-10 bg-[#2a2a2a] rounded"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
           <ChartCardSkeleton height="400px" />
         </div>
-        <TableSkeleton rows={8} />
+        <ChartCardSkeleton height="400px" />
       </div>
     );
   }

@@ -199,8 +199,28 @@ export default function TargetsSetupPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Spinner />
+      <div className="container mx-auto p-6 max-w-6xl">
+        <div className="mb-8">
+          <div className="h-9 w-64 bg-[#2a2a2a] rounded animate-pulse mb-2"></div>
+          <div className="h-5 w-96 bg-[#2a2a2a] rounded animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="p-6 animate-pulse">
+              <div className="flex items-start gap-3">
+                <div className="h-5 w-5 bg-[#2a2a2a] rounded"></div>
+                <div className="flex-1">
+                  <div className="mb-4 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] aspect-square flex items-center justify-center">
+                    <div className="w-32 h-32 bg-[#2a2a2a] rounded"></div>
+                  </div>
+                  <div className="h-6 w-32 bg-[#2a2a2a] rounded mb-2"></div>
+                  <div className="h-4 w-full bg-[#2a2a2a] rounded mb-2"></div>
+                  <div className="h-3 w-24 bg-[#2a2a2a] rounded"></div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }

@@ -101,7 +101,62 @@ export default function SessionsPage() {
   };
 
   if (loading) {
-    return <LoadingCard />;
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="h-9 w-32 bg-[#2a2a2a] rounded animate-pulse mb-2"></div>
+            <div className="h-5 w-48 bg-[#2a2a2a] rounded animate-pulse"></div>
+          </div>
+          <div className="h-10 w-32 bg-[#2a2a2a] rounded animate-pulse"></div>
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4 md:p-6">
+                {/* Desktop Layout Skeleton */}
+                <div className="hidden md:flex items-start justify-between gap-6">
+                  <div className="flex-shrink-0 w-64">
+                    <div className="h-7 w-40 bg-[#2a2a2a] rounded mb-2"></div>
+                    <div className="h-4 w-48 bg-[#2a2a2a] rounded"></div>
+                  </div>
+                  <div className="flex-1 grid grid-cols-4 gap-6">
+                    {Array.from({ length: 4 }).map((_, j) => (
+                      <div key={j} className="text-center">
+                        <div className="h-4 w-16 bg-[#2a2a2a] rounded mx-auto mb-2"></div>
+                        <div className="h-8 w-12 bg-[#2a2a2a] rounded mx-auto"></div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="h-6 w-6 bg-[#2a2a2a] rounded"></div>
+                </div>
+                {/* Mobile Layout Skeleton */}
+                <div className="md:hidden">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="h-6 w-32 bg-[#2a2a2a] rounded mb-1"></div>
+                      <div className="h-3 w-40 bg-[#2a2a2a] rounded"></div>
+                    </div>
+                    <div className="h-5 w-5 bg-[#2a2a2a] rounded"></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Array.from({ length: 4 }).map((_, j) => (
+                      <div key={j} className="bg-muted/50 rounded-md p-2 flex items-center gap-2">
+                        <div className="h-3.5 w-3.5 bg-[#2a2a2a] rounded"></div>
+                        <div className="flex-1">
+                          <div className="h-3 w-12 bg-[#2a2a2a] rounded mb-1"></div>
+                          <div className="h-5 w-8 bg-[#2a2a2a] rounded"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (

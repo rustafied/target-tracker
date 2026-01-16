@@ -10,11 +10,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    console.log('[Session Insights API] Starting...');
     await connectToDatabase();
 
     const userId = await requireUserId(request);
+    console.log(`[Session Insights API] User ID: ${userId}`);
+    
     const { id } = await params;
     const sessionIdOrSlug = id;
+    console.log(`[Session Insights API] Session ID/Slug: ${sessionIdOrSlug}`);
 
     // Try to find by slug first, fallback to _id
     let rangeSession = await RangeSession.findOne({ slug: sessionIdOrSlug });
@@ -23,9 +27,11 @@ export async function GET(
     }
 
     if (!rangeSession) {
+      console.log('[Session Insights API] Session not found');
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
+    console.log(`[Session Insights API] Found session: ${rangeSession._id}`);
     const sessionId = rangeSession._id.toString();
 
     // Get user preferences
@@ -57,14 +63,18 @@ export async function GET(
     if (maxInsights) config.maxInsights = parseInt(maxInsights);
     if (verbosity) config.verbosity = verbosity as "short" | "long";
 
+    console.log('[Session Insights API] Calling generateSessionInsights...');
     const insights = await generateSessionInsights(sessionId, userId.toString(), config);
+
+    console.log(`[Session Insights API] Generated ${insights.length} insights`);
+    console.log('[Session Insights API] Insights:', JSON.stringify(insights, null, 2));
 
     return NextResponse.json({
       insights,
       count: insights.length,
     });
   } catch (error) {
-    console.error("Error generating session insights:", error);
+    console.error("[Session Insights API] Error:", error);
     return NextResponse.json(
       { error: "Failed to generate insights" },
       { status: 500 }

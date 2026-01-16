@@ -75,11 +75,33 @@ export default function FirearmsAnalyticsPage() {
           icon={Target}
           description="Performance leaderboard and trends by firearm"
         />
-        <div className="grid gap-6 md:grid-cols-2">
-          <ChartCardSkeleton height="400px" />
-          <ChartCardSkeleton height="400px" />
-        </div>
-        <TableSkeleton rows={8} />
+        <ChartCardSkeleton height="500px" />
+        <ChartCardSkeleton height="400px" />
+        <Card>
+          <CardHeader>
+            <div className="h-6 w-48 bg-[#2a2a2a] rounded animate-pulse"></div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="relative p-4 rounded-lg border bg-card animate-pulse">
+                  <div className="h-10 w-10 bg-[#2a2a2a] rounded-full absolute -left-2 -top-2"></div>
+                  <div className="flex items-center justify-between mb-3 ml-6">
+                    <div className="h-6 w-32 bg-[#2a2a2a] rounded"></div>
+                    <div className="h-8 w-16 bg-[#2a2a2a] rounded"></div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 ml-6">
+                    <div className="h-10 bg-[#2a2a2a] rounded"></div>
+                    <div className="h-10 bg-[#2a2a2a] rounded"></div>
+                    <div className="h-10 bg-[#2a2a2a] rounded"></div>
+                    <div className="h-10 bg-[#2a2a2a] rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <ChartCardSkeleton height="400px" />
       </div>
     );
   }

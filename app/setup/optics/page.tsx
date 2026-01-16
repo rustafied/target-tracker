@@ -267,7 +267,36 @@ export default function OpticsPage() {
   };
 
   if (loading) {
-    return <LoadingCard />;
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="h-9 w-48 bg-[#2a2a2a] rounded animate-pulse mb-2"></div>
+            <div className="h-5 w-80 bg-[#2a2a2a] rounded animate-pulse"></div>
+          </div>
+          <div className="h-10 w-32 bg-[#2a2a2a] rounded animate-pulse"></div>
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 p-4 border rounded-lg bg-card animate-pulse">
+              <div className="h-5 w-5 bg-[#2a2a2a] rounded"></div>
+              <div className="w-16 h-12 bg-[#2a2a2a] rounded"></div>
+              <div className="flex-1 min-w-0">
+                <div className="h-6 w-56 bg-[#2a2a2a] rounded mb-2"></div>
+                <div className="flex gap-2">
+                  <div className="h-5 w-16 bg-[#2a2a2a] rounded"></div>
+                  <div className="h-5 w-12 bg-[#2a2a2a] rounded"></div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="h-8 w-8 bg-[#2a2a2a] rounded"></div>
+                <div className="h-8 w-8 bg-[#2a2a2a] rounded"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (

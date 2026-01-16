@@ -486,60 +486,62 @@ export default function TargetsAnalyticsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
           <FadeIn delay={150} duration={250}>
             <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Mean Radius
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{data.group.meanRadius.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Target units</p>
-            </CardContent>
-          </Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Mean Radius
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{data.group.meanRadius.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Target units</p>
+              </CardContent>
+            </Card>
+          </FadeIn>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Maximize2 className="h-4 w-4" />
-                Extreme Spread
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{data.group.extremeSpread.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Max shot distance</p>
-            </CardContent>
-          </Card>
+          <FadeIn delay={200} duration={250}>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Maximize2 className="h-4 w-4" />
+                  Extreme Spread
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{data.group.extremeSpread.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Max shot distance</p>
+              </CardContent>
+            </Card>
           </FadeIn>
 
           <FadeIn delay={250} duration={250}>
             <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Compass className="h-4 w-4" />
-                Centroid Distance
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{data.centroid?.centroidDistance.toFixed(2) || "N/A"}</p>
-              <p className="text-xs text-muted-foreground mt-1">Bias from center</p>
-            </CardContent>
-          </Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Compass className="h-4 w-4" />
+                  Centroid Distance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{data.centroid?.centroidDistance.toFixed(2) || "N/A"}</p>
+                <p className="text-xs text-muted-foreground mt-1">Bias from center</p>
+              </CardContent>
+            </Card>
           </FadeIn>
 
           <FadeIn delay={300} duration={250}>
             <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                Tightness Score
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{data.group.tightnessScore}</p>
-              <p className="text-xs text-muted-foreground mt-1">0-100 scale</p>
-            </CardContent>
-          </Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Tightness Score
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{data.group.tightnessScore}</p>
+                <p className="text-xs text-muted-foreground mt-1">0-100 scale</p>
+              </CardContent>
+            </Card>
           </FadeIn>
         </div>
       )}
