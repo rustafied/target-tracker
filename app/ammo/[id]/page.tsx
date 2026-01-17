@@ -634,16 +634,32 @@ export default function AmmoDetailPage({
                 return (
                   <div
                     key={item._id}
-                    className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
+                    className={`group flex items-start gap-4 p-4 rounded-lg border transition-colors ${
                       displayDelta > 0 
                         ? "border-green-500/20 bg-green-500/5 hover:bg-green-500/10" 
                         : "border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
                     }`}
                   >
-                    <div className={`flex-shrink-0 mt-1 ${
-                      displayDelta > 0 ? "text-green-400" : "text-red-400"
-                    }`}>
-                      {item.sessionId ? <Target className="w-5 h-5" /> : <Package className="w-5 h-5" />}
+                    <div className="flex flex-col items-center gap-2">
+                      <div className={`flex-shrink-0 ${
+                        displayDelta > 0 ? "text-green-400" : "text-red-400"
+                      }`}>
+                        {item.sessionId ? <Target className="w-5 h-5" /> : <Package className="w-5 h-5" />}
+                      </div>
+                      {canDeleteTransaction(item) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTransactionToDelete(item);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -696,20 +712,6 @@ export default function AmmoDetailPage({
                     </div>
 
                     <div className="flex-shrink-0 flex items-center gap-3">
-                      {canDeleteTransaction(item) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTransactionToDelete(item);
-                            setDeleteDialogOpen(true);
-                          }}
-                          className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
                       <div className={`text-2xl font-bold ${
                         displayDelta > 0 ? "text-green-400" : "text-red-400"
                       }`}>

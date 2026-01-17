@@ -45,10 +45,27 @@ interface UsageData {
   }>;
 }
 
+interface AvgUsageMap {
+  [caliberId: string]: {
+    avgRoundsPerSession: number;
+    totalSessions: number;
+  };
+}
+
+interface InventoryHistoryData {
+  calibers: Array<{
+    _id: string;
+    caliberName: string;
+    history: Array<{ date: string; inventory: number }>;
+  }>;
+}
+
 export default function AmmoPage() {
   const router = useRouter();
   const [inventory, setInventory] = useState<AmmoInventoryItem[]>([]);
   const [usageOverTime, setUsageOverTime] = useState<UsageData | null>(null);
+  const [inventoryHistory, setInventoryHistory] = useState<InventoryHistoryData | null>(null);
+  const [avgUsage, setAvgUsage] = useState<AvgUsageMap>({});
   const [loading, setLoading] = useState(true);
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [orderQuantities, setOrderQuantities] = useState<Record<string, string>>({});
@@ -71,10 +88,12 @@ export default function AmmoPage() {
       setLoading(true);
       
       // Fetch user's calibers, inventory, and usage data
-      const [calibersRes, inventoryRes, usageRes] = await Promise.all([
+      const [calibersRes, inventoryRes, usageRes, avgUsageRes, historyRes] = await Promise.all([
         fetch("/api/calibers"),
         fetch("/api/ammo/inventory"),
         fetch("/api/ammo/usage-over-time"),
+        fetch("/api/ammo/avg-usage"),
+        fetch("/api/ammo/inventory-history"),
       ]);
 
       if (calibersRes.ok) {
@@ -112,6 +131,18 @@ export default function AmmoPage() {
       if (usageRes.ok) {
         const usage = await usageRes.json();
         setUsageOverTime(usage);
+      }
+
+      // Load average usage data
+      if (avgUsageRes.ok) {
+        const avgUsageData = await avgUsageRes.json();
+        setAvgUsage(avgUsageData);
+      }
+
+      // Load inventory history data
+      if (historyRes.ok) {
+        const historyData = await historyRes.json();
+        setInventoryHistory(historyData);
       }
     } catch (error) {
       toast.error("Failed to load inventory");
@@ -332,6 +363,107 @@ export default function AmmoPage() {
 
   const usageChartOption = getUsageChartOption();
 
+  // Generate chart for inventory history over time
+  const getInventoryHistoryChartOption = (): EChartsOption | null => {
+    if (!inventoryHistory || inventoryHistory.calibers.length === 0) return null;
+
+    const colors = [
+      "#3b82f6", // blue
+      "#22c55e", // green
+      "#f59e0b", // amber
+      "#ef4444", // red
+      "#8b5cf6", // violet
+      "#06b6d4", // cyan
+      "#ec4899", // pink
+      "#14b8a6", // teal
+    ];
+
+    // Create all unique dates across all calibers
+    const allDates = new Set<string>();
+    inventoryHistory.calibers.forEach((cal) => {
+      cal.history.forEach((h) => allDates.add(h.date));
+    });
+    const sortedDates = Array.from(allDates).sort();
+
+    // Create series for each caliber
+    const series = inventoryHistory.calibers.map((cal, index) => {
+      const dataMap = new Map(cal.history.map((h) => [h.date, h.inventory]));
+      
+      // Fill in data for all dates, using forward-fill for missing dates
+      let lastValue = 0;
+      const data = sortedDates.map((date) => {
+        if (dataMap.has(date)) {
+          lastValue = dataMap.get(date)!;
+        }
+        return lastValue;
+      });
+
+      return {
+        name: cal.caliberName,
+        type: "line" as const,
+        data,
+        smooth: true,
+        symbol: "circle" as const,
+        symbolSize: 6,
+        color: colors[index % colors.length],
+        lineStyle: {
+          width: 2,
+        },
+        areaStyle: {
+          opacity: 0.1,
+        },
+      };
+    });
+
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+        backgroundColor: "rgba(0, 0, 0, 0.9)",
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        textStyle: { color: "#fff" },
+        formatter: (params: any) => {
+          const date = sortedDates[params[0].dataIndex];
+          let tooltip = `<strong>${format(new Date(date), "MMM d, yyyy")}</strong><br/>`;
+          params.forEach((param: any) => {
+            if (param.value > 0) {
+              tooltip += `${param.marker} ${param.seriesName}: ${param.value.toLocaleString()} rounds<br/>`;
+            }
+          });
+          return tooltip;
+        },
+      },
+      legend: {
+        data: inventoryHistory.calibers.map((c) => c.caliberName),
+        textStyle: { color: "rgba(255, 255, 255, 0.6)" },
+        top: 10,
+      },
+      grid: {
+        left: "3%",
+        right: "4%",
+        bottom: "3%",
+        top: 60,
+        containLabel: true,
+      },
+      xAxis: {
+        type: "category" as const,
+        data: sortedDates.map((date) => format(new Date(date), "MMM d")),
+        axisLine: { lineStyle: { color: "rgba(255, 255, 255, 0.1)" } },
+        axisLabel: { color: "rgba(255, 255, 255, 0.6)" },
+      },
+      yAxis: {
+        type: "value" as const,
+        name: "Inventory (rounds)",
+        nameTextStyle: { color: "rgba(255, 255, 255, 0.6)" },
+        axisLine: { lineStyle: { color: "rgba(255, 255, 255, 0.1)" } },
+        axisLabel: { color: "rgba(255, 255, 255, 0.6)" },
+        splitLine: { lineStyle: { color: "rgba(255, 255, 255, 0.05)" } },
+      },
+      series,
+    };
+  };
+
+  const inventoryHistoryChartOption = getInventoryHistoryChartOption();
+
   function openUsageDialog() {
     // Initialize empty usage amounts
     const initialUsage: Record<string, string> = {};
@@ -486,6 +618,24 @@ export default function AmmoPage() {
     );
   }
 
+  // Calculate low stock warnings
+  const lowStockWarnings = filteredInventory
+    .map((item) => {
+      const usage = avgUsage[item.caliber._id];
+      if (!usage || usage.avgRoundsPerSession <= 0) return null;
+      
+      const sessionsLeft = Math.floor(item.onHand / usage.avgRoundsPerSession);
+      if (sessionsLeft >= 10) return null;
+      
+      return {
+        item,
+        sessionsLeft,
+        avgUsage: usage.avgRoundsPerSession,
+      };
+    })
+    .filter((w) => w !== null)
+    .sort((a, b) => a!.sessionsLeft - b!.sessionsLeft);
+
   return (
     <div>
       {/* Header */}
@@ -507,6 +657,56 @@ export default function AmmoPage() {
           </Button>
         </div>
       </div>
+
+      {/* Low Stock Warnings */}
+      {lowStockWarnings.length > 0 && (
+        <Card className="p-4 mb-6 border-orange-500/50 bg-orange-500/5">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-orange-400 mb-2">Low Stock Alert</h3>
+              <div className="space-y-2">
+                {lowStockWarnings.map((warning) => {
+                  const isCritical = warning!.sessionsLeft < 5;
+                  return (
+                    <div
+                      key={warning!.item._id}
+                      className={`flex items-center justify-between gap-4 p-2 rounded ${
+                        isCritical ? "bg-red-500/10" : "bg-orange-500/10"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Image
+                          src={getBulletIcon(
+                            warning!.item.caliber.name,
+                            warning!.item.caliber.category
+                          )}
+                          alt={warning!.item.caliber.name}
+                          width={20}
+                          height={54}
+                          className="opacity-70"
+                        />
+                        <div>
+                          <span className="font-semibold">{warning!.item.caliber.name}</span>
+                          <span className="text-sm text-muted-foreground ml-2">
+                            {warning!.item.onHand.toLocaleString()} rounds
+                          </span>
+                        </div>
+                      </div>
+                      <div className={`text-sm font-semibold ${isCritical ? "text-red-400" : "text-orange-400"}`}>
+                        ~{warning!.sessionsLeft} sessions left
+                        <span className="text-muted-foreground/60 font-normal ml-1">
+                          (avg {warning!.avgUsage}/session)
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Charts */}
       {(usageChartOption || inventoryPieOption) && (
@@ -594,6 +794,23 @@ export default function AmmoPage() {
                       {item.onHand.toLocaleString()}
                     </div>
                     <div className="text-xs text-muted-foreground">rounds on hand</div>
+                    {avgUsage[item.caliber._id] && avgUsage[item.caliber._id].avgRoundsPerSession > 0 && (() => {
+                      const sessionsLeft = Math.floor(item.onHand / avgUsage[item.caliber._id].avgRoundsPerSession);
+                      const colorClass = sessionsLeft < 5 
+                        ? "text-red-400 font-semibold" 
+                        : sessionsLeft < 10 
+                        ? "text-orange-400 font-semibold" 
+                        : "text-muted-foreground/60";
+                      
+                      return (
+                        <div className={`text-xs mt-1 ${colorClass}`}>
+                          ~{sessionsLeft} sessions left
+                          <span className="text-muted-foreground/40 ml-1 font-normal">
+                            (avg {avgUsage[item.caliber._id].avgRoundsPerSession}/session)
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                   <Button
                     size="icon"
@@ -611,6 +828,14 @@ export default function AmmoPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Inventory History Chart - Full Width */}
+      {inventoryHistoryChartOption && (
+        <Card className="p-6 mt-6">
+          <h2 className="text-xl font-semibold mb-4">Inventory Over Time</h2>
+          <EChart option={inventoryHistoryChartOption} height={300} />
+        </Card>
       )}
 
       {/* Efficiency Info/Insights at bottom */}
