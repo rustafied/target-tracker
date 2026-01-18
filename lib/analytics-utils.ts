@@ -488,6 +488,57 @@ export function calculateTrend(
 }
 
 // ============================================================================
+// DISTANCE MULTIPLIER
+// ============================================================================
+
+/**
+ * Calculate distance-adjusted score with a bonus-only multiplier
+ * @param baseScore - The raw average score per shot (0-5)
+ * @param distance - Distance in yards for this data point
+ * @param baselineDistance - This firearm's typical/average distance
+ * @returns Adjusted score with distance bonus applied (never lower than baseScore)
+ */
+export function applyDistanceMultiplier(
+  baseScore: number,
+  distance: number,
+  baselineDistance: number
+): number {
+  if (distance <= 0 || baselineDistance <= 0) return baseScore;
+  
+  // Only apply bonus if shooting FARTHER than baseline
+  // Shooting closer = no penalty, just use raw score
+  if (distance <= baselineDistance) {
+    return baseScore;
+  }
+  
+  // Calculate how much farther this shot is vs baseline
+  const distanceRatio = distance / baselineDistance;
+  
+  // Apply a logarithmic multiplier for difficulty bonus
+  // At 2x distance: ~1.15x multiplier (15% bonus)
+  // At 3x distance: ~1.32x multiplier (32% bonus)
+  const multiplier = 1 + (Math.log2(distanceRatio) * 0.20);
+  
+  // Clamp the adjusted score to stay within 0-5 range
+  const adjustedScore = Math.min(5, baseScore * multiplier);
+  
+  return adjustedScore;
+}
+
+/**
+ * Calculate distance multiplier value for display purposes
+ * @param distance - Distance in yards
+ * @param baselineDistance - Reference distance
+ * @returns The multiplier value (1.0 = no bonus, >1.0 = bonus)
+ */
+export function getDistanceMultiplier(distance: number, baselineDistance: number): number {
+  if (distance <= 0 || baselineDistance <= 0) return 1;
+  if (distance <= baselineDistance) return 1; // No penalty for closer shots
+  const distanceRatio = distance / baselineDistance;
+  return 1 + (Math.log2(distanceRatio) * 0.20);
+}
+
+// ============================================================================
 // RING DISTRIBUTION AGGREGATION
 // ============================================================================
 

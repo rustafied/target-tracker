@@ -29,6 +29,7 @@ import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCar
 import { ExpandedInsightsPanel, Insight } from "@/components/ExpandedInsightsPanel";
 import { FadeIn } from "@/components/ui/fade-in";
 import { toast } from "sonner";
+import { applyDistanceMultiplier } from "@/lib/analytics-utils";
 import {
   LineChart,
   Line,
@@ -533,71 +534,150 @@ export default function SessionDetailPage() {
       "#14b8a6", // teal
     ];
 
-    // Group sheets by firearm in chronological order, capture colors
-    const firearmSheets = new Map<string, { name: string; color: string; sheets: any[] }>();
+    // Calculate baseline distance per firearm (each firearm's own average)
+    const firearmBaselines = new Map<string, number>();
+    
+    sheets.forEach(sheet => {
+      const firearmId = sheet.firearmId._id;
+      if (!firearmBaselines.has(firearmId)) {
+        // Calculate this firearm's average distance
+        const firearmSheets = sheets.filter(s => s.firearmId._id === firearmId);
+        const totalDistance = firearmSheets.reduce((sum, s) => sum + s.distanceYards, 0);
+        const avgDistance = firearmSheets.length > 0 ? totalDistance / firearmSheets.length : 25;
+        firearmBaselines.set(firearmId, avgDistance);
+      }
+    });
+
+    // Group sheets by firearm in chronological order, capture colors and distances
+    const firearmSheets = new Map<string, { 
+      name: string; 
+      color: string; 
+      sheets: any[]; 
+      distanceAdjustedSheets: any[];
+      distances: number[];
+      baseline: number;
+    }>();
     
     sheets.forEach(sheet => {
       const firearmId = sheet.firearmId._id;
       const firearmName = sheet.firearmId.name;
-      // Explicitly use the color from the firearm settings, fallback to defaults only if not set
       const firearmColor = sheet.firearmId.color;
+      const baseline = firearmBaselines.get(firearmId) || 25;
       
       if (!firearmSheets.has(firearmId)) {
         const assignedColor = firearmColor || defaultColors[firearmSheets.size % defaultColors.length];
         firearmSheets.set(firearmId, { 
           name: firearmName, 
           color: assignedColor,
-          sheets: [] 
+          sheets: [],
+          distanceAdjustedSheets: [],
+          distances: [],
+          baseline,
         });
       }
       
       const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
       const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
       const avgScore = totalShots > 0 ? parseFloat((totalScore / totalShots).toFixed(2)) : 0;
+      const distance = sheet.distanceYards || 0;
+      
+      // Calculate distance-adjusted score using THIS FIREARM'S baseline
+      const distanceAdjustedScore = distance > 0 
+        ? parseFloat(applyDistanceMultiplier(avgScore, distance, baseline).toFixed(2))
+        : avgScore;
       
       firearmSheets.get(firearmId)!.sheets.push(avgScore);
+      firearmSheets.get(firearmId)!.distanceAdjustedSheets.push(distanceAdjustedScore);
+      firearmSheets.get(firearmId)!.distances.push(distance);
     });
 
     // Find max sheets for any firearm to set x-axis
     const maxSheets = Math.max(...Array.from(firearmSheets.values()).map(f => f.sheets.length));
     const xAxisLabels = Array.from({ length: maxSheets }, (_, i) => `Sheet ${i + 1}`);
 
-    // Create series for each firearm
-    const series = Array.from(firearmSheets.values()).map((firearmData) => ({
-      name: firearmData.name,
-      type: "line" as const,
-      data: firearmData.sheets,
-      smooth: true,
-      symbol: "circle" as const,
-      symbolSize: 8,
-      lineStyle: {
-        width: 3,
-      },
-      emphasis: {
-        focus: "series" as const,
-      },
-    }));
+    // Create series for each firearm - both raw and distance-adjusted
+    const series: any[] = [];
+    
+    Array.from(firearmSheets.values()).forEach((firearmData) => {
+      // Raw score (solid line)
+      series.push({
+        name: `${firearmData.name} (Raw)`,
+        type: "line" as const,
+        data: firearmData.sheets,
+        smooth: true,
+        symbol: "circle" as const,
+        symbolSize: 8,
+        lineStyle: {
+          width: 3,
+          color: firearmData.color,
+        },
+        itemStyle: {
+          color: firearmData.color,
+        },
+        emphasis: {
+          focus: "series" as const,
+        },
+      });
+
+      // Distance-adjusted score (dashed line)
+      series.push({
+        name: `${firearmData.name} (Distance Adj)`,
+        type: "line" as const,
+        data: firearmData.distanceAdjustedSheets,
+        smooth: true,
+        symbol: "circle" as const,
+        symbolSize: 6,
+        lineStyle: {
+          width: 2,
+          type: "dashed" as const,
+          color: firearmData.color,
+        },
+        itemStyle: {
+          color: firearmData.color,
+          opacity: 0.7,
+        },
+        emphasis: {
+          focus: "series" as const,
+        },
+      });
+    });
 
     return {
-      // Explicitly set color palette from firearm settings
-      color: Array.from(firearmSheets.values()).map(f => f.color),
       tooltip: {
         trigger: "axis" as const,
         axisPointer: {
           type: "cross" as const,
         },
         formatter: (params: any) => {
-          let result = "";
-          params.forEach((param: any) => {
-            if (param.value) {
-              result += `${param.marker}${param.seriesName}: ${param.value}<br/>`;
+          if (!Array.isArray(params) || params.length === 0) return "";
+          
+          const sheetIndex = params[0].dataIndex;
+          let result = `<b>${params[0].axisValue}</b><br/>`;
+          
+          // Group by firearm (pairs of raw/adjusted)
+          for (let i = 0; i < params.length; i += 2) {
+            const rawParam = params[i];
+            const adjParam = params[i + 1];
+            
+            if (rawParam && adjParam && rawParam.value) {
+              const firearmData = Array.from(firearmSheets.values())[Math.floor(i / 2)];
+              const distance = firearmData?.distances[sheetIndex] || 0;
+              const baseline = firearmData?.baseline || 0;
+              
+              result += `<div style="margin-top: 8px;">`;
+              result += `${rawParam.marker}${rawParam.seriesName.replace(' (Raw)', '')}<br/>`;
+              result += `<span style="margin-left: 20px;">Raw: ${rawParam.value}</span><br/>`;
+              result += `<span style="margin-left: 20px;">Dist Adj: ${adjParam.value || 'N/A'}</span><br/>`;
+              result += `<span style="margin-left: 20px; opacity: 0.6;">@ ${distance}yd (baseline: ${baseline.toFixed(0)}yd)</span>`;
+              result += `</div>`;
             }
-          });
+          }
+          
           return result;
         },
       },
       legend: {
-        data: Array.from(firearmSheets.values()).map(f => f.name),
+        data: series.map((s: any) => s.name),
         top: 10,
       },
       grid: {

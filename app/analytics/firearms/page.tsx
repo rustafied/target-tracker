@@ -40,6 +40,7 @@ interface FirearmsData {
   leaderboard: FirearmMetrics[];
   trends: Record<string, any[]>;
   distanceCurves: Record<string, any[]>;
+  firearmDistances?: Record<string, number>;
 }
 
 export default function FirearmsAnalyticsPage() {
@@ -220,15 +221,18 @@ export default function FirearmsAnalyticsPage() {
     ];
 
     // Create series for each firearm with their own data points
-    const series = data.leaderboard.map((firearm, index) => {
+    const series: any[] = [];
+    
+    data.leaderboard.forEach((firearm, index) => {
       const trend = data.trends[firearm.firearmId] || [];
       
       // Sort by session index to ensure chronological order
       const sortedTrend = [...trend].sort((a: any, b: any) => a.sessionIndex - b.sessionIndex);
       const color = firearm.firearmColor || defaultColors[index % defaultColors.length];
       
-      return {
-        name: firearm.firearmName,
+      // Regular score line (solid)
+      series.push({
+        name: `${firearm.firearmName} (Raw)`,
         type: "line" as const,
         data: sortedTrend.map((s: any) => s.avgScorePerShot),
         smooth: true,
@@ -244,7 +248,29 @@ export default function FirearmsAnalyticsPage() {
         emphasis: {
           focus: "series" as const,
         },
-      };
+      });
+
+      // Distance-adjusted score line (dotted)
+      series.push({
+        name: `${firearm.firearmName} (Distance Adj)`,
+        type: "line" as const,
+        data: sortedTrend.map((s: any) => s.distanceAdjustedScore),
+        smooth: true,
+        symbol: "circle" as const,
+        symbolSize: 6,
+        lineStyle: {
+          width: 2,
+          type: "dashed" as const,
+          color: color,
+        },
+        itemStyle: {
+          color: color,
+          opacity: 0.7,
+        },
+        emphasis: {
+          focus: "series" as const,
+        },
+      });
     });
 
     // Find the maximum number of sessions any firearm has
@@ -252,30 +278,48 @@ export default function FirearmsAnalyticsPage() {
     const xAxisLabels = Array.from({ length: maxSessions }, (_, i) => `Sheet ${i + 1}`);
 
     // Calculate dynamic y-axis range based on actual data
-    const allValues = series.flatMap(s => s.data.filter((v): v is number => v !== undefined && v !== null));
+    const allValues = series.flatMap((s: any) => s.data.filter((v: any): v is number => v !== undefined && v !== null));
     const minValue = allValues.length > 0 ? Math.min(...allValues) : 0;
     const maxValue = allValues.length > 0 ? Math.max(...allValues) : 5;
     const padding = (maxValue - minValue) * 0.1 || 0.5; // 10% padding or 0.5 minimum
 
     return {
-      color: data.leaderboard.map((f, index) => f.firearmColor || defaultColors[index % defaultColors.length]),
       tooltip: {
         trigger: "axis" as const,
         axisPointer: {
           type: "cross" as const,
         },
         formatter: (params: any) => {
-          let result = "";
-          params.forEach((param: any) => {
-            if (param.value !== undefined && param.value !== null) {
-              result += `${param.marker}${param.seriesName}: ${param.value.toFixed(2)}<br/>`;
+          if (!Array.isArray(params) || params.length === 0) return "";
+          
+          const sessionIndex = params[0].dataIndex;
+          let result = `<b>${params[0].axisValue}</b><br/>`;
+          
+          // Group by firearm (pairs of raw/adjusted)
+          for (let i = 0; i < params.length; i += 2) {
+            const rawParam = params[i];
+            const adjParam = params[i + 1];
+            
+            if (rawParam && adjParam && rawParam.value !== undefined && rawParam.value !== null) {
+              const firearmId = data.leaderboard[Math.floor(i / 2)]?.firearmId;
+              const sessionData = data.trends[firearmId]?.[sessionIndex];
+              const distance = sessionData?.distance || 0;
+              const baseline = data.firearmDistances?.[firearmId] || 0;
+              
+              result += `<div style="margin-top: 8px;">`;
+              result += `${rawParam.marker}${rawParam.seriesName.replace(' (Raw)', '')}<br/>`;
+              result += `<span style="margin-left: 20px;">Raw: ${rawParam.value.toFixed(2)}</span><br/>`;
+              result += `<span style="margin-left: 20px;">Dist Adj: ${adjParam.value?.toFixed(2) || 'N/A'}</span><br/>`;
+              result += `<span style="margin-left: 20px; opacity: 0.6;">@ ${distance.toFixed(0)}yd (baseline: ${baseline.toFixed(0)}yd)</span>`;
+              result += `</div>`;
             }
-          });
+          }
+          
           return result;
         },
       },
       legend: {
-        data: data.leaderboard.map((f) => f.firearmName),
+        data: series.map((s: any) => s.name),
         top: 10,
         textStyle: { color: "hsl(var(--foreground))" },
       },

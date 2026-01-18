@@ -7,7 +7,7 @@ import { BullRecord } from "@/lib/models/BullRecord";
 import { Firearm } from "@/lib/models/Firearm";
 import { Caliber } from "@/lib/models/Caliber";
 import { Optic } from "@/lib/models/Optic";
-import { aggregateBullMetrics } from "@/lib/analytics-utils";
+import { aggregateBullMetrics, applyDistanceMultiplier } from "@/lib/analytics-utils";
 
 export async function GET(request: Request) {
   try {
@@ -87,9 +87,23 @@ export async function GET(request: Request) {
       .filter((m) => m !== null)
       .sort((a, b) => b.avgScorePerShot - a.avgScorePerShot); // Sort by avg score desc
 
+    // Calculate average distance per firearm (each firearm's own baseline)
+    const firearmDistances: Record<string, number> = {};
+    firearms.forEach((firearm) => {
+      const firearmSheets = sheets.filter(
+        (s: any) => s.firearmId.toString() === firearm._id.toString()
+      );
+      if (firearmSheets.length > 0) {
+        const totalDistance = firearmSheets.reduce((sum, s: any) => sum + (s.distanceYards || 0), 0);
+        firearmDistances[firearm._id.toString()] = totalDistance / firearmSheets.length;
+      }
+    });
+
     // Calculate session-over-session trends per firearm (for detail view)
     const trends: Record<string, any[]> = {};
     firearms.forEach((firearm) => {
+      const firearmBaseline = firearmDistances[firearm._id.toString()] || 25; // This firearm's average distance
+      
       const sessionTrends = sessions
         .map((session, index) => {
           const sessionSheets = sheets.filter(
@@ -106,10 +120,22 @@ export async function GET(request: Request) {
 
           const metrics = aggregateBullMetrics(sessionBulls);
 
+          // Calculate average distance for this session
+          const sessionDistance = sessionSheets.length > 0
+            ? sessionSheets.reduce((sum, s: any) => sum + (s.distanceYards || 0), 0) / sessionSheets.length
+            : 0;
+
+          // Calculate distance-adjusted score using THIS FIREARM'S baseline
+          const distanceAdjustedScore = sessionDistance > 0
+            ? applyDistanceMultiplier(metrics.avgScorePerShot, sessionDistance, firearmBaseline)
+            : metrics.avgScorePerShot;
+
           return {
             sessionIndex: index,
             sessionId: session._id.toString(),
             date: session.date,
+            distance: sessionDistance,
+            distanceAdjustedScore,
             ...metrics,
           };
         })
@@ -161,6 +187,7 @@ export async function GET(request: Request) {
       leaderboard,
       trends,
       distanceCurves,
+      firearmDistances, // Each firearm's average distance (for reference)
     });
   } catch (error) {
     console.error("Error fetching firearm analytics:", error);
