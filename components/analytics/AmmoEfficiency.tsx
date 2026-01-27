@@ -25,6 +25,7 @@ import { EChart } from "@/components/analytics/EChart";
 import type { EChartsOption } from "echarts";
 import { TrendingUp, Target, Lightbulb, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { formatDecimal } from "@/lib/utils";
 
 interface EfficiencyMetrics {
   caliberId: string;
@@ -290,10 +291,10 @@ export function AmmoEfficiency({ filters = {}, compactMode = false, infoOnly = f
           const caliber = data.calibers.find((c) => c.caliberName === params.name);
           if (!caliber) return "";
           return `<strong>${params.name}</strong><br/>
-            Value Score: ${params.value.toFixed(1)}<br/>
-            ${caliber.scorePerRound.toFixed(2)} score/round<br/>
-            ${caliber.bullsPer100.toFixed(1)} bulls/100<br/>
-            ${caliber.costPerRound ? `$${caliber.costPerRound.toFixed(3)}/round` : "No cost data"}`;
+            Value Score: ${formatDecimal(params.value)}<br/>
+            ${formatDecimal(caliber.scorePerRound)} score/round<br/>
+            ${formatDecimal(caliber.bullsPer100)} bulls/100<br/>
+            ${caliber.costPerRound ? `$${formatDecimal(caliber.costPerRound)}/round` : "No cost data"}`;
         },
       },
       series: [
@@ -488,7 +489,7 @@ export function AmmoEfficiency({ filters = {}, compactMode = false, infoOnly = f
                         className="text-xl font-black flex-shrink-0"
                         style={{ color: rankColor }}
                       >
-                        {caliber.valueScore.toFixed(0)}
+                        {formatDecimal(caliber.valueScore)}
                       </div>
                     </div>
                     
@@ -500,22 +501,22 @@ export function AmmoEfficiency({ filters = {}, compactMode = false, infoOnly = f
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Avg Score</span>
-                        <span className="font-semibold text-blue-400">{caliber.avgScore.toFixed(2)}</span>
+                        <span className="font-semibold text-blue-400">{formatDecimal(caliber.avgScore)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Bulls/100</span>
-                        <span className="font-semibold text-green-400">{caliber.bullsPer100.toFixed(1)}</span>
+                        <span className="font-semibold text-green-400">{formatDecimal(caliber.bullsPer100)}</span>
                       </div>
                       {caliber.costPerRound && (
                         <>
                           <div className="border-t border-white/5 pt-1.5 mt-1.5" />
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">$/Round</span>
-                            <span className="font-semibold text-amber-400">${caliber.costPerRound.toFixed(3)}</span>
+                            <span className="font-semibold text-amber-400">${formatDecimal(caliber.costPerRound)}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">$/Point</span>
-                            <span className="font-semibold text-orange-400">${caliber.costPerPoint?.toFixed(3)}</span>
+                            <span className="font-semibold text-orange-400">${formatDecimal(caliber.costPerPoint)}</span>
                           </div>
                         </>
                       )}

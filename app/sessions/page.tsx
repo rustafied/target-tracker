@@ -21,6 +21,7 @@ import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { LoadingCard } from "@/components/ui/spinner";
 import { FadeIn } from "@/components/ui/fade-in";
 import { toast } from "sonner";
+import { formatDecimal } from "@/lib/utils";
 
 interface RangeSession {
   _id: string;
@@ -243,7 +244,7 @@ export default function SessionsPage() {
                         <TrendingUp className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-muted-foreground">Avg Score</p>
-                          <p className="text-lg font-bold leading-tight">{session.avgScore.toFixed(2)}</p>
+                          <p className="text-lg font-bold leading-tight">{formatDecimal(session.avgScore)}</p>
                         </div>
                       </div>
                     )}
@@ -309,7 +310,7 @@ export default function SessionsPage() {
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">Avg Score</p>
                       </div>
                       <p className="text-2xl font-bold">
-                        {session.avgScore !== undefined && session.avgScore !== null ? session.avgScore.toFixed(2) : '-'}
+                        {session.avgScore !== undefined && session.avgScore !== null ? formatDecimal(session.avgScore) : '-'}
                       </p>
                     </div>
                     

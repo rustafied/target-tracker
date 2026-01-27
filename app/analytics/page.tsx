@@ -28,6 +28,7 @@ import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
 import { EChart, CHART_COLORS } from "@/components/analytics/EChart";
 import { DistanceAnalysisCard } from "@/components/analytics/DistanceAnalysisCard";
+import { formatDecimal } from "@/lib/utils";
 import { SequenceAnalysisCard } from "@/components/analytics/SequenceAnalysisCard";
 import { EfficiencySummary } from "@/components/analytics/EfficiencySummary";
 import { AnomalySummaryWidget } from "@/components/analytics/AnomalySummaryWidget";
@@ -254,7 +255,7 @@ export default function AnalyticsPage() {
         return `
           <strong>Session ${session.sessionIndex + 1}</strong><br/>
           ${format(new Date(session.date), "MMM d, yyyy")}<br/>
-          Avg Score: ${session.avgScorePerShot.toFixed(2)}<br/>
+          Avg Score: ${formatDecimal(session.avgScorePerShot)}<br/>
           Bull Rate: ${(session.bullRate * 100).toFixed(1)}%<br/>
           Shots: ${session.totalShots}
         `;
@@ -342,7 +343,7 @@ export default function AnalyticsPage() {
             const session = sessions[params[0].dataIndex];
             return `
               <strong>Session ${session.sessionIndex + 1}</strong><br/>
-              Mean Radius: ${session.meanRadius?.toFixed(2) || "N/A"}
+              Mean Radius: ${session.meanRadius ? formatDecimal(session.meanRadius) : "N/A"}
             `;
           },
         },
@@ -488,7 +489,7 @@ export default function AnalyticsPage() {
         <FadeIn delay={100} duration={250}>
           <KpiCard
             title="Avg Score/Shot"
-            value={kpis.avgScore.toFixed(2)}
+            value={formatDecimal(kpis.avgScore)}
             icon={TrendingUp}
             delta={deltas.last3VsPrev3?.avgScore.delta}
             higherIsBetter={true}
@@ -542,7 +543,7 @@ export default function AnalyticsPage() {
               <FadeIn delay={350} duration={250}>
                 <KpiCard
                   title="Mean Radius"
-                  value={kpis.meanRadius.toFixed(2)}
+                  value={formatDecimal(kpis.meanRadius)}
                   icon={Radius}
                   delta={deltas.last3VsPrev3?.meanRadius?.delta}
                   higherIsBetter={false}
@@ -556,7 +557,7 @@ export default function AnalyticsPage() {
               <FadeIn delay={400} duration={250}>
                 <KpiCard
                   title="Centroid Distance"
-                  value={kpis.centroidDistance.toFixed(2)}
+                  value={formatDecimal(kpis.centroidDistance)}
                   icon={Focus}
                   delta={deltas.last3VsPrev3?.centroidDistance?.delta}
                   higherIsBetter={false}

@@ -28,6 +28,7 @@ import { getBulletIcon } from "@/lib/bullet-icons";
 import Image from "next/image";
 import { EChart } from "@/components/analytics/EChart";
 import type { EChartsOption } from "echarts";
+import { formatDecimal } from "@/lib/utils";
 
 interface Caliber {
   _id: string;
@@ -367,12 +368,12 @@ export default function AmmoDetailPage({
           const session = efficiencyData[params[0].dataIndex];
           let tooltip = `<strong>${format(new Date(session.date), "MMM d, yyyy")}</strong><br/>`;
           if (session.location) tooltip += `${session.location}<br/>`;
-          tooltip += `<br/>Value Score: <strong>${session.valueScore.toFixed(1)}</strong><br/>`;
-          tooltip += `Avg Score: ${session.avgScore.toFixed(2)}<br/>`;
-          tooltip += `Bulls/100: ${session.bullsPer100.toFixed(1)}<br/>`;
+          tooltip += `<br/>Value Score: <strong>${formatDecimal(session.valueScore)}</strong><br/>`;
+          tooltip += `Avg Score: ${formatDecimal(session.avgScore)}<br/>`;
+          tooltip += `Bulls/100: ${formatDecimal(session.bullsPer100)}<br/>`;
           tooltip += `Shots: ${session.totalShots}<br/>`;
           if (hasCostData && session.costPerBull) {
-            tooltip += `<br/>Cost/Bull: $${session.costPerBull.toFixed(2)}`;
+            tooltip += `<br/>Cost/Bull: $${formatDecimal(session.costPerBull)}`;
           }
           return tooltip;
         },

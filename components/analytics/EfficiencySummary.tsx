@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { TrendingUp, DollarSign, Target } from "lucide-react";
 import Link from "next/link";
+import { formatDecimal } from "@/lib/utils";
 
 interface EfficiencySummaryProps {
   filters?: {
@@ -107,28 +108,28 @@ export function EfficiencySummary({ filters = {} }: EfficiencySummaryProps) {
             <div className="flex items-center justify-between">
               <h3 className="text-2xl font-bold">{topCaliber.caliberName}</h3>
               <Badge variant="outline" className="text-lg px-3 py-1">
-                {topCaliber.valueScore.toFixed(1)}
+                {formatDecimal(topCaliber.valueScore)}
               </Badge>
             </div>
             
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <div className="text-muted-foreground">Score/Round</div>
-                <div className="font-semibold">{topCaliber.scorePerRound.toFixed(2)}</div>
+                <div className="font-semibold">{formatDecimal(topCaliber.scorePerRound)}</div>
               </div>
               <div>
                 <div className="text-muted-foreground">Bulls/100</div>
-                <div className="font-semibold">{topCaliber.bullsPer100.toFixed(1)}</div>
+                <div className="font-semibold">{formatDecimal(topCaliber.bullsPer100)}</div>
               </div>
               {hasCostData && (
                 <>
                   <div>
                     <div className="text-muted-foreground">Cost/Round</div>
-                    <div className="font-semibold">${topCaliber.costPerRound.toFixed(3)}</div>
+                    <div className="font-semibold">${formatDecimal(topCaliber.costPerRound)}</div>
                   </div>
                   <div>
                     <div className="text-muted-foreground">Cost/Point</div>
-                    <div className="font-semibold">${topCaliber.costPerPoint?.toFixed(3)}</div>
+                    <div className="font-semibold">${formatDecimal(topCaliber.costPerPoint)}</div>
                   </div>
                 </>
               )}

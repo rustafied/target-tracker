@@ -47,6 +47,9 @@ export default function NewSheetPage() {
     targetTemplateId: "",
   });
 
+  const presetDistances = [5, 7, 10, 15, 20, 25];
+  const [isCustomDistance, setIsCustomDistance] = useState(false);
+
   useEffect(() => {
     fetchReferenceData();
   }, []);
@@ -152,13 +155,21 @@ export default function NewSheetPage() {
       // Batch all state updates together to prevent scroll jumps
       setOptics(filteredOptics);
       setCalibers(filteredCalibers);
-      setFormData((prev) => ({
-        ...prev,
-        firearmId,
-        opticId: filteredOptics.length > 0 ? filteredOptics[0]._id : "",
-        caliberId: filteredCalibers.length > 0 ? filteredCalibers[0]._id : "",
-        distanceYards: selectedFirearm.defaultDistanceYards?.toString() || prev.distanceYards,
-      }));
+      
+      setFormData((prev) => {
+        const defaultDistance = selectedFirearm.defaultDistanceYards?.toString() || prev.distanceYards;
+        const isPreset = presetDistances.includes(parseInt(defaultDistance));
+        
+        setIsCustomDistance(!isPreset);
+        
+        return {
+          ...prev,
+          firearmId,
+          opticId: filteredOptics.length > 0 ? filteredOptics[0]._id : "",
+          caliberId: filteredCalibers.length > 0 ? filteredCalibers[0]._id : "",
+          distanceYards: defaultDistance,
+        };
+      });
     }
   };
 
@@ -259,39 +270,72 @@ export default function NewSheetPage() {
               {/* Right Column - Distance, Label, Notes */}
               <div className={`space-y-6 ${!formData.firearmId ? "opacity-50 pointer-events-none" : ""}`}>
                 <div>
-                  <Label htmlFor="distance" className="flex items-center gap-2">
+                  <Label className="flex items-center gap-2 mb-3">
                     <Ruler className="h-4 w-4" />
                     Distance (yards) *
                   </Label>
-                  <div className="flex items-center gap-2 mt-1">
+                  
+                  {/* Preset Distance Buttons */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {presetDistances.map((distance) => {
+                      const isSelected = !isCustomDistance && formData.distanceYards === distance.toString();
+                      return (
+                        <Button
+                          key={distance}
+                          type="button"
+                          variant={isSelected ? "default" : "outline"}
+                          onClick={() => {
+                            setIsCustomDistance(false);
+                            setFormData({ ...formData, distanceYards: distance.toString() });
+                          }}
+                          className="flex-1 min-w-[60px]"
+                        >
+                          {distance}
+                        </Button>
+                      );
+                    })}
                     <Button
                       type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => adjustDistance(-5)}
-                      className="h-12 w-12"
+                      variant={isCustomDistance ? "default" : "outline"}
+                      onClick={() => setIsCustomDistance(true)}
+                      className="flex-1 min-w-[80px]"
                     >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <Input
-                      id="distance"
-                      type="number"
-                      value={formData.distanceYards}
-                      onChange={(e) => setFormData({ ...formData, distanceYards: e.target.value })}
-                      required
-                      min="1"
-                      className="text-center text-lg font-semibold h-12"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => adjustDistance(5)}
-                      className="h-12 w-12"
-                    >
-                      <Plus className="h-4 w-4" />
+                      Custom
                     </Button>
                   </div>
+
+                  {/* Custom Distance Input - Slides down when Custom is selected */}
+                  {isCustomDistance && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => adjustDistance(-5)}
+                        className="h-12 w-12"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <Input
+                        id="distance"
+                        type="number"
+                        value={formData.distanceYards}
+                        onChange={(e) => setFormData({ ...formData, distanceYards: e.target.value })}
+                        required
+                        min="1"
+                        className="text-center text-lg font-semibold h-12"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => adjustDistance(5)}
+                        className="h-12 w-12"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 <div>

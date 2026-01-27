@@ -59,3 +59,23 @@ export function meanRadiusToMOA(
   const radiusInches = targetUnitsToInches(meanRadiusTargetUnits, targetDiameterInches);
   return convertToMOA(radiusInches, distanceYards);
 }
+
+// ============================================================================
+// Number Formatting Utilities
+// ============================================================================
+
+/**
+ * Format a number to 2 decimal places (standard for most metrics)
+ */
+export function formatDecimal(value: number | undefined | null): string {
+  if (value === undefined || value === null || isNaN(value)) return "0.00";
+  return value.toFixed(2);
+}
+
+/**
+ * Format a currency value to 2 decimal places
+ */
+export function formatCurrency(value: number | undefined | null): string {
+  if (value === undefined || value === null || isNaN(value)) return "$0.00";
+  return `$${value.toFixed(2)}`;
+}
