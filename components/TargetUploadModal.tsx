@@ -181,14 +181,14 @@ export function TargetUploadModal({ open, onOpenChange, sheetId, onShotsDetected
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl">
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Upload Target Images</DialogTitle>
           <DialogDescription>
             Upload or paste images of your targets. We'll automatically detect bullet placements.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 min-h-0 overflow-y-auto -mx-6 px-6">
           {/* Upload Area */}
           <div
             className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
@@ -294,7 +294,7 @@ export function TargetUploadModal({ open, onOpenChange, sheetId, onShotsDetected
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={handleClose}>
             {allProcessed ? "Close" : "Cancel"}
           </Button>

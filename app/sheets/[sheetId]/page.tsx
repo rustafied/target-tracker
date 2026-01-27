@@ -894,12 +894,12 @@ export default function SheetDetailPage() {
       {/* Edit Sheet Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Edit Target Sheet</DialogTitle>
             <DialogDescription>Update sheet details</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditSubmit}>
-            <div className="space-y-6 py-4">
+            <div className="space-y-6 flex-1 min-h-0 overflow-y-auto -mx-6 px-6 py-2">
               <TagSelector
                 items={firearms}
                 selectedId={editFormData.firearmId}
@@ -969,7 +969,7 @@ export default function SheetDetailPage() {
                 />
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-shrink-0">
               <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
                 Cancel
               </Button>

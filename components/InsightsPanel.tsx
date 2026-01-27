@@ -81,7 +81,7 @@ export function InsightsPanel({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${bgColor}`}>
               <SeverityIcon className={`h-5 w-5 ${color}`} />
@@ -102,7 +102,7 @@ export function InsightsPanel({
         </DialogHeader>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-border">
+        <div className="flex gap-2 border-b border-border flex-shrink-0">
           <button
             onClick={() => setActiveTab("deviations")}
             className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
@@ -136,7 +136,7 @@ export function InsightsPanel({
         </div>
 
         {/* Content */}
-        <div className="mt-4">
+        <div className="mt-4 flex-1 min-h-0 overflow-y-auto -mx-6 px-6 pb-2">
           {/* Deviations Tab */}
           {activeTab === "deviations" && (
             <div className="space-y-3">
