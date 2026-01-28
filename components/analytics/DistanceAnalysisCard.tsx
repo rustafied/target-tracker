@@ -255,61 +255,49 @@ export function DistanceAnalysisCard({
   const displayTitle = title || `Performance by Distance (${groupBy.charAt(0).toUpperCase() + groupBy.slice(1)})`;
 
   return (
-    <div className="space-y-4">
-      <ChartCard
-        title={displayTitle}
-        icon={Ruler}
-        action={
-          <div className="flex gap-2">
-            <Select
-              value={selectedMetric}
-              onValueChange={(value) => setSelectedMetric(value as MetricType)}
+    <ChartCard
+      title={displayTitle}
+      icon={Ruler}
+      action={
+        <div className="flex gap-2">
+          <Select
+            value={selectedMetric}
+            onValueChange={(value) => setSelectedMetric(value as MetricType)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="avgScorePerShot">Average Score</SelectItem>
+              <SelectItem value="bullRate">Bull Rate</SelectItem>
+              <SelectItem value="missRate">Miss Rate</SelectItem>
+              <SelectItem value="meanRadius">Mean Radius</SelectItem>
+              {showMOA && <SelectItem value="moa">MOA</SelectItem>}
+            </SelectContent>
+          </Select>
+          {data?.insights && data.insights.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowInsights(!showInsights)}
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="avgScorePerShot">Average Score</SelectItem>
-                <SelectItem value="bullRate">Bull Rate</SelectItem>
-                <SelectItem value="missRate">Miss Rate</SelectItem>
-                <SelectItem value="meanRadius">Mean Radius</SelectItem>
-                {showMOA && <SelectItem value="moa">MOA</SelectItem>}
-              </SelectContent>
-            </Select>
-            {data?.insights && data.insights.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowInsights(!showInsights)}
-              >
-                <Info className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        }
-      >
-        {loading ? (
-          <div className="flex items-center justify-center h-[400px]">
-            <div className="text-muted-foreground">Loading...</div>
-          </div>
-        ) : chartOption ? (
+              <Info className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      }
+    >
+      {loading ? (
+        <div className="flex items-center justify-center h-[400px]">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      ) : chartOption ? (
+        <div className="space-y-4">
           <EChart option={chartOption} height={400} />
-        ) : (
-          <div className="flex items-center justify-center h-[400px]">
-            <div className="text-muted-foreground text-center">
-              <TrendingDown className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>No distance data available</p>
-              <p className="text-sm mt-1">Log sessions at different distances to see trends</p>
-            </div>
-          </div>
-        )}
-      </ChartCard>
-
-      {/* Insights Panel */}
-      {showInsights && data?.insights && data.insights.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
+          
+          {/* Insights Panel - now inside the same card */}
+          {showInsights && data?.insights && data.insights.length > 0 && (
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
               <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
               <div className="space-y-2">
                 <h4 className="font-medium">Key Insights</h4>
@@ -320,9 +308,17 @@ export function DistanceAnalysisCard({
                 </ul>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center justify-center h-[400px]">
+          <div className="text-muted-foreground text-center">
+            <TrendingDown className="h-12 w-12 mx-auto mb-2 opacity-50" />
+            <p>No distance data available</p>
+            <p className="text-sm mt-1">Log sessions at different distances to see trends</p>
+          </div>
+        </div>
       )}
-    </div>
+    </ChartCard>
   );
 }
