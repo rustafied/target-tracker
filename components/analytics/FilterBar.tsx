@@ -226,7 +226,6 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
               </div>
             </div>
           </div>
-        </div>
       </div>
     </div>
   );
