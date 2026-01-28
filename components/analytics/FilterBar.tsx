@@ -101,9 +101,9 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-[600px] max-w-[90vw] bg-background border border-border rounded-lg shadow-lg z-50 max-h-[80vh] overflow-y-auto">
+        <div className="absolute right-0 top-full mt-2 w-[600px] max-w-[90vw] bg-black dark:bg-black border border-white/20 rounded-lg shadow-2xl z-[100] max-h-[80vh] overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center justify-between">
+          <div className="flex-shrink-0 bg-black dark:bg-black border-b border-white/20 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
               <span className="font-semibold">Filters</span>
@@ -126,7 +126,7 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
           </div>
 
           {/* Content */}
-          <div className="p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black dark:bg-black">
             {/* Firearms and Calibers - 2 Column Layout */}
             {(firearms.length > 0 || calibers.length > 0) && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
