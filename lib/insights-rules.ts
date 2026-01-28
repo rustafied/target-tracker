@@ -300,11 +300,6 @@ export async function generateBiasPatternInsight(ctx: SessionContext): Promise<I
   }
   
   const bias = calculateQuadrantBias(positions);
-    quadrant: bias.quadrant,
-    concentration: bias.concentration,
-    counts: bias.counts,
-    totalPositions: positions.length
-  });
   
   if (bias.concentration > 0.6) { // 60%+ in one quadrant
     const quadrantNames: Record<string, string> = {
@@ -606,11 +601,6 @@ export async function generateInventoryAlertInsight(ctx: OverviewContext): Promi
     }
   });
   
-    Array.from(caliberUsageBySession.entries()).map(([id, data]) => 
-      `${id}: ${data.totalShots} shots across ${data.sessionCount} sessions`
-    )
-  );
-  
   // Find calibers with low stock (AmmoInventory.userId is Discord ID string)
   const ammoRecords = await AmmoInventory.find({ userId: ctx.userId });
   
@@ -618,13 +608,6 @@ export async function generateInventoryAlertInsight(ctx: OverviewContext): Promi
     const caliberId = new Types.ObjectId(caliberIdStr);
     const ammo = ammoRecords.find(a => a.caliberId?.equals(caliberId));
     const caliber = await Caliber.findById(caliberId);
-    
-      hasAmmo: !!ammo,
-      hasCaliber: !!caliber,
-      stock: ammo?.onHand || 0,
-      totalShots: usageData.totalShots,
-      sessionCount: usageData.sessionCount
-    });
     
     if (!ammo || !caliber || usageData.sessionCount === 0) continue;
     
