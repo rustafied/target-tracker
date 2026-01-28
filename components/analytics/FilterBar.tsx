@@ -84,19 +84,19 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
       {/* Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40"
+          className="fixed inset-0 bg-black z-[9998]"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Dropdown Panel with Slide Animation */}
       <div
-        className={`absolute right-0 top-full mt-2 w-[600px] max-w-[90vw] bg-zinc-950 border border-white/20 rounded-lg shadow-2xl z-50 overflow-hidden transition-all duration-300 ease-in-out origin-top ${
+        className={`fixed right-4 top-20 w-[600px] max-w-[90vw] bg-black border border-white/20 rounded-lg shadow-2xl z-[9999] overflow-hidden transition-all duration-300 ease-in-out origin-top ${
           isOpen ? "opacity-100 scale-y-100" : "opacity-0 scale-y-0 pointer-events-none"
         }`}
       >
         {/* Header */}
-        <div className="bg-zinc-950 border-b border-white/20 px-4 py-3 flex items-center justify-between">
+        <div className="bg-black border-b border-white/20 px-4 py-3 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
             <span className="font-semibold">Filters</span>
@@ -119,7 +119,7 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
         </div>
 
         {/* Content */}
-        <div className="max-h-[70vh] overflow-y-auto p-4 space-y-4 bg-zinc-950">
+        <div className="max-h-[70vh] overflow-y-auto p-4 space-y-4 bg-black">
             {/* Firearms and Calibers - 2 Column Layout */}
             {(firearms.length > 0 || calibers.length > 0) && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
