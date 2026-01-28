@@ -609,170 +609,9 @@ export default function AnalyticsPage() {
         </div>
       </FadeIn>
 
-      {/* Charts */}
-      <div className="space-y-6 mb-6">
-        <FadeIn delay={650} duration={300}>
-          <ChartCard title="Average Score Over Sessions" icon={LineChart}>
-            <EChart option={avgScoreChartOption} height={300} />
-          </ChartCard>
-        </FadeIn>
-
-        {/* Distance Impact Analysis */}
-        <FadeIn delay={700} duration={300}>
-          <DistanceAnalysisCard
-            groupBy="firearm"
-            filters={{
-              firearmIds: filters.firearmIds,
-              caliberIds: filters.caliberIds,
-              opticIds: filters.opticIds,
-              distanceMin: filters.distanceMin,
-              distanceMax: filters.distanceMax,
-              minShots: filters.minShots,
-              positionOnly: filters.positionOnly,
-            }}
-            targetDiameterInches={10.5}
-            showMOA={true}
-            title="Distance Impact Analysis"
-          />
-        </FadeIn>
-
-        <FadeIn delay={750} duration={300}>
-          <ChartCard title="Bull Rate & Miss Rate" icon={TrendingUp}>
-            <EChart option={bullMissChartOption} height={300} />
-          </ChartCard>
-        </FadeIn>
-
-        {meanRadiusChartOption && (
-          <FadeIn delay={800} duration={300}>
-            <ChartCard title="Mean Radius (Precision)" icon={Radius}>
-              <EChart option={meanRadiusChartOption} height={300} />
-            </ChartCard>
-          </FadeIn>
-        )}
-
-        <FadeIn delay={850} duration={300}>
-          <ChartCard title="Shots Per Session" icon={Activity}>
-            <EChart option={shotCountChartOption} height={250} />
-          </ChartCard>
-        </FadeIn>
-
-        <FadeIn delay={900} duration={300}>
-          <ChartCard title="Ring Distribution" icon={PieChart}>
-            <EChart option={ringDistChartOption} height={300} />
-          </ChartCard>
-        </FadeIn>
-
-        {/* Fatigue & Sequence Analysis */}
-        <FadeIn delay={950} duration={300}>
-          <LazyLoad height="500px">
-            <SequenceAnalysisCard
-              filters={{
-                firearmIds: filters.firearmIds,
-                caliberIds: filters.caliberIds,
-                opticIds: filters.opticIds,
-                distanceMin: filters.distanceMin,
-                distanceMax: filters.distanceMax,
-                minShots: filters.minShots,
-                positionOnly: filters.positionOnly,
-              }}
-            />
-          </LazyLoad>
-        </FadeIn>
-      </div>
-
-      {/* Efficiency Summary */}
-      <FadeIn delay={1000} duration={300}>
-        <div className="mb-6">
-          <LazyLoad height="400px">
-            <EfficiencySummary
-              filters={{
-                firearmIds: filters.firearmIds,
-                caliberIds: filters.caliberIds,
-                opticIds: filters.opticIds,
-              }}
-            />
-          </LazyLoad>
-        </div>
-      </FadeIn>
-
-      {/* Anomaly Detection Summary */}
-      <FadeIn delay={1050} duration={300}>
-        <div className="mb-6">
-          <LazyLoad height="300px">
-            <AnomalySummaryWidget threshold={20} minSessions={5} maxDisplay={5} />
-          </LazyLoad>
-        </div>
-      </FadeIn>
-
-      {/* Drilldown Links */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-        <FadeIn delay={1100} duration={250}>
-          <Link href="/analytics/targets">
-            <Card className="hover:bg-accent transition-colors cursor-pointer">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Shot Visualizations
-                  </span>
-                  <ArrowRight className="h-5 w-5" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Heatmaps, shot plots, bias analysis, and group metrics
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        </FadeIn>
-
-        <FadeIn delay={1150} duration={250}>
-          <Link href="/analytics/firearms">
-            <Card className="hover:bg-accent transition-colors cursor-pointer">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Firearms
-                  </span>
-                  <ArrowRight className="h-5 w-5" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Performance leaderboard and trends by firearm
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        </FadeIn>
-
-        <FadeIn delay={1200} duration={250}>
-          <Link href="/analytics/calibers">
-            <Card className="hover:bg-accent transition-colors cursor-pointer">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Crosshair className="h-5 w-5" />
-                    Calibers
-                  </span>
-                  <ArrowRight className="h-5 w-5" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Performance leaderboard and trends by caliber
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        </FadeIn>
-      </div>
-
-      {/* Insights */}
+      {/* Performance Insights */}
       {deltas.last3VsPrev3 && trends && (
-        <FadeIn delay={1250} duration={300}>
+        <FadeIn delay={650} duration={300}>
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -821,6 +660,167 @@ export default function AnalyticsPage() {
           </Card>
         </FadeIn>
       )}
+
+      {/* Charts */}
+      <div className="space-y-6 mb-6">
+        <FadeIn delay={700} duration={300}>
+          <ChartCard title="Average Score Over Sessions" icon={LineChart}>
+            <EChart option={avgScoreChartOption} height={300} />
+          </ChartCard>
+        </FadeIn>
+
+        {/* Distance Impact Analysis */}
+        <FadeIn delay={750} duration={300}>
+          <DistanceAnalysisCard
+            groupBy="firearm"
+            filters={{
+              firearmIds: filters.firearmIds,
+              caliberIds: filters.caliberIds,
+              opticIds: filters.opticIds,
+              distanceMin: filters.distanceMin,
+              distanceMax: filters.distanceMax,
+              minShots: filters.minShots,
+              positionOnly: filters.positionOnly,
+            }}
+            targetDiameterInches={10.5}
+            showMOA={true}
+            title="Distance Impact Analysis"
+          />
+        </FadeIn>
+
+        <FadeIn delay={800} duration={300}>
+          <ChartCard title="Bull Rate & Miss Rate" icon={TrendingUp}>
+            <EChart option={bullMissChartOption} height={300} />
+          </ChartCard>
+        </FadeIn>
+
+        {meanRadiusChartOption && (
+          <FadeIn delay={850} duration={300}>
+            <ChartCard title="Mean Radius (Precision)" icon={Radius}>
+              <EChart option={meanRadiusChartOption} height={300} />
+            </ChartCard>
+          </FadeIn>
+        )}
+
+        <FadeIn delay={900} duration={300}>
+          <ChartCard title="Shots Per Session" icon={Activity}>
+            <EChart option={shotCountChartOption} height={250} />
+          </ChartCard>
+        </FadeIn>
+
+        <FadeIn delay={950} duration={300}>
+          <ChartCard title="Ring Distribution" icon={PieChart}>
+            <EChart option={ringDistChartOption} height={300} />
+          </ChartCard>
+        </FadeIn>
+
+        {/* Fatigue & Sequence Analysis */}
+        <FadeIn delay={1000} duration={300}>
+          <LazyLoad height="500px">
+            <SequenceAnalysisCard
+              filters={{
+                firearmIds: filters.firearmIds,
+                caliberIds: filters.caliberIds,
+                opticIds: filters.opticIds,
+                distanceMin: filters.distanceMin,
+                distanceMax: filters.distanceMax,
+                minShots: filters.minShots,
+                positionOnly: filters.positionOnly,
+              }}
+            />
+          </LazyLoad>
+        </FadeIn>
+      </div>
+
+      {/* Efficiency Summary */}
+      <FadeIn delay={1100} duration={300}>
+        <div className="mb-6">
+          <LazyLoad height="400px">
+            <EfficiencySummary
+              filters={{
+                firearmIds: filters.firearmIds,
+                caliberIds: filters.caliberIds,
+                opticIds: filters.opticIds,
+              }}
+            />
+          </LazyLoad>
+        </div>
+      </FadeIn>
+
+      {/* Anomaly Detection Summary */}
+      <FadeIn delay={1150} duration={300}>
+        <div className="mb-6">
+          <LazyLoad height="300px">
+            <AnomalySummaryWidget threshold={20} minSessions={5} maxDisplay={5} />
+          </LazyLoad>
+        </div>
+      </FadeIn>
+
+      {/* Drilldown Links */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
+        <FadeIn delay={1200} duration={250}>
+          <Link href="/analytics/targets">
+            <Card className="hover:bg-accent transition-colors cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Shot Visualizations
+                  </span>
+                  <ArrowRight className="h-5 w-5" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Heatmaps, shot plots, bias analysis, and group metrics
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </FadeIn>
+
+        <FadeIn delay={1250} duration={250}>
+          <Link href="/analytics/firearms">
+            <Card className="hover:bg-accent transition-colors cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Firearms
+                  </span>
+                  <ArrowRight className="h-5 w-5" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Performance leaderboard and trends by firearm
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </FadeIn>
+
+        <FadeIn delay={1300} duration={250}>
+          <Link href="/analytics/calibers">
+            <Card className="hover:bg-accent transition-colors cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Crosshair className="h-5 w-5" />
+                    Calibers
+                  </span>
+                  <ArrowRight className="h-5 w-5" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Performance leaderboard and trends by caliber
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </FadeIn>
+      </div>
     </div>
   );
 }

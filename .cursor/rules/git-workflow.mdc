@@ -1,0 +1,45 @@
+---
+description: Git workflow and deployment rules
+alwaysApply: true
+---
+
+# Git Workflow Rules
+
+## Do NOT Auto-Push
+
+**IMPORTANT**: Never automatically push changes to git unless the user explicitly tells you to "deploy" or "push".
+
+### Allowed Actions Without Permission
+- Make code changes
+- Run tests
+- Check TypeScript/linting
+- Stage changes with `git add`
+- Create commits
+
+### Require Explicit Permission
+- `git push` - Only when user says "deploy", "push", or "push to vercel"
+- Force push operations
+- Any destructive git operations
+
+### Workflow Pattern
+
+1. Make changes as requested
+2. Run checks (tsc, lint) if needed
+3. Stage and commit changes
+4. **STOP** - Wait for user to explicitly request deployment
+5. Only push when user says: "deploy", "push", "push it", "send it", etc.
+
+## Example
+
+```bash
+# ✅ GOOD - Stop after commit
+git add -A
+git commit -m "Fix bug"
+# Wait for user instruction
+
+# ❌ BAD - Don't auto-push
+git add -A && git commit -m "Fix bug" && git push
+```
+
+When changes are ready but not pushed, tell the user:
+> "Changes committed locally. Let me know when you want me to push/deploy."
