@@ -596,7 +596,7 @@ export default function AnalyticsPage() {
 
       {/* Overview Insights */}
       <FadeIn delay={600} duration={300}>
-        <div className="mb-6">
+        <div className="mb-4">
           <LazyLoad height="200px">
             <ExpandedInsightsPanel
               insights={insights}
