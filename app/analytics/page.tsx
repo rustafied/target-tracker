@@ -216,8 +216,9 @@ export default function AnalyticsPage() {
   if (loading && !data) {
     return (
       <div className="space-y-6">
-        <AnalyticsHeader title="Analytics" icon={BarChart3} description="Track your shooting performance over time" />
-        <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+        <AnalyticsHeader title="Analytics" icon={BarChart3} description="Track your shooting performance over time">
+          <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+        </AnalyticsHeader>
         <AnalyticsLoadingSkeleton />
       </div>
     );
@@ -226,8 +227,9 @@ export default function AnalyticsPage() {
   if (!data || data.sessions.length === 0) {
     return (
       <div>
-        <AnalyticsHeader title="Analytics" icon={BarChart3} description="Track your shooting performance over time" />
-        <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+        <AnalyticsHeader title="Analytics" icon={BarChart3} description="Track your shooting performance over time">
+          <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+        </AnalyticsHeader>
         <EmptyState
           title="No data available"
           description="No sessions match your current filters. Try adjusting your filters or record some shooting sessions to see analytics."
@@ -465,6 +467,7 @@ export default function AnalyticsPage() {
           icon={BarChart3}
           description="Track your shooting performance over time"
         >
+          <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
           <Link href="/analytics/compare?type=firearm">
             <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
               <BarChart3 className="mr-2 h-4 w-4" />
@@ -472,10 +475,6 @@ export default function AnalyticsPage() {
             </Button>
           </Link>
         </AnalyticsHeader>
-      </FadeIn>
-
-      <FadeIn delay={50} duration={200}>
-        <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
       </FadeIn>
 
       {/* KPI Cards */}
