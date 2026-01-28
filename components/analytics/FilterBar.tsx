@@ -81,6 +81,14 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
         )}
       </Button>
 
+      {/* Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
       {/* Dropdown Panel with Slide Animation */}
       <div
         className={`absolute right-0 top-full mt-2 w-[600px] max-w-[90vw] bg-zinc-950 border border-white/20 rounded-lg shadow-2xl z-50 overflow-hidden transition-all duration-300 ease-in-out origin-top ${
