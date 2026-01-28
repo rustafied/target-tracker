@@ -22,7 +22,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
-import { FilterBar, AnalyticsFilters } from "@/components/analytics/FilterBar";
+import { FilterBar, FilterButton, AnalyticsFilters } from "@/components/analytics/FilterBar";
 import { KpiCard } from "@/components/analytics/KpiCard";
 import { ChartCard } from "@/components/analytics/ChartCard";
 import { EmptyState } from "@/components/analytics/EmptyState";
@@ -82,6 +82,7 @@ export default function AnalyticsPage() {
   const [firearms, setFirearms] = useState<{ _id: string; name: string }[]>([]);
   const [calibers, setCalibers] = useState<{ _id: string; name: string }[]>([]);
   const [optics, setOptics] = useState<{ _id: string; name: string }[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const [filters, setFilters] = useState<AnalyticsFilters>({
     firearmIds: searchParams.get("firearmIds")?.split(",").filter(Boolean) || [],
@@ -213,12 +214,20 @@ export default function AnalyticsPage() {
     router.replace(`/analytics?${params.toString()}`, { scroll: false });
   };
 
+  const activeFilterCount =
+    filters.firearmIds.length +
+    filters.caliberIds.length +
+    filters.opticIds.length +
+    (filters.distanceMin > 0 ? 1 : 0) +
+    (filters.distanceMax < 100 ? 1 : 0);
+
   if (loading && !data) {
     return (
       <div className="space-y-6">
         <AnalyticsHeader title="Analytics" icon={BarChart3} description="Track your shooting performance over time">
-          <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+          <FilterButton isOpen={filterOpen} setIsOpen={setFilterOpen} activeFilterCount={activeFilterCount} />
         </AnalyticsHeader>
+        <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} isOpen={filterOpen} setIsOpen={setFilterOpen} />
         <AnalyticsLoadingSkeleton />
       </div>
     );
@@ -228,8 +237,9 @@ export default function AnalyticsPage() {
     return (
       <div>
         <AnalyticsHeader title="Analytics" icon={BarChart3} description="Track your shooting performance over time">
-          <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+          <FilterButton isOpen={filterOpen} setIsOpen={setFilterOpen} activeFilterCount={activeFilterCount} />
         </AnalyticsHeader>
+        <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} isOpen={filterOpen} setIsOpen={setFilterOpen} />
         <EmptyState
           title="No data available"
           description="No sessions match your current filters. Try adjusting your filters or record some shooting sessions to see analytics."
@@ -467,7 +477,7 @@ export default function AnalyticsPage() {
           icon={BarChart3}
           description="Track your shooting performance over time"
         >
-          <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} />
+          <FilterButton isOpen={filterOpen} setIsOpen={setFilterOpen} activeFilterCount={activeFilterCount} />
           <Link href="/analytics/compare?type=firearm">
             <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
               <BarChart3 className="mr-2 h-4 w-4" />
@@ -476,6 +486,8 @@ export default function AnalyticsPage() {
           </Link>
         </AnalyticsHeader>
       </FadeIn>
+
+      <FilterBar filters={filters} onChange={setFilters} firearms={firearms} calibers={calibers} optics={optics} isOpen={filterOpen} setIsOpen={setFilterOpen} />
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

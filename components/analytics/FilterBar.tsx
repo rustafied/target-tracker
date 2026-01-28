@@ -21,10 +21,11 @@ export interface FilterBarProps {
   firearms: { _id: string; name: string }[];
   calibers: { _id: string; name: string }[];
   optics: { _id: string; name: string }[];
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
 }
 
-export function FilterBar({ filters, onChange, firearms, calibers, optics }: FilterBarProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function FilterBar({ filters, onChange, firearms, calibers, optics, isOpen, setIsOpen }: FilterBarProps) {
 
   const activeFilterCount =
     filters.firearmIds.length +
@@ -66,22 +67,6 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
 
   return (
     <>
-      {/* Filter Button - Returns just the button to be placed in header */}
-      <Button
-        variant="outline"
-        onClick={() => setIsOpen(!isOpen)}
-        className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20"
-      >
-        <Filter className="mr-2 h-4 w-4" />
-        Filters
-        {activeFilterCount > 0 && (
-          <Badge variant="secondary" className="ml-2">
-            {activeFilterCount}
-          </Badge>
-        )}
-      </Button>
-
-      {/* Filter Card - Slides down and pushes content */}
       {isOpen && (
         <div className="mb-6">
           <div className="bg-card border border-border rounded-lg shadow-lg overflow-hidden animate-in slide-in-from-top-2 duration-300">
@@ -228,6 +213,25 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
       </div>
       )}
     </>
+  );
+}
+
+// Separate component for just the button
+export function FilterButton({ isOpen, setIsOpen, activeFilterCount }: { isOpen: boolean; setIsOpen: (open: boolean) => void; activeFilterCount: number }) {
+  return (
+    <Button
+      variant="outline"
+      onClick={() => setIsOpen(!isOpen)}
+      className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20"
+    >
+      <Filter className="mr-2 h-4 w-4" />
+      Filters
+      {activeFilterCount > 0 && (
+        <Badge variant="secondary" className="ml-2">
+          {activeFilterCount}
+        </Badge>
+      )}
+    </Button>
   );
 }
 
