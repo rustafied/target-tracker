@@ -288,24 +288,18 @@ export async function generateBiasPatternInsight(ctx: SessionContext): Promise<I
   
   const positions = bulls.flatMap(b => getBullPositions(b));
   
-  console.log(`[generateBiasPatternInsight] Total shots fired: ${shotsFired}, Position data available: ${positions.length}`);
-  console.log(`[generateBiasPatternInsight] Bulls count: ${bulls.length}`);
-  console.log(`[generateBiasPatternInsight] Sample positions (first 5):`, positions.slice(0, 5));
   
   // Need at least 20 positions AND at least 30% of total shots to be confident
   if (positions.length < 20) {
-    console.log(`[generateBiasPatternInsight] Not enough position data (${positions.length} < 20)`);
     return null;
   }
   
   const positionCoverage = positions.length / shotsFired;
   if (positionCoverage < 0.3) {
-    console.log(`[generateBiasPatternInsight] Position coverage too low (${(positionCoverage * 100).toFixed(0)}% < 30%)`);
     return null;
   }
   
   const bias = calculateQuadrantBias(positions);
-  console.log(`[generateBiasPatternInsight] Bias calculation results:`, {
     quadrant: bias.quadrant,
     concentration: bias.concentration,
     counts: bias.counts,
@@ -355,27 +349,21 @@ export async function generateBiasPatternInsight(ctx: SessionContext): Promise<I
  */
 
 export async function generateTrendSummaryInsight(ctx: OverviewContext): Promise<Insight | null> {
-  console.log('[generateTrendSummaryInsight] Starting for userId:', ctx.userId);
   const threeMonthsAgo = new Date();
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
   
   // Convert userId string to ObjectId for query
   const userObjectId = new Types.ObjectId(ctx.userId);
   
-  console.log('[generateTrendSummaryInsight] Three months ago:', threeMonthsAgo.toISOString());
-  console.log('[generateTrendSummaryInsight] Querying with userId:', userObjectId);
   
   const sessions = await RangeSession.find({
     userId: userObjectId,
     date: { $gte: threeMonthsAgo },
   }).select('_id date').sort({ date: 1 }).lean();
   
-  console.log('[generateTrendSummaryInsight] Found sessions:', sessions.length, '(need 5+)');
   if (sessions.length > 0) {
-    console.log('[generateTrendSummaryInsight] Date range:', sessions[0].date, 'to', sessions[sessions.length-1].date);
   }
   if (sessions.length < 5) {
-    console.log('[generateTrendSummaryInsight] Not enough sessions, returning null');
     return null;
   }
   
@@ -400,11 +388,8 @@ export async function generateTrendSummaryInsight(ctx: OverviewContext): Promise
   });
   
   const trend = detectTrend(monthlyAvgs);
-  console.log('[generateTrendSummaryInsight] Trend detected:', trend);
-  console.log('[generateTrendSummaryInsight] Monthly averages:', monthlyAvgs.map(a => a.toFixed(2)).join(', '));
   
   if (trend === 'stable') {
-    console.log('[generateTrendSummaryInsight] Trend is stable, returning null');
     return null;
   }
   
@@ -436,13 +421,11 @@ export async function generateTrendSummaryInsight(ctx: OverviewContext): Promise
 }
 
 export async function generateTopPerformersInsight(ctx: OverviewContext): Promise<Insight | null> {
-  console.log('[generateTopPerformersInsight] Starting for userId:', ctx.userId);
   // Convert userId string to ObjectId for query
   const userObjectId = new Types.ObjectId(ctx.userId);
   
   // Get all calibers for this user
   const calibers = await Caliber.find({ userId: userObjectId }).select('_id name').lean();
-  console.log('[generateTopPerformersInsight] Found calibers:', calibers.length);
   if (calibers.length < 2) return null;
   
   // Batch fetch all sheets and bulls for this user
@@ -499,12 +482,10 @@ export async function generateTopPerformersInsight(ctx: OverviewContext): Promis
 }
 
 export async function generateUsageRecommendationInsight(ctx: OverviewContext): Promise<Insight | null> {
-  console.log('[generateUsageRecommendationInsight] Starting for userId:', ctx.userId);
   // Convert userId string to ObjectId for query
   const userObjectId = new Types.ObjectId(ctx.userId);
   
   const firearms = await Firearm.find({ userId: userObjectId }).select('_id name').lean();
-  console.log('[generateUsageRecommendationInsight] Found firearms:', firearms.length);
   if (firearms.length < 2) return null;
   
   // Batch fetch all sheets and bulls for this user
@@ -543,9 +524,7 @@ export async function generateUsageRecommendationInsight(ctx: OverviewContext): 
     usagePercent: (s.shotCount / totalShots) * 100,
   }));
   
-  console.log('[generateUsageRecommendationInsight] Firearm usage:');
   withUsage.forEach(s => {
-    console.log(`  - ${s.firearm.name}: ${s.avgScore.toFixed(2)} avg, ${s.usagePercent.toFixed(1)}% usage (high: ${s.avgScore >= 3.2}, low usage: ${s.usagePercent < 15})`);
   });
   
   // Lowered threshold from 3.5 to 3.2 (more realistic for most shooters)
@@ -553,7 +532,6 @@ export async function generateUsageRecommendationInsight(ctx: OverviewContext): 
     .filter(s => s.avgScore >= 3.2 && s.usagePercent < 15)
     .sort((a, b) => b.avgScore - a.avgScore);
   
-  console.log('[generateUsageRecommendationInsight] Underused firearms:', underused.length);
   if (underused.length === 0) return null;
   
   const gem = underused[0];
@@ -577,7 +555,6 @@ export async function generateUsageRecommendationInsight(ctx: OverviewContext): 
 }
 
 export async function generateInventoryAlertInsight(ctx: OverviewContext): Promise<Insight | null> {
-  console.log('[generateInventoryAlertInsight] Starting for userId:', ctx.userId);
   const userObjectId = new Types.ObjectId(ctx.userId);
   
   // Get all recent sessions to calculate average usage per session
@@ -585,9 +562,7 @@ export async function generateInventoryAlertInsight(ctx: OverviewContext): Promi
     userId: userObjectId,
   }).sort({ date: -1 }).limit(10).select('_id date');
   
-  console.log('[generateInventoryAlertInsight] Found recent sessions:', allRecentSessions.length);
   if (allRecentSessions.length === 0) {
-    console.log('[generateInventoryAlertInsight] No recent sessions, returning null');
     return null;
   }
   
@@ -601,7 +576,6 @@ export async function generateInventoryAlertInsight(ctx: OverviewContext): Promi
     targetSheetId: { $in: allSheets.map(s => s._id) } 
   });
   
-  console.log('[generateInventoryAlertInsight] Found sheets:', allSheets.length, 'bulls:', allBulls.length);
   
   // Calculate average usage per session for each caliber
   const caliberUsageBySession = new Map<string, { totalShots: number; sessionCount: number; sessions: Set<string> }>();
@@ -632,7 +606,6 @@ export async function generateInventoryAlertInsight(ctx: OverviewContext): Promi
     }
   });
   
-  console.log('[generateInventoryAlertInsight] Caliber usage:', 
     Array.from(caliberUsageBySession.entries()).map(([id, data]) => 
       `${id}: ${data.totalShots} shots across ${data.sessionCount} sessions`
     )
@@ -640,14 +613,12 @@ export async function generateInventoryAlertInsight(ctx: OverviewContext): Promi
   
   // Find calibers with low stock (AmmoInventory.userId is Discord ID string)
   const ammoRecords = await AmmoInventory.find({ userId: ctx.userId });
-  console.log('[generateInventoryAlertInsight] Found ammo records:', ammoRecords.length);
   
   for (const [caliberIdStr, usageData] of caliberUsageBySession.entries()) {
     const caliberId = new Types.ObjectId(caliberIdStr);
     const ammo = ammoRecords.find(a => a.caliberId?.equals(caliberId));
     const caliber = await Caliber.findById(caliberId);
     
-    console.log(`[generateInventoryAlertInsight] Checking caliber ${caliberIdStr}:`, {
       hasAmmo: !!ammo,
       hasCaliber: !!caliber,
       stock: ammo?.onHand || 0,
@@ -661,7 +632,6 @@ export async function generateInventoryAlertInsight(ctx: OverviewContext): Promi
     const avgShotsPerSession = usageData.totalShots / usageData.sessionCount;
     const sessionsRemaining = avgShotsPerSession > 0 ? stock / avgShotsPerSession : Infinity;
     
-    console.log(`[generateInventoryAlertInsight] ${caliber.name}: ${stock} rounds, avg ${avgShotsPerSession.toFixed(0)} rounds/session, ${sessionsRemaining.toFixed(1)} sessions remaining`);
     
     // Alert when 5 sessions or fewer remaining
     if (sessionsRemaining <= 5) {
@@ -694,7 +664,6 @@ export async function generateInventoryAlertInsight(ctx: OverviewContext): Promi
 }
 
 export async function generateCompositeFlagInsight(ctx: OverviewContext): Promise<Insight | null> {
-  console.log('[generateCompositeFlagInsight] Starting for userId:', ctx.userId);
   // Convert userId string to ObjectId for query
   const userObjectId = new Types.ObjectId(ctx.userId);
   
@@ -705,10 +674,8 @@ export async function generateCompositeFlagInsight(ctx: OverviewContext): Promis
     .select('_id date')
     .lean();
   
-  console.log('[generateCompositeFlagInsight] Found recent sessions:', recentSessions.length);
   
   if (recentSessions.length < 10) {
-    console.log('[generateCompositeFlagInsight] Not enough sessions (need 10), returning null');
     return null;
   }
   
@@ -753,9 +720,6 @@ export async function generateCompositeFlagInsight(ctx: OverviewContext): Promis
   const secondMissRate = secondHalf.reduce((sum, m) => sum + m.missRate, 0) / 5;
   const missRateChange = calculatePercentChange(secondMissRate, firstMissRate);
   
-  console.log('[generateCompositeFlagInsight] Bull rate change:', bullRateChange.toFixed(1) + '%');
-  console.log('[generateCompositeFlagInsight] Miss rate change:', missRateChange.toFixed(1) + '%');
-  console.log('[generateCompositeFlagInsight] Condition: bull rate >10% improving AND miss rate <5% change');
   
   if (bullRateChange > 10 && Math.abs(missRateChange) < 5) {
     return {

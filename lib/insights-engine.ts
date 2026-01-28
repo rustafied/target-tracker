@@ -202,13 +202,11 @@ export async function generateSessionInsights(
   userId: string,
   config: Partial<InsightConfig> = {}
 ): Promise<Insight[]> {
-  console.log(`[generateSessionInsights] Starting for session: ${sessionId}, user: ${userId}`);
   const fullConfig = { ...DEFAULT_CONFIG, ...config };
   const insights: Insight[] = [];
   
   const session = await RangeSession.findById(sessionId);
   if (!session) {
-    console.log('[generateSessionInsights] Session not found');
     return [];
   }
   
@@ -218,10 +216,7 @@ export async function generateSessionInsights(
     targetSheetId: { $in: sheets.map(s => s._id) } 
   });
   
-  console.log(`[generateSessionInsights] Found ${sheets.length} sheets, ${bulls.length} bulls`);
-  
   if (bulls.length === 0) {
-    console.log('[generateSessionInsights] No bulls found');
     return [];
   }
   
@@ -229,8 +224,6 @@ export async function generateSessionInsights(
   const totalScore = bulls.reduce((sum, b) => sum + calculateBullScore(b), 0);
   const shotsFired = bulls.reduce((sum, b) => sum + calculateBullTotalShots(b), 0);
   const avgScore = shotsFired > 0 ? totalScore / shotsFired : 0;
-  
-  console.log(`[generateSessionInsights] Session metrics - avgScore: ${avgScore}, shotsFired: ${shotsFired}`);
   
   // Get user's historical average (all sessions)
   const userSessions = await RangeSession.find({ userId: new Types.ObjectId(userId) });
@@ -244,10 +237,8 @@ export async function generateSessionInsights(
   
   // Generate insights based on enabled types
   const generators = getSessionInsightGenerators();
-  console.log(`[generateSessionInsights] Found ${generators.length} generators`);
   
   for (const generator of generators) {
-    console.log(`[generateSessionInsights] Checking generator: ${generator.type}, enabled: ${fullConfig.enabledTypes.includes(generator.type)}`);
     if (fullConfig.enabledTypes.includes(generator.type)) {
       try {
         const insight = await generator.generate({
@@ -262,11 +253,8 @@ export async function generateSessionInsights(
           config: fullConfig,
         });
         
-        console.log(`[generateSessionInsights] Generator ${generator.type} returned:`, insight ? `confidence ${insight.confidence}` : 'null');
-        
         if (insight && insight.confidence >= fullConfig.minConfidence) {
           insights.push(insight);
-          console.log(`[generateSessionInsights] Added insight from ${generator.type}`);
         }
       } catch (err) {
         console.error(`Error in ${generator.type} generator:`, err);
@@ -287,12 +275,10 @@ export async function generateOverviewInsights(
   userId: string,
   config: Partial<InsightConfig> = {}
 ): Promise<Insight[]> {
-  console.log('[generateOverviewInsights] Starting with userId:', userId);
   const fullConfig = { ...DEFAULT_CONFIG, ...config };
   const insights: Insight[] = [];
   
   const generators = getOverviewInsightGenerators();
-  console.log('[generateOverviewInsights] Found generators:', generators.length);
   
   // Run all generators in parallel for better performance
   const generatorPromises = generators.map(async (generator) => {
@@ -301,9 +287,7 @@ export async function generateOverviewInsights(
     }
     
     try {
-      console.log('[generateOverviewInsights] Starting generator:', generator.type);
       const insight = await generator.generate({ userId, config: fullConfig });
-      console.log('[generateOverviewInsights] Generator', generator.type, 'returned:', insight ? 'insight' : 'null');
       
       if (insight && insight.confidence >= fullConfig.minConfidence) {
         return insight;
@@ -318,7 +302,6 @@ export async function generateOverviewInsights(
   const results = await Promise.all(generatorPromises);
   const validInsights = results.filter((i): i is Insight => i !== null);
   
-  console.log('[generateOverviewInsights] Total insights generated:', validInsights.length);
   validInsights.sort((a, b) => b.confidence - a.confidence);
   return validInsights.slice(0, fullConfig.maxInsights);
 }
@@ -350,9 +333,7 @@ export async function generateComparisonInsights(
   }
   
   insights.sort((a, b) => b.confidence - a.confidence);
-  const finalInsights = insights.slice(0, fullConfig.maxInsights);
-  console.log(`[generateSessionInsights] Returning ${finalInsights.length} insights (generated ${insights.length} total)`);
-  return finalInsights;
+  return insights.slice(0, fullConfig.maxInsights);
 }
 
 /**
