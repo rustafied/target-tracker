@@ -65,8 +65,8 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
   };
 
   return (
-    <div className="relative">
-      {/* Filter Button */}
+    <>
+      {/* Filter Button - Returns just the button to be placed in header */}
       <Button
         variant="outline"
         onClick={() => setIsOpen(!isOpen)}
@@ -81,45 +81,35 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
         )}
       </Button>
 
-      {/* Backdrop */}
+      {/* Filter Card - Slides down and pushes content */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black z-[9998]"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+        <div className="mb-6">
+          <div className="bg-card border border-border rounded-lg shadow-lg overflow-hidden animate-in slide-in-from-top-2 duration-300">
+            {/* Header */}
+            <div className="bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                <span className="font-semibold">Filters</span>
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {activeFilterCount > 0 && (
+                  <Button variant="ghost" size="sm" onClick={resetFilters}>
+                    Reset
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
 
-      {/* Dropdown Panel with Slide Animation */}
-      <div
-        className={`fixed right-4 top-20 w-[600px] max-w-[90vw] bg-black border border-white/20 rounded-lg shadow-2xl z-[9999] overflow-hidden transition-all duration-300 ease-in-out origin-top ${
-          isOpen ? "opacity-100 scale-y-100" : "opacity-0 scale-y-0 pointer-events-none"
-        }`}
-      >
-        {/* Header */}
-        <div className="bg-black border-b border-white/20 px-4 py-3 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            <span className="font-semibold">Filters</span>
-            {activeFilterCount > 0 && (
-              <Badge variant="secondary">
-                {activeFilterCount}
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={resetFilters}>
-                Reset
-              </Button>
-            )}
-            <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="max-h-[70vh] overflow-y-auto p-4 space-y-4 bg-black">
+            {/* Content */}
+            <div className="p-4 space-y-4 bg-card">
             {/* Firearms and Calibers - 2 Column Layout */}
             {(firearms.length > 0 || calibers.length > 0) && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -234,8 +224,10 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
               </div>
             </div>
           </div>
+        </div>
       </div>
-    </div>
+      )}
+    </>
   );
 }
 
