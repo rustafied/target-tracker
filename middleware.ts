@@ -5,7 +5,7 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow auth routes and static assets
+  // Allow auth routes, API routes during auth, and static assets
   if (
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/debug") ||
@@ -18,26 +18,34 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check for valid session
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+  try {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+      secureCookie: process.env.NODE_ENV === "production",
+    });
 
-  if (!token) {
-    // No session, redirect to login
+    if (!token) {
+      // No session, redirect to login
+      const loginUrl = new URL("/login", request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Verify user is master admin
+    const masterDiscordId = process.env.MASTER_DISCORD_ID;
+    if (token.discordId !== masterDiscordId) {
+      // Not authorized
+      const loginUrl = new URL("/login?error=not_allowed", request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return NextResponse.next();
+  } catch (error) {
+    // If token validation fails, redirect to login
+    console.error("Middleware auth error:", error);
     const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }
-
-  // Verify user is master admin
-  const masterDiscordId = process.env.MASTER_DISCORD_ID;
-  if (token.discordId !== masterDiscordId) {
-    // Not authorized
-    const loginUrl = new URL("/login?error=not_allowed", request.url);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
 }
 
 export const config = {
