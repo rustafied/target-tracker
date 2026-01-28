@@ -101,9 +101,9 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-[600px] max-w-[90vw] bg-card border border-border rounded-lg shadow-lg z-50 max-h-[80vh] overflow-y-auto">
+        <div className="absolute right-0 top-full mt-2 w-[600px] max-w-[90vw] bg-background border border-border rounded-lg shadow-lg z-50 max-h-[80vh] overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+          <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
               <span className="font-semibold">Filters</span>
