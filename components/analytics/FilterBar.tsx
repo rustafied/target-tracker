@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Filter, X, ChevronDown, ChevronUp, Target, Crosshair, Ruler, Telescope, Check } from "lucide-react";
+import { Filter, X, Target, Crosshair, Ruler, Telescope, Check } from "lucide-react";
 
 export interface AnalyticsFilters {
   firearmIds: string[];
@@ -26,6 +25,24 @@ export interface FilterBarProps {
 
 export function FilterBar({ filters, onChange, firearms, calibers, optics }: FilterBarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   const activeFilterCount =
     filters.firearmIds.length +
@@ -66,56 +83,50 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
   };
 
   return (
-    <Card className="mb-6">
-      {!isOpen ? (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="w-full text-left hover:bg-accent/50 transition-colors cursor-pointer rounded-lg"
-        >
-          <CardHeader className="cursor-pointer">
-            <div className="flex items-center justify-between w-full">
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filters
-                {activeFilterCount > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {activeFilterCount}
-                  </Badge>
-                )}
-              </CardTitle>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Click to expand</span>
-                <ChevronDown className="h-4 w-4" />
-              </div>
+    <div className="relative inline-block" ref={dropdownRef}>
+      {/* Filter Button */}
+      <Button
+        variant="outline"
+        onClick={() => setIsOpen(!isOpen)}
+        className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20"
+      >
+        <Filter className="mr-2 h-4 w-4" />
+        Filters
+        {activeFilterCount > 0 && (
+          <Badge variant="secondary" className="ml-2">
+            {activeFilterCount}
+          </Badge>
+        )}
+      </Button>
+
+      {/* Dropdown Panel */}
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-[600px] max-w-[90vw] bg-card border border-border rounded-lg shadow-lg z-50 max-h-[80vh] overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              <span className="font-semibold">Filters</span>
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary">
+                  {activeFilterCount}
+                </Badge>
+              )}
             </div>
-          </CardHeader>
-        </button>
-      ) : (
-        <>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filters
-                {activeFilterCount > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {activeFilterCount}
-                  </Badge>
-                )}
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                {activeFilterCount > 0 && (
-                  <Button variant="ghost" size="sm" onClick={resetFilters}>
-                    Reset
-                  </Button>
-                )}
-                <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="gap-2">
-                  Hide <ChevronUp className="h-4 w-4" />
+            <div className="flex items-center gap-2">
+              {activeFilterCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={resetFilters}>
+                  Reset
                 </Button>
-              </div>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          </div>
+
+          {/* Content */}
+          <div className="p-4 space-y-4">
             {/* Firearms and Calibers - 2 Column Layout */}
             {(firearms.length > 0 || calibers.length > 0) && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -229,10 +240,10 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
                 </div>
               </div>
             </div>
-          </CardContent>
-        </>
+          </div>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
 
