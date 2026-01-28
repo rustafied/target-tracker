@@ -3,21 +3,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import { Filter, X, ChevronDown, ChevronUp, Target, Crosshair, Ruler, Telescope, Check } from "lucide-react";
 
 export interface AnalyticsFilters {
   firearmIds: string[];
   caliberIds: string[];
   opticIds: string[];
-  distanceMin: string;
-  distanceMax: string;
-  minShots: number;
-  positionOnly: boolean;
-  allowSynthetic: boolean;
+  distanceMin: number;
+  distanceMax: number;
 }
 
 export interface FilterBarProps {
@@ -35,10 +31,8 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
     filters.firearmIds.length +
     filters.caliberIds.length +
     filters.opticIds.length +
-    (filters.distanceMin ? 1 : 0) +
-    (filters.distanceMax ? 1 : 0) +
-    (filters.positionOnly ? 1 : 0) +
-    (filters.allowSynthetic ? 1 : 0);
+    (filters.distanceMin > 0 ? 1 : 0) +
+    (filters.distanceMax < 100 ? 1 : 0);
 
   const toggleFirearm = (id: string) => {
     const newIds = filters.firearmIds.includes(id)
@@ -66,11 +60,8 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
       firearmIds: [],
       caliberIds: [],
       opticIds: [],
-      distanceMin: "",
-      distanceMax: "",
-      minShots: 10,
-      positionOnly: false,
-      allowSynthetic: false,
+      distanceMin: 0,
+      distanceMax: 100,
     });
   };
 
@@ -212,76 +203,25 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
               </div>
             )}
 
-            {/* Distance Range */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="distanceMin" className="flex items-center gap-2">
-                  <Ruler className="h-4 w-4" />
-                  Min Distance (yards)
-                </Label>
-                <Input
-                  id="distanceMin"
-                  type="number"
-                  value={filters.distanceMin}
-                  onChange={(e) => onChange({ ...filters, distanceMin: e.target.value })}
-                  placeholder="e.g., 25"
-                />
-              </div>
-              <div>
-                <Label htmlFor="distanceMax" className="flex items-center gap-2">
-                  <Ruler className="h-4 w-4" />
-                  Max Distance (yards)
-                </Label>
-                <Input
-                  id="distanceMax"
-                  type="number"
-                  value={filters.distanceMax}
-                  onChange={(e) => onChange({ ...filters, distanceMax: e.target.value })}
-                  placeholder="e.g., 100"
-                />
-              </div>
-            </div>
-
-            {/* Min Shots */}
+            {/* Distance Range Slider */}
             <div>
-              <Label htmlFor="minShots">Minimum Shots Threshold</Label>
-              <Input
-                id="minShots"
-                type="number"
-                value={filters.minShots}
-                onChange={(e) => onChange({ ...filters, minShots: parseInt(e.target.value) || 10 })}
-                placeholder="10"
-              />
-            </div>
-
-            {/* Data Mode Toggles */}
-            <div className="space-y-3">
-              <Label>Data Mode</Label>
-              <div className="flex flex-col gap-3">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <Checkbox
-                    id="positionOnly"
-                    checked={filters.positionOnly}
-                    onCheckedChange={(checked) => 
-                      onChange({ ...filters, positionOnly: checked as boolean })
-                    }
-                  />
-                  <span className="text-sm group-hover:text-foreground transition-colors">
-                    Position data only (exclude count-only bulls)
-                  </span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <Checkbox
-                    id="allowSynthetic"
-                    checked={filters.allowSynthetic}
-                    onCheckedChange={(checked) => 
-                      onChange({ ...filters, allowSynthetic: checked as boolean })
-                    }
-                  />
-                  <span className="text-sm group-hover:text-foreground transition-colors">
-                    Allow synthetic shots for visualizations
-                  </span>
-                </label>
+              <Label className="flex items-center gap-2 mb-3">
+                <Ruler className="h-4 w-4" />
+                Distance Range (yards)
+              </Label>
+              <div className="space-y-3">
+                <Slider
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[filters.distanceMin, filters.distanceMax]}
+                  onValueChange={([min, max]) => onChange({ ...filters, distanceMin: min, distanceMax: max })}
+                  className="w-full"
+                />
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{filters.distanceMin} yds</span>
+                  <span>{filters.distanceMax} yds</span>
+                </div>
               </div>
             </div>
           </CardContent>

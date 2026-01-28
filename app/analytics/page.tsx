@@ -87,11 +87,8 @@ export default function AnalyticsPage() {
     firearmIds: searchParams.get("firearmIds")?.split(",").filter(Boolean) || [],
     caliberIds: searchParams.get("caliberIds")?.split(",").filter(Boolean) || [],
     opticIds: searchParams.get("opticIds")?.split(",").filter(Boolean) || [],
-    distanceMin: searchParams.get("distanceMin") || "",
-    distanceMax: searchParams.get("distanceMax") || "",
-    minShots: parseInt(searchParams.get("minShots") || "10"),
-    positionOnly: searchParams.get("positionOnly") === "true",
-    allowSynthetic: searchParams.get("allowSynthetic") === "true",
+    distanceMin: parseInt(searchParams.get("distanceMin") || "0"),
+    distanceMax: parseInt(searchParams.get("distanceMax") || "100"),
   });
 
   useEffect(() => {
@@ -187,10 +184,10 @@ export default function AnalyticsPage() {
       if (filters.firearmIds.length > 0) params.append("firearmIds", filters.firearmIds.join(","));
       if (filters.caliberIds.length > 0) params.append("caliberIds", filters.caliberIds.join(","));
       if (filters.opticIds.length > 0) params.append("opticIds", filters.opticIds.join(","));
-      if (filters.distanceMin) params.append("distanceMin", filters.distanceMin);
-      if (filters.distanceMax) params.append("distanceMax", filters.distanceMax);
-      params.append("minShots", filters.minShots.toString());
-      params.append("positionOnly", filters.positionOnly.toString());
+      if (filters.distanceMin > 0) params.append("distanceMin", filters.distanceMin.toString());
+      if (filters.distanceMax < 100) params.append("distanceMax", filters.distanceMax.toString());
+      params.append("minShots", "10");
+      params.append("positionOnly", "true");
 
       const res = await fetch(`/api/analytics/overview?${params}`);
       if (res.ok) {
@@ -210,11 +207,8 @@ export default function AnalyticsPage() {
     if (filters.firearmIds.length > 0) params.set("firearmIds", filters.firearmIds.join(","));
     if (filters.caliberIds.length > 0) params.set("caliberIds", filters.caliberIds.join(","));
     if (filters.opticIds.length > 0) params.set("opticIds", filters.opticIds.join(","));
-    if (filters.distanceMin) params.set("distanceMin", filters.distanceMin);
-    if (filters.distanceMax) params.set("distanceMax", filters.distanceMax);
-    if (filters.minShots !== 10) params.set("minShots", filters.minShots.toString());
-    if (filters.positionOnly) params.set("positionOnly", "true");
-    if (filters.allowSynthetic) params.set("allowSynthetic", "true");
+    if (filters.distanceMin > 0) params.set("distanceMin", filters.distanceMin.toString());
+    if (filters.distanceMax < 100) params.set("distanceMax", filters.distanceMax.toString());
 
     router.replace(`/analytics?${params.toString()}`, { scroll: false });
   };
@@ -679,8 +673,8 @@ export default function AnalyticsPage() {
               opticIds: filters.opticIds,
               distanceMin: filters.distanceMin,
               distanceMax: filters.distanceMax,
-              minShots: filters.minShots,
-              positionOnly: filters.positionOnly,
+              minShots: 10,
+              positionOnly: true,
             }}
             targetDiameterInches={10.5}
             showMOA={true}
@@ -724,8 +718,8 @@ export default function AnalyticsPage() {
                 opticIds: filters.opticIds,
                 distanceMin: filters.distanceMin,
                 distanceMax: filters.distanceMax,
-                minShots: filters.minShots,
-                positionOnly: filters.positionOnly,
+                minShots: 10,
+                positionOnly: true,
               }}
             />
           </LazyLoad>

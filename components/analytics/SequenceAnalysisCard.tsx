@@ -44,8 +44,8 @@ interface SequenceAnalysisCardProps {
     firearmIds?: string[];
     caliberIds?: string[];
     opticIds?: string[];
-    distanceMin?: string;
-    distanceMax?: string;
+    distanceMin?: number;
+    distanceMax?: number;
     minShots?: number;
     positionOnly?: boolean;
   };
@@ -91,8 +91,8 @@ export function SequenceAnalysisCard({
       if (filters.opticIds && filters.opticIds.length > 0) {
         params.append("opticIds", filters.opticIds.join(","));
       }
-      if (filters.distanceMin) params.append("distanceMin", filters.distanceMin);
-      if (filters.distanceMax) params.append("distanceMax", filters.distanceMax);
+      if (filters.distanceMin && filters.distanceMin > 0) params.append("distanceMin", filters.distanceMin.toString());
+      if (filters.distanceMax && filters.distanceMax < 100) params.append("distanceMax", filters.distanceMax.toString());
       if (filters.minShots) params.append("minShots", filters.minShots.toString());
       if (filters.positionOnly) params.append("positionOnly", "true");
 

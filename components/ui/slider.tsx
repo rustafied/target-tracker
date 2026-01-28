@@ -20,7 +20,14 @@ const Slider = React.forwardRef<
     <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-white/20 dark:bg-white/20">
       <SliderPrimitive.Range className="absolute h-full bg-green-600 dark:bg-green-600" />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-green-600 bg-white dark:bg-white shadow-lg ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:scale-110" />
+    {Array.isArray(props.value) && props.value.length > 1 ? (
+      <>
+        <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-green-600 bg-white dark:bg-white shadow-lg ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:scale-110" />
+        <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-green-600 bg-white dark:bg-white shadow-lg ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:scale-110" />
+      </>
+    ) : (
+      <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-green-600 bg-white dark:bg-white shadow-lg ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:scale-110" />
+    )}
   </SliderPrimitive.Root>
 ))
 Slider.displayName = SliderPrimitive.Root.displayName

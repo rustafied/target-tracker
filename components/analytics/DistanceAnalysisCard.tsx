@@ -22,8 +22,8 @@ export interface DistanceAnalysisCardProps {
     firearmIds?: string[];
     caliberIds?: string[];
     opticIds?: string[];
-    distanceMin?: string;
-    distanceMax?: string;
+    distanceMin?: number;
+    distanceMax?: number;
     minShots?: number;
     positionOnly?: boolean;
   };
@@ -69,8 +69,8 @@ export function DistanceAnalysisCard({
       if (filters.firearmIds?.length) params.set("firearmIds", filters.firearmIds.join(","));
       if (filters.caliberIds?.length) params.set("caliberIds", filters.caliberIds.join(","));
       if (filters.opticIds?.length) params.set("opticIds", filters.opticIds.join(","));
-      if (filters.distanceMin) params.set("distanceMin", filters.distanceMin);
-      if (filters.distanceMax) params.set("distanceMax", filters.distanceMax);
+      if (filters.distanceMin && filters.distanceMin > 0) params.set("distanceMin", filters.distanceMin.toString());
+      if (filters.distanceMax && filters.distanceMax < 100) params.set("distanceMax", filters.distanceMax.toString());
 
       const response = await fetch(`/api/analytics/distance?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch distance data");
