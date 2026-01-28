@@ -116,61 +116,66 @@ export function FilterBar({ filters, onChange, firearms, calibers, optics }: Fil
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Firearms */}
-            {firearms.length > 0 && (
-              <div>
-                <Label className="flex items-center gap-2 mb-2">
-                  <Target className="h-4 w-4" />
-                  Firearms
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {firearms.map((firearm) => {
-                    const isActive = filters.firearmIds.includes(firearm._id);
-                    return (
-                      <button
-                        key={firearm._id}
-                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                          isActive
-                            ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
-                            : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
-                        }`}
-                        onClick={() => toggleFirearm(firearm._id)}
-                      >
-                        {isActive && <Check className="h-4 w-4" />}
-                        {firearm.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            {/* Firearms and Calibers - 2 Column Layout */}
+            {(firearms.length > 0 || calibers.length > 0) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Firearms */}
+                {firearms.length > 0 && (
+                  <div>
+                    <Label className="flex items-center gap-2 mb-2">
+                      <Target className="h-4 w-4" />
+                      Firearms
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {firearms.map((firearm) => {
+                        const isActive = filters.firearmIds.includes(firearm._id);
+                        return (
+                          <button
+                            key={firearm._id}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                              isActive
+                                ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
+                                : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
+                            }`}
+                            onClick={() => toggleFirearm(firearm._id)}
+                          >
+                            {isActive && <Check className="h-4 w-4" />}
+                            {firearm.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-            {/* Calibers */}
-            {calibers.length > 0 && (
-              <div>
-                <Label className="flex items-center gap-2 mb-2">
-                  <Crosshair className="h-4 w-4" />
-                  Calibers
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {calibers.map((caliber) => {
-                    const isActive = filters.caliberIds.includes(caliber._id);
-                    return (
-                      <button
-                        key={caliber._id}
-                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                          isActive
-                            ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
-                            : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
-                        }`}
-                        onClick={() => toggleCaliber(caliber._id)}
-                      >
-                        {isActive && <Check className="h-4 w-4" />}
-                        {caliber.name}
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* Calibers */}
+                {calibers.length > 0 && (
+                  <div>
+                    <Label className="flex items-center gap-2 mb-2">
+                      <Crosshair className="h-4 w-4" />
+                      Calibers
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {calibers.map((caliber) => {
+                        const isActive = filters.caliberIds.includes(caliber._id);
+                        return (
+                          <button
+                            key={caliber._id}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                              isActive
+                                ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
+                                : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
+                            }`}
+                            onClick={() => toggleCaliber(caliber._id)}
+                          >
+                            {isActive && <Check className="h-4 w-4" />}
+                            {caliber.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
