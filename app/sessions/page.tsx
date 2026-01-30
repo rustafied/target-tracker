@@ -122,15 +122,15 @@ export default function SessionsPage() {
                     <div className="h-7 w-40 bg-[#2a2a2a] rounded mb-2"></div>
                     <div className="h-4 w-48 bg-[#2a2a2a] rounded"></div>
                   </div>
-                  <div className="flex-1 grid grid-cols-4 gap-6">
+                  <div className="flex-1 grid grid-cols-4 gap-6 min-w-0">
                     {Array.from({ length: 4 }).map((_, j) => (
-                      <div key={j} className="text-center">
+                      <div key={j} className="text-center min-w-0">
                         <div className="h-4 w-16 bg-[#2a2a2a] rounded mx-auto mb-2"></div>
                         <div className="h-8 w-12 bg-[#2a2a2a] rounded mx-auto"></div>
                       </div>
                     ))}
                   </div>
-                  <div className="h-6 w-6 bg-[#2a2a2a] rounded"></div>
+                  <div className="h-6 w-6 bg-[#2a2a2a] rounded flex-shrink-0"></div>
                 </div>
                 {/* Mobile Layout Skeleton */}
                 <div className="md:hidden">

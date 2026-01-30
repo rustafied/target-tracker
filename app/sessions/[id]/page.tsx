@@ -300,18 +300,18 @@ export default function SessionDetailPage() {
       <div>
         {/* Header with title, location, and buttons */}
         <div className="mb-6 animate-pulse">
-          <div className="flex items-start justify-between mb-4">
-            <div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-4 mb-4">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <div className="h-8 w-8 bg-[#2a2a2a] rounded"></div>
-                <div className="h-9 w-64 bg-[#2a2a2a] rounded"></div>
+                <div className="h-8 w-8 bg-[#2a2a2a] rounded flex-shrink-0"></div>
+                <div className="h-9 w-full max-w-[16rem] bg-[#2a2a2a] rounded"></div>
               </div>
               <div className="flex items-center gap-2 mt-2">
-                <div className="h-4 w-4 bg-[#2a2a2a] rounded"></div>
-                <div className="h-5 w-40 bg-[#2a2a2a] rounded"></div>
+                <div className="h-4 w-4 bg-[#2a2a2a] rounded flex-shrink-0"></div>
+                <div className="h-5 w-full max-w-[10rem] bg-[#2a2a2a] rounded"></div>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               <div className="h-10 w-28 bg-[#2a2a2a] rounded"></div>
               <div className="h-10 w-10 bg-[#2a2a2a] rounded"></div>
               <div className="h-10 w-10 bg-[#2a2a2a] rounded"></div>
@@ -322,18 +322,18 @@ export default function SessionDetailPage() {
         {/* Session Summary Card */}
         <Card className="mb-6 animate-pulse">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="h-5 w-5 bg-[#2a2a2a] rounded"></div>
-              <div className="h-6 w-48 bg-[#2a2a2a] rounded"></div>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="h-5 w-5 bg-[#2a2a2a] rounded flex-shrink-0"></div>
+              <div className="h-6 w-full max-w-[12rem] bg-[#2a2a2a] rounded"></div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i}>
-                  <div className="h-4 w-24 bg-[#2a2a2a] rounded mb-2"></div>
-                  <div className="h-8 w-20 bg-[#2a2a2a] rounded mb-1"></div>
-                  <div className="h-3 w-16 bg-[#2a2a2a] rounded"></div>
+                <div key={i} className="min-w-0">
+                  <div className="h-4 w-full max-w-[6rem] bg-[#2a2a2a] rounded mb-2"></div>
+                  <div className="h-8 w-full max-w-[5rem] bg-[#2a2a2a] rounded mb-1"></div>
+                  <div className="h-3 w-full max-w-[4rem] bg-[#2a2a2a] rounded"></div>
                 </div>
               ))}
             </div>
@@ -343,20 +343,20 @@ export default function SessionDetailPage() {
         {/* Session Overview Chart */}
         <Card className="mb-6 animate-pulse">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="h-5 w-5 bg-[#2a2a2a] rounded"></div>
-              <div className="h-6 w-80 bg-[#2a2a2a] rounded"></div>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="h-5 w-5 bg-[#2a2a2a] rounded flex-shrink-0"></div>
+              <div className="h-6 w-full max-w-[20rem] bg-[#2a2a2a] rounded"></div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <div className="h-4 w-64 bg-[#2a2a2a] rounded mb-3"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+              <div className="lg:col-span-2 min-w-0">
+                <div className="h-4 w-full max-w-[16rem] bg-[#2a2a2a] rounded mb-3"></div>
                 <div className="h-[590px] bg-[#1a1a1a] rounded flex items-center justify-center">
                   <div className="h-32 w-32 bg-[#2a2a2a] rounded"></div>
                 </div>
               </div>
-              <div className="space-y-6">
+              <div className="space-y-6 min-w-0">
                 <div className="h-[250px] bg-[#1a1a1a] rounded"></div>
                 <div className="h-[280px] bg-[#1a1a1a] rounded"></div>
               </div>
@@ -372,9 +372,9 @@ export default function SessionDetailPage() {
           <CardContent>
             <div className="space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-start gap-4 p-4 border rounded-lg">
-                  <div className="flex-1 space-y-3">
-                    <div className="h-6 w-40 bg-[#2a2a2a] rounded"></div>
+                <div key={i} className="flex items-start gap-4 p-4 border rounded-lg min-w-0">
+                  <div className="flex-1 space-y-3 min-w-0">
+                    <div className="h-6 w-full max-w-[10rem] bg-[#2a2a2a] rounded"></div>
                     <div className="flex flex-wrap gap-2">
                       {Array.from({ length: 4 }).map((_, j) => (
                         <div key={j} className="h-6 w-20 bg-[#2a2a2a] rounded"></div>
