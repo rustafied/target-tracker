@@ -8,6 +8,7 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -222,6 +223,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-64 p-0">
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <div className="flex flex-col h-full py-6">
                   <div className="px-6 mb-6">
                     <Link href="/sessions" className="flex items-center gap-2">
