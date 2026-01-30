@@ -429,12 +429,14 @@ export default function FirearmsAnalyticsPage() {
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                         isSelected
                           ? "text-white shadow-lg ring-2"
-                          : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
+                          : "text-white/70 hover:text-white/90"
                       }`}
                       style={isSelected ? { 
                         backgroundColor: color,
                         ringColor: `${color}66`
-                      } : undefined}
+                      } : {
+                        backgroundColor: `${color}33`,
+                      }}
                     >
                       {firearm.firearmName}
                     </button>
