@@ -391,8 +391,8 @@ export default function FirearmsAnalyticsPage() {
         >
           <Link href="/analytics/compare?type=firearm">
             <Button variant="outline" className="dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/20">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Compare Firearms
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline ml-2">Compare Firearms</span>
             </Button>
           </Link>
         </AnalyticsHeader>
