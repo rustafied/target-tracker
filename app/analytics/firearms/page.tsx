@@ -209,8 +209,8 @@ export default function FirearmsAnalyticsPage() {
         orient: "horizontal" as const,
       },
       grid: {
-        left: "10%",
-        right: "5%",
+        left: 10,
+        right: 10,
         top: 60,
         bottom: 60,
         containLabel: true,
@@ -356,8 +356,8 @@ export default function FirearmsAnalyticsPage() {
         textStyle: { color: "hsl(var(--foreground))" },
       },
       grid: {
-        left: "10%",
-        right: "5%",
+        left: 0,
+        right: 0,
         top: 60,
         bottom: 60,
         containLabel: true,
@@ -409,8 +409,11 @@ export default function FirearmsAnalyticsPage() {
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     selectedFirearms.length === data.leaderboard.length
                       ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
-                      : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
+                      : "text-white/70 hover:text-white/90"
                   }`}
+                  style={selectedFirearms.length !== data.leaderboard.length ? {
+                    backgroundColor: "#3b82f633"
+                  } : undefined}
                 >
                   All Firearms
                 </button>
@@ -431,11 +434,8 @@ export default function FirearmsAnalyticsPage() {
                           ? "text-white shadow-lg ring-2"
                           : "text-white/70 hover:text-white/90"
                       }`}
-                      style={isSelected ? { 
-                        backgroundColor: color,
-                        ringColor: `${color}66`
-                      } : {
-                        backgroundColor: `${color}33`,
+                      style={{ 
+                        backgroundColor: isSelected ? color : `${color}33`,
                       }}
                     >
                       {firearm.firearmName}

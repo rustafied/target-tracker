@@ -1,45 +1,43 @@
 ---
-description: Git workflow and deployment rules
+description: Git commit and push workflow - only when explicitly requested
 alwaysApply: true
 ---
 
-# Git Workflow Rules
+# Git Workflow
 
-## Do NOT Auto-Push
+**IMPORTANT**: Never automatically commit or push changes unless the user explicitly requests it.
 
-**IMPORTANT**: Never automatically push changes to git unless the user explicitly tells you to "deploy" or "push".
+## Rules
 
-### Allowed Actions Without Permission
-- Make code changes
-- Run tests
-- Check TypeScript/linting
-- Stage changes with `git add`
-- Create commits
+1. **Only commit when asked**: Do not create git commits unless the user specifically says:
+   - "commit"
+   - "git commit"
+   - "commit this"
+   - "save these changes"
+   
+2. **Only push when asked**: Do not push to remote unless the user specifically says:
+   - "push"
+   - "git push"
+   - "deploy"
+   - "push to production"
 
-### Require Explicit Permission
-- `git push` - Only when user says "deploy", "push", or "push to vercel"
-- Force push operations
-- Any destructive git operations
+3. **Always ask first**: If it's unclear whether the user wants to commit/push, ask them explicitly.
 
-### Workflow Pattern
-
-1. Make changes as requested
-2. Run checks (tsc, lint) if needed
-3. Stage and commit changes
-4. **STOP** - Wait for user to explicitly request deployment
-5. Only push when user says: "deploy", "push", "push it", "send it", etc.
-
-## Example
+## Examples
 
 ```bash
-# ✅ GOOD - Stop after commit
-git add -A
-git commit -m "Fix bug"
-# Wait for user instruction
+# ❌ BAD - Auto-committing without being asked
+# User: "fix the button styling"
+# AI: [fixes code, then commits and pushes]
 
-# ❌ BAD - Don't auto-push
-git add -A && git commit -m "Fix bug" && git push
+# ✅ GOOD - Only commit when explicitly requested
+# User: "fix the button styling"
+# AI: [fixes code, stops]
+
+# User: "commit and push this"
+# AI: [commits with descriptive message, then pushes]
 ```
 
-When changes are ready but not pushed, tell the user:
-> "Changes committed locally. Let me know when you want me to push/deploy."
+## Exception
+
+The only exception is when the user says something like "check lint then deploy" or "lint and push" - these clearly indicate they want the changes committed and pushed after linting passes.
