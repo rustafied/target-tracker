@@ -300,19 +300,10 @@ export default function SessionDetailPage() {
       <div>
         {/* Header with title, location, and buttons */}
         <div className="mb-6 animate-pulse">
-          <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-4 mb-4">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-8 w-8 bg-[#2a2a2a] rounded flex-shrink-0"></div>
-                <div className="h-9 w-full max-w-[16rem] bg-[#2a2a2a] rounded"></div>
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="h-4 w-4 bg-[#2a2a2a] rounded flex-shrink-0"></div>
-                <div className="h-5 w-full max-w-[10rem] bg-[#2a2a2a] rounded"></div>
-              </div>
-            </div>
-            <div className="flex gap-2 flex-shrink-0">
-              <div className="h-10 w-28 bg-[#2a2a2a] rounded"></div>
+          <div className="flex items-center justify-between gap-4 mb-4">
+            {/* Just 3 icon boxes on mobile to match the real buttons */}
+            <div className="flex gap-2">
+              <div className="h-10 w-10 bg-[#2a2a2a] rounded"></div>
               <div className="h-10 w-10 bg-[#2a2a2a] rounded"></div>
               <div className="h-10 w-10 bg-[#2a2a2a] rounded"></div>
             </div>
