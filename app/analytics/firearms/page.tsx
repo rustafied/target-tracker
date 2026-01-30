@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 
-import { Target, TrendingUp, Crosshair, Activity, Award, Trophy, Ruler, BarChart3 } from "lucide-react";
+import { Target, TrendingUp, Crosshair, Activity, Award, Trophy, Ruler, BarChart3, Check } from "lucide-react";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
 import { Button } from "@/components/ui/button";
 import { ChartCard } from "@/components/analytics/ChartCard";
@@ -46,10 +46,18 @@ interface FirearmsData {
 export default function FirearmsAnalyticsPage() {
   const [data, setData] = useState<FirearmsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedFirearms, setSelectedFirearms] = useState<string[]>([]);
 
   useEffect(() => {
     fetchAnalytics();
   }, []);
+
+  useEffect(() => {
+    // Initialize selectedFirearms when data loads
+    if (data && data.leaderboard.length > 0 && selectedFirearms.length === 0) {
+      setSelectedFirearms(data.leaderboard.map(f => f.firearmId));
+    }
+  }, [data]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -67,6 +75,25 @@ export default function FirearmsAnalyticsPage() {
       setLoading(false);
     }
   };
+
+  const toggleFirearm = (firearmId: string) => {
+    setSelectedFirearms(prev => 
+      prev.includes(firearmId) 
+        ? prev.filter(id => id !== firearmId)
+        : [...prev, firearmId]
+    );
+  };
+
+  const toggleAll = () => {
+    if (data && selectedFirearms.length === data.leaderboard.length) {
+      setSelectedFirearms([]);
+    } else if (data) {
+      setSelectedFirearms(data.leaderboard.map(f => f.firearmId));
+    }
+  };
+
+  // Filter data based on selected firearms
+  const filteredLeaderboard = data?.leaderboard.filter(f => selectedFirearms.includes(f.firearmId)) || [];
 
   if (loading && !data) {
     return (
@@ -141,7 +168,7 @@ export default function FirearmsAnalyticsPage() {
       "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
     ];
 
-    const series = data.leaderboard.map((firearm, index) => {
+    const series = filteredLeaderboard.map((firearm, index) => {
       const firearmCurve = data.distanceCurves[firearm.firearmId] || [];
       const dataMap = new Map(firearmCurve.map((point: any) => [point.distance, point.avgScorePerShot]));
       const color = firearm.firearmColor || defaultColors[index % defaultColors.length];
@@ -171,13 +198,15 @@ export default function FirearmsAnalyticsPage() {
     const padding = (maxValue - minValue) * 0.1 || 0.5; // 10% padding or 0.5 minimum
 
     return {
-      color: data.leaderboard.map((f, index) => f.firearmColor || defaultColors[index % defaultColors.length]),
+      color: filteredLeaderboard.map((f, index) => f.firearmColor || defaultColors[index % defaultColors.length]),
       tooltip: {
         trigger: "axis" as const,
       },
       legend: {
-        data: data.leaderboard.map((f) => f.firearmName),
+        data: filteredLeaderboard.map((f) => f.firearmName),
         top: 10,
+        type: "scroll" as const,
+        orient: "horizontal" as const,
       },
       grid: {
         left: 60,
@@ -207,7 +236,7 @@ export default function FirearmsAnalyticsPage() {
 
   // Multi-firearm performance chart
   const performanceChartOption: EChartsOption | null = (() => {
-    if (!data || data.leaderboard.length === 0) return null;
+    if (!data || filteredLeaderboard.length === 0) return null;
 
     const defaultColors = [
       "#3b82f6", // blue
@@ -223,7 +252,7 @@ export default function FirearmsAnalyticsPage() {
     // Create series for each firearm with their own data points
     const series: any[] = [];
     
-    data.leaderboard.forEach((firearm, index) => {
+    filteredLeaderboard.forEach((firearm, index) => {
       const trend = data.trends[firearm.firearmId] || [];
       
       // Sort by session index to ensure chronological order
@@ -274,7 +303,7 @@ export default function FirearmsAnalyticsPage() {
     });
 
     // Find the maximum number of sessions any firearm has
-    const maxSessions = Math.max(...data.leaderboard.map(f => (data.trends[f.firearmId] || []).length));
+    const maxSessions = Math.max(...filteredLeaderboard.map(f => (data.trends[f.firearmId] || []).length));
     const xAxisLabels = Array.from({ length: maxSessions }, (_, i) => `Sheet ${i + 1}`);
 
     // Calculate dynamic y-axis range based on actual data
@@ -301,7 +330,8 @@ export default function FirearmsAnalyticsPage() {
             const adjParam = params[i + 1];
             
             if (rawParam && adjParam && rawParam.value !== undefined && rawParam.value !== null) {
-              const firearmId = data.leaderboard[Math.floor(i / 2)]?.firearmId;
+              const firearmIndex = Math.floor(i / 2);
+              const firearmId = filteredLeaderboard[firearmIndex]?.firearmId;
               const sessionData = data.trends[firearmId]?.[sessionIndex];
               const distance = sessionData?.distance || 0;
               const baseline = data.firearmDistances?.[firearmId] || 0;
@@ -321,6 +351,8 @@ export default function FirearmsAnalyticsPage() {
       legend: {
         data: series.map((s: any) => s.name),
         top: 10,
+        type: "scroll" as const,
+        orient: "horizontal" as const,
         textStyle: { color: "hsl(var(--foreground))" },
       },
       grid: {
@@ -365,6 +397,54 @@ export default function FirearmsAnalyticsPage() {
           </Link>
         </AnalyticsHeader>
       </FadeIn>
+
+      {/* Firearm Selector */}
+      {data && data.leaderboard.length > 0 && (
+        <FadeIn delay={50} duration={200}>
+          <Card className="mt-6">
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={toggleAll}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    selectedFirearms.length === data.leaderboard.length
+                      ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
+                      : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
+                  }`}
+                >
+                  All Firearms
+                </button>
+                {data.leaderboard.map((firearm, index) => {
+                  const defaultColors = [
+                    "#3b82f6", "#22c55e", "#f59e0b", "#ef4444",
+                    "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
+                  ];
+                  const color = firearm.firearmColor || defaultColors[index % defaultColors.length];
+                  const isSelected = selectedFirearms.includes(firearm.firearmId);
+                  
+                  return (
+                    <button
+                      key={firearm.firearmId}
+                      onClick={() => toggleFirearm(firearm.firearmId)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        isSelected
+                          ? "text-white shadow-lg ring-2"
+                          : "bg-white/5 text-foreground hover:bg-white/10 border border-white/20 hover:border-white/30"
+                      }`}
+                      style={isSelected ? { 
+                        backgroundColor: color,
+                        ringColor: `${color}66`
+                      } : undefined}
+                    >
+                      {firearm.firearmName}
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      )}
 
       {performanceChartOption && (
         <FadeIn delay={100} duration={300}>
