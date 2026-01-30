@@ -105,12 +105,12 @@ export default function SessionsPage() {
   if (loading) {
     return (
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="min-w-0">
             <div className="h-9 w-32 bg-[#2a2a2a] rounded animate-pulse mb-2"></div>
             <div className="h-5 w-48 bg-[#2a2a2a] rounded animate-pulse"></div>
           </div>
-          <div className="h-10 w-32 bg-[#2a2a2a] rounded animate-pulse"></div>
+          <div className="h-10 w-full sm:w-32 bg-[#2a2a2a] rounded animate-pulse flex-shrink-0"></div>
         </div>
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
