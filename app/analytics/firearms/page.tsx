@@ -209,8 +209,8 @@ export default function FirearmsAnalyticsPage() {
         orient: "horizontal" as const,
       },
       grid: {
-        left: 60,
-        right: 30,
+        left: "10%",
+        right: "5%",
         top: 60,
         bottom: 60,
         containLabel: true,
@@ -356,8 +356,8 @@ export default function FirearmsAnalyticsPage() {
         textStyle: { color: "hsl(var(--foreground))" },
       },
       grid: {
-        left: 60,
-        right: 30,
+        left: "10%",
+        right: "5%",
         top: 60,
         bottom: 60,
         containLabel: true,
