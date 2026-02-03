@@ -701,13 +701,13 @@ export default function SessionDetailPage() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div>
+      <div className="pt-2 sm:pt-0">
         <FadeIn duration={200}>
           <div className="mb-6">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold flex items-center gap-3">
-                  <Calendar className="h-8 w-8" />
+                <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3">
+                  <Calendar className="h-6 w-6 sm:h-8 sm:w-8" />
                   {format(new Date(session.date), "MMMM d, yyyy")}
                 {session.notes && (
                   <Tooltip>
