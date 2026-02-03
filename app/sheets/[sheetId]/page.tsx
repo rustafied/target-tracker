@@ -703,7 +703,7 @@ export default function SheetDetailPage() {
   const progressionChartOption = getProgressionChartOption();
 
   return (
-    <div>
+    <div className="pt-4 sm:pt-0">
       <FadeIn duration={200}>
         <div className="flex items-center justify-between mb-6">
           <Button variant="ghost" onClick={() => sheet && router.push(`/sessions/${sheet.rangeSessionId.slug || sheet.rangeSessionId._id}`)}>

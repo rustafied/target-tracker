@@ -471,7 +471,7 @@ export default function AmmoDetailPage({
   }
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-8">
+    <div className="container max-w-4xl mx-auto px-4 py-8 pt-4 sm:pt-8">
       {/* Header */}
       <div className="mb-8">
         <Button

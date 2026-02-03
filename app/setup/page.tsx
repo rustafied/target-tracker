@@ -4,7 +4,7 @@ import { Target, Crosshair, Zap, LayoutGrid } from "lucide-react";
 
 export default function SetupPage() {
   return (
-    <div>
+    <div className="pt-4 sm:pt-0">
       <h1 className="text-3xl font-bold mb-6">Setup</h1>
       <p className="text-muted-foreground mb-8">
         Manage your firearms, optics, calibers, and target templates.

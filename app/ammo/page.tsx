@@ -637,7 +637,7 @@ export default function AmmoPage() {
     .sort((a, b) => a!.sessionsLeft - b!.sessionsLeft);
 
   return (
-    <div>
+    <div className="pt-4 sm:pt-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

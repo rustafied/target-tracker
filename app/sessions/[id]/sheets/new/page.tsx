@@ -216,7 +216,7 @@ export default function NewSheetPage() {
   }
 
   return (
-    <div className="pb-20">
+    <div className="pb-20 pt-4 sm:pt-0">
       <Button
         variant="ghost"
         onClick={() => router.back()}

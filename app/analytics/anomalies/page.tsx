@@ -123,7 +123,7 @@ export default function AnomaliesPage() {
   }
 
   return (
-    <div>
+    <div className="pt-4 sm:pt-0">
       <FadeIn duration={200}>
         <AnalyticsHeader
           title="Session Anomaly Detection"

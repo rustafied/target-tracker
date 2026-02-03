@@ -701,7 +701,7 @@ export default function SessionDetailPage() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="pt-2 sm:pt-0">
+      <div className="pt-4 sm:pt-0">
         <FadeIn duration={200}>
           <div className="mb-6">
             <div className="flex items-start justify-between mb-4">

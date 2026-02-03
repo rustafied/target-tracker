@@ -92,7 +92,7 @@ export default function ComparePage() {
   }
 
   return (
-    <div>
+    <div className="pt-4 sm:pt-0">
       <FadeIn duration={200}>
         <div className="mb-6">
           <Link href="/analytics">

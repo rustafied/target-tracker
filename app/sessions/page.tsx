@@ -177,7 +177,7 @@ export default function SessionsPage() {
   }
 
   return (
-    <div>
+    <div className="pt-4 sm:pt-0">
       <FadeIn duration={200}>
         <div className="flex items-center justify-between mb-6">
           <div>
