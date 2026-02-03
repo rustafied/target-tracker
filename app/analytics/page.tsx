@@ -20,6 +20,7 @@ import {
   PieChart,
   Sparkles,
   ArrowRight,
+  Trophy,
 } from "lucide-react";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
 import { FilterBar, FilterButton, AnalyticsFilters } from "@/components/analytics/FilterBar";
@@ -762,7 +763,7 @@ export default function AnalyticsPage() {
       </FadeIn>
 
       {/* Drilldown Links */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <FadeIn delay={1200} duration={250}>
           <Link href="/analytics/targets">
             <Card className="hover:bg-accent transition-colors cursor-pointer">
@@ -785,6 +786,27 @@ export default function AnalyticsPage() {
         </FadeIn>
 
         <FadeIn delay={1250} duration={250}>
+          <Link href="/analytics/bulls">
+            <Card className="hover:bg-accent transition-colors cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5" />
+                    Best Bulls
+                  </span>
+                  <ArrowRight className="h-5 w-5" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Your top 20 best bulls across all sessions
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </FadeIn>
+
+        <FadeIn delay={1300} duration={250}>
           <Link href="/analytics/firearms">
             <Card className="hover:bg-accent transition-colors cursor-pointer">
               <CardHeader>
@@ -805,7 +827,7 @@ export default function AnalyticsPage() {
           </Link>
         </FadeIn>
 
-        <FadeIn delay={1300} duration={250}>
+        <FadeIn delay={1350} duration={250}>
           <Link href="/analytics/calibers">
             <Card className="hover:bg-accent transition-colors cursor-pointer">
               <CardHeader>

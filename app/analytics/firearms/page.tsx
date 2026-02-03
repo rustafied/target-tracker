@@ -401,50 +401,48 @@ export default function FirearmsAnalyticsPage() {
       {/* Firearm Selector */}
       {data && data.leaderboard.length > 0 && (
         <FadeIn delay={50} duration={200}>
-          <Card className="mt-6">
-            <CardContent className="pt-6">
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={toggleAll}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedFirearms.length === data.leaderboard.length
-                      ? "bg-blue-600 text-white shadow-lg"
-                      : "text-white/70 hover:text-white/90"
-                  }`}
-                  style={selectedFirearms.length !== data.leaderboard.length ? {
-                    backgroundColor: "#3b82f633"
-                  } : undefined}
-                >
-                  All Firearms
-                </button>
-                {data.leaderboard.map((firearm, index) => {
-                  const defaultColors = [
-                    "#3b82f6", "#22c55e", "#f59e0b", "#ef4444",
-                    "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
-                  ];
-                  const color = firearm.firearmColor || defaultColors[index % defaultColors.length];
-                  const isSelected = selectedFirearms.includes(firearm.firearmId);
-                  
-                  return (
-                    <button
-                      key={firearm.firearmId}
-                      onClick={() => toggleFirearm(firearm.firearmId)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        isSelected
-                          ? "text-white shadow-lg"
-                          : "text-white/70 hover:text-white/90"
-                      }`}
-                      style={{ 
-                        backgroundColor: isSelected ? color : `${color}33`,
-                      }}
-                    >
-                      {firearm.firearmName}
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={toggleAll}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedFirearms.length === data.leaderboard.length
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "text-white/70 hover:text-white/90"
+                }`}
+                style={selectedFirearms.length !== data.leaderboard.length ? {
+                  backgroundColor: "#3b82f633"
+                } : undefined}
+              >
+                All Firearms
+              </button>
+              {data.leaderboard.map((firearm, index) => {
+                const defaultColors = [
+                  "#3b82f6", "#22c55e", "#f59e0b", "#ef4444",
+                  "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6",
+                ];
+                const color = firearm.firearmColor || defaultColors[index % defaultColors.length];
+                const isSelected = selectedFirearms.includes(firearm.firearmId);
+                
+                return (
+                  <button
+                    key={firearm.firearmId}
+                    onClick={() => toggleFirearm(firearm.firearmId)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      isSelected
+                        ? "text-white shadow-lg"
+                        : "text-white/70 hover:text-white/90"
+                    }`}
+                    style={{ 
+                      backgroundColor: isSelected ? color : `${color}33`,
+                    }}
+                  >
+                    {firearm.firearmName}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </FadeIn>
       )}
 

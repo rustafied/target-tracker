@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Calendar, MapPin, FileText, Target, TrendingUp, Crosshair, ChevronRight, ArrowUp, ArrowDown, Clock } from "lucide-react";
+import { Plus, Calendar, MapPin, FileText, Target, TrendingUp, Crosshair, ChevronRight, ArrowUp, ArrowDown, Clock, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +52,21 @@ export default function SessionsPage() {
   useEffect(() => {
     fetchSessions();
   }, []);
+
+  // Compute top 10 sessions by avgScore
+  const top10Rankings = useMemo(() => {
+    const rankings = new Map<string, number>();
+    const sessionsWithScores = sessions
+      .filter(s => s.avgScore !== undefined && s.avgScore !== null)
+      .sort((a, b) => (b.avgScore ?? 0) - (a.avgScore ?? 0))
+      .slice(0, 10);
+    
+    sessionsWithScores.forEach((session, index) => {
+      rankings.set(session._id, index + 1);
+    });
+    
+    return rankings;
+  }, [sessions]);
 
   const fetchSessions = async () => {
     try {
@@ -203,6 +218,20 @@ export default function SessionsPage() {
                       <div className="flex items-center gap-1.5 mb-0.5">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <h3 className="text-lg font-bold">{format(new Date(session.date), "MMM d, yyyy")}</h3>
+                        {top10Rankings.has(session._id) && (
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold ${
+                            top10Rankings.get(session._id) === 1 
+                              ? 'bg-yellow-500/20 text-yellow-500' 
+                              : top10Rankings.get(session._id) === 2 
+                                ? 'bg-gray-300/20 text-gray-300'
+                                : top10Rankings.get(session._id) === 3
+                                  ? 'bg-amber-600/20 text-amber-600'
+                                  : 'bg-blue-500/20 text-blue-500'
+                          }`}>
+                            <Trophy className="h-3 w-3" />
+                            #{top10Rankings.get(session._id)}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground ml-5.5">
                         {format(new Date(session.date), "EEEE")}
@@ -274,6 +303,20 @@ export default function SessionsPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <Calendar className="h-5 w-5 text-muted-foreground" />
                       <h3 className="text-xl font-bold">{format(new Date(session.date), "MMM d, yyyy")}</h3>
+                      {top10Rankings.has(session._id) && (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold ${
+                          top10Rankings.get(session._id) === 1 
+                            ? 'bg-yellow-500/20 text-yellow-500' 
+                            : top10Rankings.get(session._id) === 2 
+                              ? 'bg-gray-300/20 text-gray-300'
+                              : top10Rankings.get(session._id) === 3
+                                ? 'bg-amber-600/20 text-amber-600'
+                                : 'bg-blue-500/20 text-blue-500'
+                        }`}>
+                          <Trophy className="h-3.5 w-3.5" />
+                          #{top10Rankings.get(session._id)}
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground ml-7">
                       {format(new Date(session.date), "EEEE")}

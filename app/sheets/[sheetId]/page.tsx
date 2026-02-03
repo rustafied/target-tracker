@@ -80,6 +80,16 @@ interface BullRecord {
   detectedShotCount?: number;
 }
 
+interface BullPercentile {
+  bullId: string;
+  overallPercentile: number;
+  firearmPercentile: number;
+  overallRank: number;
+  firearmRank: number;
+  totalBulls: number;
+  firearmBulls: number;
+}
+
 export default function SheetDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -96,6 +106,7 @@ export default function SheetDetailPage() {
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [selectedImageBull, setSelectedImageBull] = useState<BullRecord | null>(null);
   const [progressionData, setProgressionData] = useState<any>(null);
+  const [bullPercentiles, setBullPercentiles] = useState<Map<string, BullPercentile>>(new Map());
   
   const [firearms, setFirearms] = useState<{ _id: string; name: string; caliberIds?: string[]; opticIds?: string[] }[]>([]);
   const [allOptics, setAllOptics] = useState<{ _id: string; name: string }[]>([]);
@@ -125,6 +136,15 @@ export default function SheetDetailPage() {
     }
   }, [sheet]);
 
+  // Fetch percentiles only on initial load (not on every shot change)
+  const [percentilesLoaded, setPercentilesLoaded] = useState(false);
+  useEffect(() => {
+    if (sheet && bulls.length > 0 && !percentilesLoaded) {
+      fetchBullPercentiles();
+      setPercentilesLoaded(true);
+    }
+  }, [sheet, bulls, percentilesLoaded]);
+
   const fetchReferenceData = async () => {
     try {
       const [firearmsRes, opticsRes, calibersRes] = await Promise.all([
@@ -151,6 +171,43 @@ export default function SheetDetailPage() {
       if (res.ok) {
         const data = await res.json();
         setProgressionData(data);
+      }
+    } catch (error) {
+      // Silent fail
+    }
+  };
+
+  const fetchBullPercentiles = async () => {
+    try {
+      if (!sheet || bulls.length === 0) return;
+      
+      // Calculate average scores for each bull that has shots
+      const bullsWithShots = bulls
+        .filter(bull => {
+          const metrics = calculateBullMetrics(bull as any);
+          return metrics.totalShots > 0;
+        })
+        .map(bull => {
+          const metrics = calculateBullMetrics(bull as any);
+          return {
+            bullId: bull._id,
+            averageScore: metrics.averagePerShot,
+            firearmId: sheet.firearmId._id,
+          };
+        });
+      
+      if (bullsWithShots.length === 0) return;
+      
+      const res = await fetch("/api/analytics/bull-percentiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bullsWithShots),
+      });
+      
+      if (res.ok) {
+        const data: BullPercentile[] = await res.json();
+        const percentileMap = new Map(data.map(p => [p.bullId, p]));
+        setBullPercentiles(percentileMap);
       }
     } catch (error) {
       // Silent fail
@@ -456,6 +513,8 @@ export default function SheetDetailPage() {
       if (res.ok) {
         toast.success("Scores saved");
         fetchSheet();
+        // Refresh percentiles after saving
+        setPercentilesLoaded(false);
       } else {
         toast.error("Failed to save scores");
       }
@@ -852,6 +911,30 @@ export default function SheetDetailPage() {
                       <p className="text-xl font-bold">{metrics.averagePerShot.toFixed(2)}</p>
                     </div>
                   </div>
+                  
+                  {/* Percentiles */}
+                  {metrics.totalShots > 0 && bullPercentiles.has(bull._id) && (
+                    <div className="w-full grid grid-cols-2 gap-4 text-sm border-t pt-4 mt-4">
+                      <div className="text-center">
+                        <p className="text-muted-foreground text-xs">Overall Percentile</p>
+                        <p className="text-lg font-bold text-blue-400">
+                          Top {100 - bullPercentiles.get(bull._id)!.overallPercentile}%
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          #{bullPercentiles.get(bull._id)!.overallRank} of {bullPercentiles.get(bull._id)!.totalBulls}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-muted-foreground text-xs">{sheet.firearmId.name} Percentile</p>
+                        <p className="text-lg font-bold text-green-400">
+                          Top {100 - bullPercentiles.get(bull._id)!.firearmPercentile}%
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          #{bullPercentiles.get(bull._id)!.firearmRank} of {bullPercentiles.get(bull._id)!.firearmBulls}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

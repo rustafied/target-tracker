@@ -5,8 +5,6 @@ import { Plus, Edit, Trash2, Eye, Scan, Maximize2, FileText, GripVertical } from
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getOpticIcon } from "@/lib/optic-icons";
-import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -83,17 +81,6 @@ function SortableOpticCard({
       >
         <GripVertical className="h-5 w-5 text-muted-foreground" />
       </button>
-
-      {/* Optic Icon */}
-      <div className="flex-shrink-0 flex items-center">
-        <Image
-          src={getOpticIcon(optic.name, optic.type)}
-          alt={optic.name}
-          width={64}
-          height={48}
-          className="opacity-90"
-        />
-      </div>
 
       {/* Main Content */}
       <div className="flex-1 min-w-0">
@@ -280,7 +267,6 @@ export default function OpticsPage() {
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4 p-4 border rounded-lg bg-card animate-pulse">
               <div className="h-5 w-5 bg-[#2a2a2a] rounded"></div>
-              <div className="w-16 h-12 bg-[#2a2a2a] rounded"></div>
               <div className="flex-1 min-w-0">
                 <div className="h-6 w-56 bg-[#2a2a2a] rounded mb-2"></div>
                 <div className="flex gap-2">

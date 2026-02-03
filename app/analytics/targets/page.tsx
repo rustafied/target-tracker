@@ -83,6 +83,7 @@ export default function TargetsAnalyticsPage() {
     distanceMin: parseInt(searchParams.get("distanceMin") || "0"),
     distanceMax: parseInt(searchParams.get("distanceMax") || "100"),
   });
+  const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
     fetchReferenceData();
@@ -199,6 +200,8 @@ export default function TargetsAnalyticsPage() {
           firearms={firearms}
           calibers={calibers}
           optics={optics}
+          isOpen={filterOpen}
+          setIsOpen={setFilterOpen}
         />
         <EmptyState
           title="No shot position data available"
@@ -464,6 +467,8 @@ export default function TargetsAnalyticsPage() {
           firearms={firearms}
           calibers={calibers}
           optics={optics}
+          isOpen={filterOpen}
+          setIsOpen={setFilterOpen}
         />
       </FadeIn>
 

@@ -68,6 +68,7 @@ export default function OpticsAnalyticsPage() {
     distanceMin: parseInt(searchParams.get("distanceMin") || "0"),
     distanceMax: parseInt(searchParams.get("distanceMax") || "100"),
   });
+  const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
     fetchReferenceData();
@@ -210,6 +211,8 @@ export default function OpticsAnalyticsPage() {
           firearms={firearms}
           calibers={calibers}
           optics={optics}
+          isOpen={filterOpen}
+          setIsOpen={setFilterOpen}
         />
         <EmptyState title="No optic data available" description="No sessions match your current filters." />
       </div>
@@ -461,6 +464,8 @@ export default function OpticsAnalyticsPage() {
           firearms={firearms}
           calibers={calibers}
           optics={optics}
+          isOpen={filterOpen}
+          setIsOpen={setFilterOpen}
         />
       </FadeIn>
 

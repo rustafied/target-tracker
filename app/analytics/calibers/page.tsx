@@ -67,6 +67,7 @@ export default function CalibersAnalyticsPage() {
     distanceMin: parseInt(searchParams.get("distanceMin") || "0"),
     distanceMax: parseInt(searchParams.get("distanceMax") || "100"),
   });
+  const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
     fetchReferenceData();
@@ -211,6 +212,8 @@ export default function CalibersAnalyticsPage() {
           firearms={firearms}
           calibers={calibers}
           optics={optics}
+          isOpen={filterOpen}
+          setIsOpen={setFilterOpen}
         />
         <EmptyState
           title="No caliber data available"
@@ -400,6 +403,8 @@ export default function CalibersAnalyticsPage() {
           firearms={firearms}
           calibers={calibers}
           optics={optics}
+          isOpen={filterOpen}
+          setIsOpen={setFilterOpen}
         />
       </FadeIn>
 
