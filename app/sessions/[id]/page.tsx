@@ -77,6 +77,16 @@ interface RangeSession {
   notes?: string;
 }
 
+interface SheetPercentile {
+  sheetId: string;
+  overallPercentile: number;
+  firearmPercentile: number;
+  overallRank: number;
+  firearmRank: number;
+  totalSheets: number;
+  firearmSheets: number;
+}
+
 interface Sheet {
   _id: string;
   slug?: string;
@@ -115,6 +125,7 @@ export default function SessionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  const [sheetPercentiles, setSheetPercentiles] = useState<Map<string, SheetPercentile>>(new Map());
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteSheetDialogOpen, setDeleteSheetDialogOpen] = useState(false);
   const [sheetToDelete, setSheetToDelete] = useState<Sheet | null>(null);
@@ -156,6 +167,51 @@ export default function SessionDetailPage() {
       setInsightsLoading(false);
     }
   };
+
+  const fetchSheetPercentiles = async () => {
+    try {
+      if (sheets.length === 0) return;
+      
+      // Calculate average scores for sheets that have shots
+      const sheetsWithShots = sheets
+        .filter(sheet => {
+          const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
+          return totalShots > 0;
+        })
+        .map(sheet => {
+          const totalShots = sheet.bulls?.reduce((acc, bull) => acc + bull.totalShots, 0) || 0;
+          const totalScore = sheet.bulls?.reduce((acc, bull) => acc + bull.totalScore, 0) || 0;
+          return {
+            sheetId: sheet._id,
+            averageScore: totalShots > 0 ? totalScore / totalShots : 0,
+            firearmId: sheet.firearmId._id,
+          };
+        });
+      
+      if (sheetsWithShots.length === 0) return;
+      
+      const res = await fetch("/api/analytics/sheet-percentiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sheetsWithShots),
+      });
+      
+      if (res.ok) {
+        const data: SheetPercentile[] = await res.json();
+        const percentileMap = new Map(data.map(p => [p.sheetId, p]));
+        setSheetPercentiles(percentileMap);
+      }
+    } catch (error) {
+      // Silent fail
+    }
+  };
+
+  // Fetch sheet percentiles when sheets are loaded
+  useEffect(() => {
+    if (sheets.length > 0) {
+      fetchSheetPercentiles();
+    }
+  }, [sheets]);
 
   const fetchLocations = async () => {
     try {
@@ -1099,16 +1155,40 @@ export default function SessionDetailPage() {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Total Shots</p>
-                        <p className="text-xl font-semibold">{totalShots}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Total Score</p>
-                        <p className="text-xl font-semibold">{totalScore}</p>
-                      </div>
-                    </div>
+<div className="grid grid-cols-2 gap-4 text-sm">
+                                      <div>
+                                        <p className="text-muted-foreground">Total Shots</p>
+                                        <p className="text-xl font-semibold">{totalShots}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">Total Score</p>
+                                        <p className="text-xl font-semibold">{totalScore}</p>
+                                      </div>
+                                    </div>
+
+                                    {/* Sheet Percentiles */}
+                                    {totalShots > 0 && sheetPercentiles.has(sheet._id) && (
+                                      <div className="grid grid-cols-2 gap-4 text-sm border-t pt-4 mt-4">
+                                        <div className="text-center">
+                                          <p className="text-muted-foreground text-xs">Overall Percentile</p>
+                                          <p className="text-lg font-bold text-blue-400">
+                                            Top {100 - sheetPercentiles.get(sheet._id)!.overallPercentile}%
+                                          </p>
+                                          <p className="text-xs text-muted-foreground">
+                                            #{sheetPercentiles.get(sheet._id)!.overallRank} of {sheetPercentiles.get(sheet._id)!.totalSheets}
+                                          </p>
+                                        </div>
+                                        <div className="text-center">
+                                          <p className="text-muted-foreground text-xs">{sheet.firearmId.name} Percentile</p>
+                                          <p className="text-lg font-bold text-green-400">
+                                            Top {100 - sheetPercentiles.get(sheet._id)!.firearmPercentile}%
+                                          </p>
+                                          <p className="text-xs text-muted-foreground">
+                                            #{sheetPercentiles.get(sheet._id)!.firearmRank} of {sheetPercentiles.get(sheet._id)!.firearmSheets}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )}
 
                     {bullChartData.length > 0 && bullChartData.some((b) => b.totalShots > 0) && (
                       <div className="pt-2">
