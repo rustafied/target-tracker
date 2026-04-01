@@ -24,6 +24,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { calculateBullMetrics } from "@/lib/metrics";
 
@@ -114,6 +121,8 @@ export default function SheetDetailPage() {
   const [filteredOptics, setFilteredOptics] = useState<{ _id: string; name: string }[]>([]);
   const [filteredCalibers, setFilteredCalibers] = useState<{ _id: string; name: string }[]>([]);
 
+  const [recentSessions, setRecentSessions] = useState<{ _id: string; slug: string; date: string; location?: string }[]>([]);
+
   const [editFormData, setEditFormData] = useState({
     firearmId: "",
     caliberId: "",
@@ -121,6 +130,7 @@ export default function SheetDetailPage() {
     distanceYards: "",
     sheetLabel: "",
     notes: "",
+    rangeSessionId: "",
   });
 
   useEffect(() => {
@@ -287,6 +297,18 @@ export default function SheetDetailPage() {
     }
   };
 
+  const fetchRecentSessions = async () => {
+    try {
+      const res = await fetch("/api/sessions");
+      if (res.ok) {
+        const data = await res.json();
+        setRecentSessions(data.sessions.slice(0, 10));
+      }
+    } catch (error) {
+      console.error("Failed to fetch sessions:", error);
+    }
+  };
+
   const openEditDialog = () => {
     if (sheet) {
       setEditFormData({
@@ -296,7 +318,9 @@ export default function SheetDetailPage() {
         distanceYards: sheet.distanceYards.toString(),
         sheetLabel: sheet.sheetLabel || "",
         notes: sheet.notes || "",
+        rangeSessionId: sheet.rangeSessionId._id,
       });
+      fetchRecentSessions();
 
       // Filter optics and calibers based on firearm
       const selectedFirearm = firearms.find((f) => f._id === sheet.firearmId._id);
@@ -346,18 +370,31 @@ export default function SheetDetailPage() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const sessionChanged = sheet && editFormData.rangeSessionId !== sheet.rangeSessionId._id;
+
     try {
+      const payload: any = {
+        ...editFormData,
+        distanceYards: parseInt(editFormData.distanceYards),
+      };
+      // Only send rangeSessionId if it changed
+      if (!sessionChanged) {
+        delete payload.rangeSessionId;
+      }
+
       const res = await fetch(`/api/sheets/${sheetId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...editFormData,
-          distanceYards: parseInt(editFormData.distanceYards),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        toast.success("Sheet updated");
+        if (sessionChanged) {
+          const targetSession = recentSessions.find(s => s._id === editFormData.rangeSessionId);
+          toast.success(`Sheet moved to session ${targetSession ? format(new Date(targetSession.date), "MMM d, yyyy") : ""}`);
+        } else {
+          toast.success("Sheet updated");
+        }
         setEditDialogOpen(false);
         fetchSheet();
       } else {
@@ -983,6 +1020,29 @@ export default function SheetDetailPage() {
           </DialogHeader>
           <form onSubmit={handleEditSubmit}>
             <div className="space-y-6 flex-1 min-h-0 overflow-y-auto -mx-6 px-6 py-2">
+              <div>
+                <Label className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Session
+                </Label>
+                <Select
+                  value={editFormData.rangeSessionId}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, rangeSessionId: value })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select session" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {recentSessions.map((session) => (
+                      <SelectItem key={session._id} value={session._id}>
+                        {format(new Date(session.date), "MMM d, yyyy")}
+                        {session.location ? ` — ${session.location}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <TagSelector
                 items={firearms}
                 selectedId={editFormData.firearmId}

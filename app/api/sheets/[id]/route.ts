@@ -78,16 +78,26 @@ export async function PUT(
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
     }
     
-    // Don't update rangeSessionId if not provided
     const updateData: any = {
       firearmId: validated.firearmId,
       caliberId: validated.caliberId,
       opticId: validated.opticId,
       distanceYards: validated.distanceYards,
     };
-    
+
     if (validated.sheetLabel !== undefined) updateData.sheetLabel = validated.sheetLabel;
     if (validated.notes !== undefined) updateData.notes = validated.notes;
+
+    // Allow moving sheet to a different session
+    if (validated.rangeSessionId) {
+      const targetSession = mongoose.Types.ObjectId.isValid(validated.rangeSessionId)
+        ? await RangeSession.findById(validated.rangeSessionId)
+        : await RangeSession.findOne({ slug: validated.rangeSessionId });
+      if (!targetSession) {
+        return NextResponse.json({ error: "Target session not found" }, { status: 404 });
+      }
+      updateData.rangeSessionId = targetSession._id;
+    }
     
     // Update the found sheet
     Object.assign(sheet, updateData);
