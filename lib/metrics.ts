@@ -1,4 +1,5 @@
 import { IBullRecord } from "./models/BullRecord";
+import { extractScoreCounts } from "./analytics-utils";
 
 // Type for bull records that may have been migrated or not
 type BullRecordLike = {
@@ -19,24 +20,13 @@ export interface BullMetrics {
 }
 
 export function calculateBullMetrics(bull: BullRecordLike): BullMetrics {
-  const totalShots =
-    (bull.score5Count || 0) +
-    (bull.score4Count || 0) +
-    (bull.score3Count || 0) +
-    (bull.score2Count || 0) +
-    (bull.score1Count || 0) +
-    (bull.score0Count || 0);
+  const { s5, s4, s3, s2, s1, s0 } = extractScoreCounts(bull);
 
-  const totalScore =
-    (bull.score5Count || 0) * 5 +
-    (bull.score4Count || 0) * 4 +
-    (bull.score3Count || 0) * 3 +
-    (bull.score2Count || 0) * 2 +
-    (bull.score1Count || 0) * 1 +
-    (bull.score0Count || 0) * 0;
+  const totalShots = s5 + s4 + s3 + s2 + s1 + s0;
+  const totalScore = s5 * 5 + s4 * 4 + s3 * 3 + s2 * 2 + s1 * 1;
 
   const averagePerShot = totalShots > 0 ? totalScore / totalShots : 0;
-  const bullHitRate = totalShots > 0 ? (bull.score5Count || 0) / totalShots : 0;
+  const bullHitRate = totalShots > 0 ? s5 / totalShots : 0;
 
   return {
     totalShots,

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { AmmoTransaction } from "@/lib/models/AmmoTransaction";
-import { AmmoInventory } from "@/lib/models/AmmoInventory";
 import { TargetSheet } from "@/lib/models/TargetSheet";
-import mongoose from "mongoose";
+import { recalculateOnHand } from "@/lib/ammo-reconciliation";
 
 export async function POST() {
   try {
@@ -11,13 +10,11 @@ export async function POST() {
 
     // Find all session_deduct transactions
     const transactions = await AmmoTransaction.find({ reason: "session_deduct" }).lean();
-    
+
     const orphaned = [];
-    
+
     for (const tx of transactions) {
-      // Check if sheet still exists
       const sheet = await TargetSheet.findById(tx.sheetId).lean();
-      
       if (!sheet) {
         orphaned.push(tx);
       }
@@ -25,17 +22,20 @@ export async function POST() {
 
     console.log(`Found ${orphaned.length} orphaned transactions`);
 
-    // Delete orphaned transactions and reverse inventory
+    // Track calibers that need recalculation
+    const caliberUserPairs = new Set<string>();
+
+    // Delete orphaned transactions
     for (const tx of orphaned) {
       await AmmoTransaction.deleteOne({ _id: tx._id });
-      
-      // Reverse inventory change
-      await AmmoInventory.updateOne(
-        { caliberId: tx.caliberId.toString() },
-        { $inc: { onHand: -tx.delta } } // Opposite of delta
-      );
-      
-      console.log(`Cleaned up orphaned transaction: ${tx._id}, reversed ${-tx.delta} rounds`);
+      caliberUserPairs.add(`${tx.userId}|${tx.caliberId.toString()}`);
+      console.log(`Cleaned up orphaned transaction: ${tx._id}`);
+    }
+
+    // Recalculate onHand for affected calibers
+    for (const pair of caliberUserPairs) {
+      const [userId, caliberId] = pair.split("|");
+      await recalculateOnHand(userId, caliberId);
     }
 
     return NextResponse.json({

@@ -10,6 +10,7 @@ import { Firearm } from './models/Firearm';
 import { Optic } from './models/Optic';
 import { Caliber } from './models/Caliber';
 import { Types } from 'mongoose';
+import { extractScoreCounts } from './analytics-utils';
 
 export interface Insight {
   id: string;
@@ -78,25 +79,13 @@ const DEFAULT_CONFIG: InsightConfig = {
  * Data structure helpers
  */
 export function calculateBullScore(bull: any): number {
-  return (
-    (bull.score5Count || 0) * 5 +
-    (bull.score4Count || 0) * 4 +
-    (bull.score3Count || 0) * 3 +
-    (bull.score2Count || 0) * 2 +
-    (bull.score1Count || 0) * 1 +
-    (bull.score0Count || 0) * 0
-  );
+  const { s5, s4, s3, s2, s1 } = extractScoreCounts(bull);
+  return s5 * 5 + s4 * 4 + s3 * 3 + s2 * 2 + s1 * 1;
 }
 
 export function calculateBullTotalShots(bull: any): number {
-  return bull.totalShots || (
-    (bull.score5Count || 0) +
-    (bull.score4Count || 0) +
-    (bull.score3Count || 0) +
-    (bull.score2Count || 0) +
-    (bull.score1Count || 0) +
-    (bull.score0Count || 0)
-  );
+  const { s5, s4, s3, s2, s1, s0 } = extractScoreCounts(bull);
+  return s5 + s4 + s3 + s2 + s1 + s0;
 }
 
 export function getBullPositions(bull: any): Array<{ x: number; y: number }> {

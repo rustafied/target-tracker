@@ -658,6 +658,101 @@ export default function AmmoPage() {
         </div>
       </div>
 
+      {/* Total Rounds Card + Inventory List */}
+      {filteredInventory.length === 0 ? (
+        <Card className="p-12 text-center mb-6">
+          <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground/20" />
+          <h3 className="text-lg font-semibold mb-2">No calibers found</h3>
+          <p className="text-muted-foreground mb-6">
+            Add calibers in Setup to start tracking ammo
+          </p>
+          <Button onClick={() => router.push("/setup/calibers")}>
+            Go to Setup → Calibers
+          </Button>
+        </Card>
+      ) : (
+        <div className="mb-6">
+          {/* Total Rounds Card */}
+          <Card className="p-5 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Package className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">Total Rounds on Hand</span>
+              </div>
+              <div className="text-3xl font-bold">
+                {filteredInventory.reduce((sum, item) => sum + item.onHand, 0).toLocaleString()}
+              </div>
+            </div>
+          </Card>
+
+          {/* Inventory List */}
+          <Card className="divide-y divide-border">
+            {filteredInventory.map((item) => {
+              const usage = avgUsage[item.caliber._id];
+              const sessionsLeft = usage && usage.avgRoundsPerSession > 0
+                ? Math.floor(item.onHand / usage.avgRoundsPerSession)
+                : null;
+              const sessionsColor = sessionsLeft !== null
+                ? sessionsLeft < 5
+                  ? "text-red-400"
+                  : sessionsLeft < 10
+                  ? "text-orange-400"
+                  : "text-muted-foreground/60"
+                : "";
+
+              return (
+                <div
+                  key={item._id}
+                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-accent transition-colors cursor-pointer"
+                  onClick={() => router.push(`/ammo/${(item.caliber as any).slug || item.caliber._id}`)}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Image
+                      src={getBulletIcon(item.caliber.name, item.caliber.category)}
+                      alt={item.caliber.name}
+                      width={20}
+                      height={54}
+                      className="flex-shrink-0 opacity-70"
+                    />
+                    <div className="min-w-0">
+                      <span className="font-medium truncate block">{item.caliber.name}</span>
+                      {sessionsLeft !== null && (
+                        <span className={`text-xs ${sessionsColor}`}>
+                          ~{sessionsLeft} sessions left
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {item.onHand <= 0 && (
+                      <Badge variant="outline" className="border-red-500/50 text-red-400">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {item.onHand < 0 ? "Negative" : "Empty"}
+                      </Badge>
+                    )}
+                    <span className="text-lg font-semibold tabular-nums w-20 text-right">
+                      {item.onHand.toLocaleString()}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 flex-shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditDialog(item);
+                      }}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </Card>
+        </div>
+      )}
+
       {/* Low Stock Warnings */}
       {lowStockWarnings.length > 0 && (
         <Card className="p-4 mb-6 border-orange-500/50 bg-orange-500/5">
@@ -733,102 +828,6 @@ export default function AmmoPage() {
       <div className="mb-6">
         <AmmoEfficiency />
       </div>
-
-      {/* Inventory Grid */}
-      {filteredInventory.length === 0 ? (
-        <Card className="p-12 text-center">
-          <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground/20" />
-          <h3 className="text-lg font-semibold mb-2">No calibers found</h3>
-          <p className="text-muted-foreground mb-6">
-            Add calibers in Setup to start tracking ammo
-          </p>
-          <Button onClick={() => router.push("/setup/calibers")}>
-            Go to Setup → Calibers
-          </Button>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredInventory.map((item) => (
-            <Card
-              key={item._id}
-              className="p-5 hover:bg-accent transition-colors relative cursor-pointer"
-              onClick={() => router.push(`/ammo/${(item.caliber as any).slug || item.caliber._id}`)}
-            >
-              <div className="flex items-center justify-between gap-4">
-                {/* Left side: Icon and Caliber Info */}
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <Image
-                    src={getBulletIcon(item.caliber.name, item.caliber.category)}
-                    alt={item.caliber.name}
-                    width={24}
-                    height={64}
-                    className="flex-shrink-0 opacity-70"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-lg truncate">
-                      {item.caliber.name}
-                    </h3>
-                    {item.caliber.shortCode && (
-                      <p className="text-sm text-muted-foreground">{item.caliber.shortCode}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Center: Status Badge (if needed) */}
-                <div className="flex items-center gap-2">
-                  {item.onHand <= 0 && (
-                    <Badge
-                      variant="outline"
-                      className="border-red-500/50 text-red-400"
-                    >
-                      <AlertCircle className="w-3 h-3 mr-1" />
-                      {item.onHand < 0 ? "Negative" : "Empty"}
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Right side: Inventory and Edit Button */}
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-2xl font-bold">
-                      {item.onHand.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-muted-foreground">rounds on hand</div>
-                    {avgUsage[item.caliber._id] && avgUsage[item.caliber._id].avgRoundsPerSession > 0 && (() => {
-                      const sessionsLeft = Math.floor(item.onHand / avgUsage[item.caliber._id].avgRoundsPerSession);
-                      const colorClass = sessionsLeft < 5 
-                        ? "text-red-400 font-semibold" 
-                        : sessionsLeft < 10 
-                        ? "text-orange-400 font-semibold" 
-                        : "text-muted-foreground/60";
-                      
-                      return (
-                        <div className={`text-xs mt-1 ${colorClass}`}>
-                          ~{sessionsLeft} sessions left
-                          <span className="text-muted-foreground/40 ml-1 font-normal">
-                            (avg {avgUsage[item.caliber._id].avgRoundsPerSession}/session)
-                          </span>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 flex-shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEditDialog(item);
-                    }}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
 
       {/* Inventory History Chart - Full Width */}
       {inventoryHistoryChartOption && (

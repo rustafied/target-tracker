@@ -124,18 +124,18 @@ export async function GET(request: Request) {
       // Skip bulls with no shots
       if (totalShots === 0) continue;
 
-      // Get score counts - try countsByScore first, fallback to legacy
+      // Get score counts - try countsByScore first (must be non-empty), fallback to legacy
       let s5 = 0, s4 = 0, s3 = 0, s2 = 0, s1 = 0, s0 = 0;
-      if (bull.countsByScore && typeof bull.countsByScore === "object") {
-        const counts = bull.countsByScore instanceof Map 
-          ? Object.fromEntries(bull.countsByScore)
-          : bull.countsByScore;
-        s5 = Number(counts["5"]) || 0;
-        s4 = Number(counts["4"]) || 0;
-        s3 = Number(counts["3"]) || 0;
-        s2 = Number(counts["2"]) || 0;
-        s1 = Number(counts["1"]) || 0;
-        s0 = Number(counts["0"]) || 0;
+      const cbsRaw = bull.countsByScore && typeof bull.countsByScore === "object"
+        ? (bull.countsByScore instanceof Map ? Object.fromEntries(bull.countsByScore) : bull.countsByScore)
+        : null;
+      if (cbsRaw && Object.keys(cbsRaw).length > 0) {
+        s5 = Number(cbsRaw["5"]) || 0;
+        s4 = Number(cbsRaw["4"]) || 0;
+        s3 = Number(cbsRaw["3"]) || 0;
+        s2 = Number(cbsRaw["2"]) || 0;
+        s1 = Number(cbsRaw["1"]) || 0;
+        s0 = Number(cbsRaw["0"]) || 0;
       } else {
         s5 = bull.score5Count || 0;
         s4 = bull.score4Count || 0;

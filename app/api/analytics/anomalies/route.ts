@@ -7,6 +7,7 @@ import { Firearm } from "@/lib/models/Firearm";
 import { Caliber } from "@/lib/models/Caliber";
 import { Optic } from "@/lib/models/Optic";
 import { requireUserId } from "@/lib/auth-helpers";
+import { extractScoreCounts } from "@/lib/analytics-utils";
 
 interface SessionMetrics {
   sessionId: string;
@@ -119,25 +120,14 @@ export async function GET(request: NextRequest) {
       let missCount = 0;
       
       bulls.forEach(bull => {
-        const shots = 
-          (bull.score5Count || 0) +
-          (bull.score4Count || 0) +
-          (bull.score3Count || 0) +
-          (bull.score2Count || 0) +
-          (bull.score1Count || 0) +
-          (bull.score0Count || 0);
-        
-        const score =
-          ((bull.score5Count || 0) * 5) +
-          ((bull.score4Count || 0) * 4) +
-          ((bull.score3Count || 0) * 3) +
-          ((bull.score2Count || 0) * 2) +
-          ((bull.score1Count || 0) * 1);
-        
+        const { s5, s4, s3, s2, s1, s0 } = extractScoreCounts(bull);
+        const shots = s5 + s4 + s3 + s2 + s1 + s0;
+        const score = s5 * 5 + s4 * 4 + s3 * 3 + s2 * 2 + s1 * 1;
+
         totalShots += shots;
         totalScore += score;
-        bullCount += bull.score5Count || 0;
-        missCount += bull.score0Count || 0;
+        bullCount += s5;
+        missCount += s0;
       });
       
       const avgScore = totalShots > 0 ? totalScore / totalShots : 0;

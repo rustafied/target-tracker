@@ -7,7 +7,7 @@ import { BullRecord } from "@/lib/models/BullRecord";
 import { Firearm } from "@/lib/models/Firearm";
 import { Caliber } from "@/lib/models/Caliber";
 import { Optic } from "@/lib/models/Optic";
-import { aggregateBullMetrics } from "@/lib/analytics-utils";
+import { aggregateBullMetrics, extractScoreCounts } from "@/lib/analytics-utils";
 
 export async function GET(request: Request) {
   try {
@@ -88,14 +88,10 @@ export async function GET(request: Request) {
           const sheetBulls = caliberBulls.filter(
             (b) => b.targetSheetId.toString() === sheet._id.toString()
           );
-          const shots = sheetBulls.reduce((sum, b) => sum + (
-            (b.score5Count || 0) +
-            (b.score4Count || 0) +
-            (b.score3Count || 0) +
-            (b.score2Count || 0) +
-            (b.score1Count || 0) +
-            (b.score0Count || 0)
-          ), 0);
+          const shots = sheetBulls.reduce((sum, b) => {
+            const sc = extractScoreCounts(b);
+            return sum + sc.s5 + sc.s4 + sc.s3 + sc.s2 + sc.s1 + sc.s0;
+          }, 0);
           firearmUsage.set(firearmId, (firearmUsage.get(firearmId) || 0) + shots);
         });
 

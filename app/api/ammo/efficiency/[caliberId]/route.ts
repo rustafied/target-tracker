@@ -51,7 +51,7 @@ export async function GET(
       // Get sheets for this caliber in this session
       const sheets = await TargetSheet.find({
         rangeSessionId: session._id,
-        caliberId: caliberId,
+        caliberId: caliber._id,
       });
 
       if (sheets.length === 0) continue;
@@ -67,24 +67,44 @@ export async function GET(
       let bullCount = 0;
 
       bulls.forEach((bull) => {
-        const shots =
-          (bull.score5Count || 0) +
-          (bull.score4Count || 0) +
-          (bull.score3Count || 0) +
-          (bull.score2Count || 0) +
-          (bull.score1Count || 0) +
-          (bull.score0Count || 0);
+        let shots = 0;
+        let score = 0;
+        let bulls5 = 0;
 
-        const score =
-          (bull.score5Count || 0) * 5 +
-          (bull.score4Count || 0) * 4 +
-          (bull.score3Count || 0) * 3 +
-          (bull.score2Count || 0) * 2 +
-          (bull.score1Count || 0) * 1;
+        // Try new countsByScore format first (must be non-empty), fallback to legacy fields
+        const cbsObj = bull.countsByScore && typeof bull.countsByScore === "object"
+          ? (bull.countsByScore instanceof Map ? Object.fromEntries(bull.countsByScore) : bull.countsByScore)
+          : null;
+        if (cbsObj && Object.keys(cbsObj).length > 0) {
+          for (const [scoreStr, count] of Object.entries(cbsObj)) {
+            const s = parseInt(scoreStr);
+            const c = Number(count) || 0;
+            shots += c;
+            score += s * c;
+            if (s === 5) bulls5 += c;
+          }
+        } else {
+          shots =
+            (bull.score5Count || 0) +
+            (bull.score4Count || 0) +
+            (bull.score3Count || 0) +
+            (bull.score2Count || 0) +
+            (bull.score1Count || 0) +
+            (bull.score0Count || 0);
+
+          score =
+            (bull.score5Count || 0) * 5 +
+            (bull.score4Count || 0) * 4 +
+            (bull.score3Count || 0) * 3 +
+            (bull.score2Count || 0) * 2 +
+            (bull.score1Count || 0) * 1;
+
+          bulls5 = bull.score5Count || 0;
+        }
 
         totalShots += shots;
         totalScore += score;
-        bullCount += bull.score5Count || 0;
+        bullCount += bulls5;
       });
 
       if (totalShots === 0) continue;

@@ -6,6 +6,7 @@ import { BullRecord } from "@/lib/models/BullRecord";
 import { Caliber } from "@/lib/models/Caliber";
 import { Firearm } from "@/lib/models/Firearm";
 import { Optic } from "@/lib/models/Optic";
+import { extractScoreCounts } from "@/lib/analytics-utils";
 
 interface EfficiencyMetrics {
   caliberId: string;
@@ -105,24 +106,10 @@ export async function GET(request: Request) {
       let bullCount = 0;
 
       caliberBulls.forEach((bull) => {
-        const shots =
-          (bull.score5Count || 0) +
-          (bull.score4Count || 0) +
-          (bull.score3Count || 0) +
-          (bull.score2Count || 0) +
-          (bull.score1Count || 0) +
-          (bull.score0Count || 0);
-
-        const score =
-          (bull.score5Count || 0) * 5 +
-          (bull.score4Count || 0) * 4 +
-          (bull.score3Count || 0) * 3 +
-          (bull.score2Count || 0) * 2 +
-          (bull.score1Count || 0) * 1;
-
-        totalShots += shots;
-        totalScore += score;
-        bullCount += bull.score5Count || 0;
+        const { s5, s4, s3, s2, s1, s0 } = extractScoreCounts(bull);
+        totalShots += s5 + s4 + s3 + s2 + s1 + s0;
+        totalScore += s5 * 5 + s4 * 4 + s3 * 3 + s2 * 2 + s1 * 1;
+        bullCount += s5;
       });
 
       // Apply min shots filter

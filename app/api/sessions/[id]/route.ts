@@ -10,6 +10,7 @@ import { Optic } from "@/lib/models/Optic";
 import { AmmoTransaction } from "@/lib/models/AmmoTransaction";
 import { sessionSchema } from "@/lib/validators/session";
 import { calculateSheetMetrics } from "@/lib/metrics";
+import { extractScoreCounts } from "@/lib/analytics-utils";
 
 export async function GET(
   request: Request,
@@ -73,19 +74,9 @@ export async function GET(
       sheets.map(async (sheet: any) => {
         const bulls = await BullRecord.find({ targetSheetId: sheet._id }).sort({ bullIndex: 1 }).lean();
         const bullsWithMetrics = bulls.map((bull: any) => {
-          const totalShots =
-            (bull.score5Count || 0) +
-            (bull.score4Count || 0) +
-            (bull.score3Count || 0) +
-            (bull.score2Count || 0) +
-            (bull.score1Count || 0) +
-            (bull.score0Count || 0);
-          const totalScore =
-            (bull.score5Count || 0) * 5 +
-            (bull.score4Count || 0) * 4 +
-            (bull.score3Count || 0) * 3 +
-            (bull.score2Count || 0) * 2 +
-            (bull.score1Count || 0) * 1;
+          const { s5, s4, s3, s2, s1, s0 } = extractScoreCounts(bull);
+          const totalShots = s5 + s4 + s3 + s2 + s1 + s0;
+          const totalScore = s5 * 5 + s4 * 4 + s3 * 3 + s2 * 2 + s1 * 1;
           return {
             ...bull,
             totalShots,

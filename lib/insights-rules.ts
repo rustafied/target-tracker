@@ -25,6 +25,7 @@ import {
   calculateBullTotalShots,
   getBullPositions,
 } from './insights-engine';
+import { extractScoreCounts } from './analytics-utils';
 
 interface SessionContext {
   session: any;
@@ -182,7 +183,7 @@ export async function generateDistanceDiagnosticInsight(ctx: SessionContext): Pr
   if (!sessionDistance) return null;
   
   // Calculate bull rate (score 4 or 5)
-  const bullHits = bulls.reduce((sum, b) => sum + (b.score5Count || 0) + (b.score4Count || 0), 0);
+  const bullHits = bulls.reduce((sum, b) => { const sc = extractScoreCounts(b); return sum + sc.s5 + sc.s4; }, 0);
   const totalShots = bulls.reduce((sum, b) => sum + calculateBullTotalShots(b), 0);
   if (totalShots === 0) return null;
   
@@ -369,7 +370,7 @@ export async function generateTrendSummaryInsight(ctx: OverviewContext): Promise
   
   const allBulls = await BullRecord.find({ 
     targetSheetId: { $in: allSheets.map(sh => sh._id) } 
-  }).select('targetSheetId score5Count score4Count score3Count score2Count score1Count score0Count totalShots').lean();
+  }).select('targetSheetId score5Count score4Count score3Count score2Count score1Count score0Count countsByScore totalShots').lean();
   
   // Calculate monthly averages from batched data
   const monthlyAvgs = sessions.map((s) => {
@@ -427,7 +428,7 @@ export async function generateTopPerformersInsight(ctx: OverviewContext): Promis
   const allSheets = await TargetSheet.find({ userId: userObjectId }).select('_id caliberId').lean();
   const allBulls = await BullRecord.find({ 
     targetSheetId: { $in: allSheets.map(s => s._id) } 
-  }).select('targetSheetId score5Count score4Count score3Count score2Count score1Count score0Count totalShots').lean();
+  }).select('targetSheetId score5Count score4Count score3Count score2Count score1Count score0Count countsByScore totalShots').lean();
   
   // Calculate stats from batched data
   const caliberStats = calibers.map((cal) => {
@@ -487,7 +488,7 @@ export async function generateUsageRecommendationInsight(ctx: OverviewContext): 
   const allSheets = await TargetSheet.find({ userId: userObjectId }).select('_id firearmId').lean();
   const allBulls = await BullRecord.find({ 
     targetSheetId: { $in: allSheets.map(s => s._id) } 
-  }).select('targetSheetId score5Count score4Count score3Count score2Count score1Count score0Count totalShots').lean();
+  }).select('targetSheetId score5Count score4Count score3Count score2Count score1Count score0Count countsByScore totalShots').lean();
   
   // Calculate stats from batched data
   const firearmStats = firearms.map((firearm) => {
@@ -669,7 +670,7 @@ export async function generateCompositeFlagInsight(ctx: OverviewContext): Promis
   
   const allBulls = await BullRecord.find({ 
     targetSheetId: { $in: allSheets.map(s => s._id) } 
-  }).select('targetSheetId score5Count score4Count score3Count score2Count score1Count score0Count totalShots').lean();
+  }).select('targetSheetId score5Count score4Count score3Count score2Count score1Count score0Count countsByScore totalShots').lean();
   
   // Calculate metrics from batched data
   const sessionMetrics = recentSessions.map((s) => {
@@ -678,8 +679,8 @@ export async function generateCompositeFlagInsight(ctx: OverviewContext): Promis
       sessionSheets.some(sh => sh._id.toString() === b.targetSheetId.toString())
     );
     
-    const bullHits = bulls.reduce((sum, b) => sum + (b.score5Count || 0) + (b.score4Count || 0), 0);
-    const misses = bulls.reduce((sum, b) => sum + (b.score0Count || 0), 0);
+    const bullHits = bulls.reduce((sum, b) => { const sc = extractScoreCounts(b); return sum + sc.s5 + sc.s4; }, 0);
+    const misses = bulls.reduce((sum, b) => extractScoreCounts(b).s0 + sum, 0);
     const totalShots = bulls.reduce((sum, b) => sum + calculateBullTotalShots(b), 0);
     
     const bullRate = totalShots > 0 ? bullHits / totalShots : 0;

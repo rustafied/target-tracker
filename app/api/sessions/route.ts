@@ -10,6 +10,7 @@ import { Caliber } from "@/lib/models/Caliber";
 import { Optic } from "@/lib/models/Optic";
 import { sessionSchema } from "@/lib/validators/session";
 import { requireUserId } from "@/lib/auth-helpers";
+import { extractScoreCounts } from "@/lib/analytics-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,27 +35,14 @@ export async function GET(request: NextRequest) {
         const sheetIds = sheets.map(s => s._id);
         const bulls = await BullRecord.find({ targetSheetId: { $in: sheetIds } });
         
-        // Calculate totalShots from score counts (more reliable than stored totalShots)
-        const totalShots = bulls.reduce((sum, bull) => {
-          const shots = 
-            (bull.score5Count || 0) +
-            (bull.score4Count || 0) +
-            (bull.score3Count || 0) +
-            (bull.score2Count || 0) +
-            (bull.score1Count || 0) +
-            (bull.score0Count || 0);
-          return sum + shots;
-        }, 0);
-        
-        // Calculate total score from score counts
-        const totalScore = bulls.reduce((sum, bull) => {
-          return sum + 
-            ((bull.score5Count || 0) * 5) + 
-            ((bull.score4Count || 0) * 4) + 
-            ((bull.score3Count || 0) * 3) + 
-            ((bull.score2Count || 0) * 2) + 
-            ((bull.score1Count || 0) * 1);
-        }, 0);
+        // Calculate totalShots and totalScore from score counts
+        let totalShots = 0;
+        let totalScore = 0;
+        bulls.forEach((bull) => {
+          const { s5, s4, s3, s2, s1, s0 } = extractScoreCounts(bull);
+          totalShots += s5 + s4 + s3 + s2 + s1 + s0;
+          totalScore += s5 * 5 + s4 * 4 + s3 * 3 + s2 * 2 + s1 * 1;
+        });
         
         const avgScore = totalShots > 0 ? totalScore / totalShots : 0;
         

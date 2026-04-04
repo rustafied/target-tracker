@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { AmmoInventory } from "@/lib/models/AmmoInventory";
 import { AmmoTransaction } from "@/lib/models/AmmoTransaction";
+import { recalculateOnHand } from "@/lib/ammo-reconciliation";
 import { requireUserId } from "@/lib/auth-helpers";
 import mongoose from "mongoose";
 import { z } from "zod";
@@ -45,16 +45,12 @@ export async function POST(req: NextRequest) {
       note,
     });
 
-    // Update inventory atomically
-    const inventory = await AmmoInventory.findOneAndUpdate(
-      { userId: userIdString, caliberId: caliberObjectId },
-      { $inc: { onHand: delta } },
-      { new: true, upsert: true }
-    );
+    // Recalculate onHand from all transactions (drift-proof)
+    const onHand = await recalculateOnHand(userIdString, caliberId);
 
     return NextResponse.json({
       success: true,
-      onHand: inventory.onHand,
+      onHand,
     });
   } catch (error: any) {
     console.error("Error adjusting inventory:", error);

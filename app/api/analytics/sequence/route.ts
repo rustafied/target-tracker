@@ -4,6 +4,7 @@ import { TargetSheet } from "@/lib/models/TargetSheet";
 import { BullRecord } from "@/lib/models/AimPointRecord";
 import { RangeSession } from "@/lib/models/RangeSession";
 import { requireUserId } from "@/lib/auth-helpers";
+import { extractScoreCounts } from "@/lib/analytics-utils";
 
 interface SequenceBucket {
   bucket: number;
@@ -145,9 +146,17 @@ export async function GET(request: NextRequest) {
       } else if (!positionOnly) {
         // No position data, but we can still analyze scores
         // Expand count fields into individual shots (sequence is approximate)
+        const sc = extractScoreCounts(bull);
         let shotIndex = 0;
-        for (let score = 5; score >= 0; score--) {
-          const count = (bull as any)[`score${score}Count`] || 0;
+        const counts = [
+          { score: 5, count: sc.s5 },
+          { score: 4, count: sc.s4 },
+          { score: 3, count: sc.s3 },
+          { score: 2, count: sc.s2 },
+          { score: 1, count: sc.s1 },
+          { score: 0, count: sc.s0 },
+        ];
+        for (const { score, count } of counts) {
           for (let i = 0; i < count; i++) {
             allShots.push({
               sessionId: sheet.rangeSessionId.toString(),
